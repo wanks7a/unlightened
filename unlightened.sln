@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "soul", "soul\soul.vcxproj", "{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "magic", "magic\magic.vcxproj", "{877A8476-7EC9-4628-9125-222A6BD21AED}"
 EndProject
 Global
@@ -15,14 +13,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Debug|x64.ActiveCfg = Debug|x64
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Debug|x64.Build.0 = Debug|x64
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Debug|x86.ActiveCfg = Debug|Win32
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Debug|x86.Build.0 = Debug|Win32
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Release|x64.ActiveCfg = Release|x64
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Release|x64.Build.0 = Release|x64
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Release|x86.ActiveCfg = Release|Win32
-		{80B96C19-6B6F-43AA-A22D-4C5ED82D61DD}.Release|x86.Build.0 = Release|Win32
 		{877A8476-7EC9-4628-9125-222A6BD21AED}.Debug|x64.ActiveCfg = Debug|x64
 		{877A8476-7EC9-4628-9125-222A6BD21AED}.Debug|x64.Build.0 = Debug|x64
 		{877A8476-7EC9-4628-9125-222A6BD21AED}.Debug|x86.ActiveCfg = Debug|x64
