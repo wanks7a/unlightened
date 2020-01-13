@@ -11,11 +11,9 @@ private:
     std::vector<float> output;
     std::vector<float> derivativeWRtoInput;
     const float* input;
-    float useBias;
 public:
     LinearLayer(size_t neuronSize, bool includeBias = true)
     {
-        useBias = includeBias;
         size = neuronSize;
     }
 

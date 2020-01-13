@@ -82,19 +82,22 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\AllLayers.h" />
+    <ClInclude Include="include\GpuMemory.h" />
+    <ClInclude Include="include\GpuUtils.h" />
     <ClInclude Include="include\InputLayer.h" />
     <ClInclude Include="include\Layer.h" />
     <ClInclude Include="include\LinearLayer.h" />
+    <ClInclude Include="include\LinearLayerGPU.h" />
     <ClInclude Include="include\NeuralNet.h" />
     <ClInclude Include="include\OutputLayer.h" />
     <ClInclude Include="include\SigmoidLayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\source.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="source\linearLayerGPU.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

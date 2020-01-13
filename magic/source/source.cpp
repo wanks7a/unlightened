@@ -1,16 +1,21 @@
 #include <NeuralNet.h>
 #include <array>
+#include <LinearLayerGPU.h>
+#include <GpuUtils.h>
 
 int main()
 {
+    if (!utils::GpuInit())
+        return 0;
     NeuralNet test(2, true);
-    test.addLayer(new LinearLayer(2));
+    test.addLayer(new LinearLayerGPU<false>(10));
+    //test.addLayer(new LinearLayer(10));
     test.addLayer(new SigmoidLayer());
     test.addLayer(new LinearLayer(1));
     test.addLayer(new SigmoidLayer());
     OutputLayer loss;
     test.addLayer(&loss);
-    for (int i = 0; i < 1000000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
         test.predict();
@@ -41,5 +46,6 @@ int main()
     test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
     test.predict();
     loss.printLayer();
+    utils::GpuRelase();
     return 0;
 }

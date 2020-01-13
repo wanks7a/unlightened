@@ -5,7 +5,7 @@ class Layer
 protected:
     size_t size;
     size_t inputSize;
-    static constexpr float learing_rate = 0.01f;
+    static constexpr float learing_rate = 0.1f;
 public:
     virtual void init() = 0;
     virtual void forwardPass(Layer* prevLayer) = 0;
