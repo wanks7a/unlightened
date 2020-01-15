@@ -92,12 +92,15 @@
     <ClInclude Include="include\NeuralNet.h" />
     <ClInclude Include="include\OutputLayer.h" />
     <ClInclude Include="include\SigmoidLayer.h" />
+    <ClInclude Include="include\SigmoidLayerGPU.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\GpuUtils.cpp" />
     <ClCompile Include="source\source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="source\linearLayerGPU.cu" />
+    <CudaCompile Include="source\sigmoidLayerGPU.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

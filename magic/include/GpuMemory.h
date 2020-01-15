@@ -40,11 +40,14 @@ public:
 
 	bool setValues(const T* values, size_t count)
 	{
-		dealloc();
-		currentSize = count;
-		if (cudaSuccess != cudaMalloc(&ptr, sizeof(T) * count))
+		if (currentSize != count || ptr == nullptr)
 		{
-			std::cout << "cudaMalloc failed" << std::endl;
+			dealloc();
+			currentSize = count;
+			if (cudaSuccess != cudaMalloc(&ptr, sizeof(T) * count))
+			{
+				std::cout << "cudaMalloc failed" << std::endl;
+			}
 		}
 		if (cudaSuccess != cudaMemcpy(ptr, values, sizeof(T) * count, cudaMemcpyKind::cudaMemcpyHostToDevice))
 		{

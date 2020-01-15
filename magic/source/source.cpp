@@ -1,6 +1,7 @@
 #include <NeuralNet.h>
 #include <array>
 #include <LinearLayerGPU.h>
+#include <SigmoidLayerGPU.h>
 #include <GpuUtils.h>
 
 int main()
@@ -10,9 +11,11 @@ int main()
     NeuralNet test(2, true);
     test.addLayer(new LinearLayerGPU<false>(10));
     //test.addLayer(new LinearLayer(10));
-    test.addLayer(new SigmoidLayer());
+    //test.addLayer(new SigmoidLayer());
+    test.addLayer(new SigmoidLayerGPU());
     test.addLayer(new LinearLayer(1));
-    test.addLayer(new SigmoidLayer());
+    //test.addLayer(new SigmoidLayer());
+    test.addLayer(new SigmoidLayerGPU());
     OutputLayer loss;
     test.addLayer(&loss);
     for (int i = 0; i < 10000; i++)

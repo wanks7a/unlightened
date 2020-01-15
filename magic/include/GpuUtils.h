@@ -7,9 +7,9 @@
 
 namespace utils
 {
-	size_t getBlockSize(size_t threadsPerBlock, size_t maxThreads);
+size_t getBlockSize(size_t threadsPerBlock, size_t maxThreads);
 bool GpuInit();
-
+void waitAndCheckForErrors();
 bool GpuRelase();
 }
 #endif

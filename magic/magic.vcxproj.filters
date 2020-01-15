@@ -39,14 +39,23 @@
     <ClInclude Include="include\LinearLayerGPU.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\SigmoidLayerGPU.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\source.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\GpuUtils.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="source\linearLayerGPU.cu">
+      <Filter>source</Filter>
+    </CudaCompile>
+    <CudaCompile Include="source\sigmoidLayerGPU.cu">
       <Filter>source</Filter>
     </CudaCompile>
   </ItemGroup>
