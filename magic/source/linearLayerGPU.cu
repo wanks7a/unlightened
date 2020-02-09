@@ -15,8 +15,8 @@ __global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, 
         float result = 0.0f;
         for (int j = 0; j < inputSize; j++)
         {
-            __fmaf_rn(input[j], weights[i * inputSize + j], result); // very fast multiply add = a*b + c
-            //result += input[j] * weights[i * inputSize + j];
+            //result = __fmaf_rn(input[j], weights[i * inputSize + j], result); // very fast multiply add = a*b + c
+            result += input[j] * weights[i * inputSize + j];
         }
         output[i] = result;
     }
