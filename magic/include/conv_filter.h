@@ -25,7 +25,7 @@ struct filter_options
     }
 };
 
-void filter_forwardPass(const float* input, shape input_shape, size_t padding, float* output);
+void filter_forwardPass(const float* input, shape input_shape, const float* weights, float* output, shape output_shape, unsigned int filter_size);
 
 class filter_conv2d
 {
@@ -56,4 +56,8 @@ public:
         return true;
     }
 
+    shape get_output_shape()
+    {
+        return output_shape;
+    }
 };

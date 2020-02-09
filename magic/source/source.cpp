@@ -70,7 +70,7 @@ int main()
     cuVector<float> outputK;
     output.resize(10*7);
     outputK.setValues(output);
-    filter_forwardPass(inputK.get(), input_shape, 0, outputK.get());
+    //filter_forwardPass(inputK.get(), input_shape, 0, outputK.get(), );
     outputK.getCopy(output);
     utils::GpuRelase();
     return 0;
