@@ -15,7 +15,7 @@ __global__ void k_sigmoidLayer(T* input, T* output, size_t inputSize)
 
 void sigmoidLayer(float* input, float* output, size_t inputSize)
 {
-	auto threadsPerBlock = std::min(inputSize, static_cast<size_t>(256));
+	auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(256)));
 	auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
 	k_sigmoidLayer << <blocks, threadsPerBlock >> > (input, output, inputSize);
 }
@@ -31,7 +31,7 @@ __global__ void k_sigmoidLayerDerivative(T* derivativeWRtoInput, const T* output
 
 void sigmoidLayerDerivative(float* derivativeWRtoInput, const float* output, const float* derivativeWRtoOutput, size_t inputSize)
 {
-	auto threadsPerBlock = std::min(inputSize, static_cast<size_t>(256));
+	auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(256)));
 	auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
 	k_sigmoidLayerDerivative << <blocks, threadsPerBlock >> > (derivativeWRtoInput, output, derivativeWRtoOutput, inputSize);
 }

@@ -1,12 +1,12 @@
-#include "cuda_runtime.h"
+#include <GpuUtils.h>
 #include <iostream>
 #include <cmath>
 
 namespace utils
 {
-    size_t getBlockSize(size_t threadsPerBlock, size_t maxThreads)
+    unsigned int getBlockSize(size_t threadsPerBlock, size_t maxThreads)
     {
-        return static_cast<size_t>(std::ceil(static_cast<double>(maxThreads) / threadsPerBlock));
+        return static_cast<unsigned int>(std::ceil(static_cast<double>(maxThreads) / threadsPerBlock));
     }
 
     bool GpuInit()

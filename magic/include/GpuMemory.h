@@ -2,6 +2,7 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <iostream>
+#include <vector>
 
 template <typename T>
 class cuVector
@@ -59,6 +60,25 @@ public:
 	bool setValues(const std::vector<T>& values)
 	{
 		return setValues(values.data(), values.size());
+	}
+
+	bool resize(size_t size)
+	{
+		if (currentSize != size)
+		{
+			dealloc();
+			currentSize = size;
+			if (cudaSuccess != cudaMalloc(&ptr, sizeof(T) * size))
+			{
+				std::cout << "cudaMalloc failed" << std::endl;
+				return false;
+			}
+			if (cudaSuccess != cudaMemset(ptr, 0, sizeof(T) * size))
+			{
+				std::cout << "failed to zero out the new memory" << std::endl;
+			}
+		}
+		return true;
 	}
 
 	~cuVector()

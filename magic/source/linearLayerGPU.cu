@@ -22,7 +22,7 @@ __global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, 
 
 void linearLayerForwardPassGPU(float* output, float* weights, const float* input, size_t inputSize, size_t outputSize)
 {
-    auto threadsPerBlock = std::min(outputSize, static_cast<size_t>(trPerBlock));
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
     k_linearLayerForwardPass << <blocks, threadsPerBlock >> > (output, weights, input, inputSize, outputSize);
     utils::waitAndCheckForErrors();
@@ -44,7 +44,7 @@ __global__ void k_calcDerivativeWRtoInput(T* derivativeWRtoInput, size_t inputSi
 
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, size_t outputSize, const float* weights)
 {
-    auto threadsPerBlock = std::min(inputSize, static_cast<size_t>(trPerBlock));
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
     k_calcDerivativeWRtoInput << <blocks, threadsPerBlock >> > (derivativeWRtoInput, inputSize, derivateWRtoOutput, outputSize, weights);
     utils::waitAndCheckForErrors();
@@ -66,7 +66,7 @@ __global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput
 
 void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize)
 {
-    auto threadsPerBlock = std::min(outputSize, static_cast<size_t>(trPerBlock));
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
     k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize);
     utils::waitAndCheckForErrors();

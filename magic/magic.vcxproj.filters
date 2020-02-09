@@ -42,6 +42,9 @@
     <ClInclude Include="include\SigmoidLayerGPU.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\conv_filter.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\source.cpp">
@@ -56,6 +59,9 @@
       <Filter>source</Filter>
     </CudaCompile>
     <CudaCompile Include="source\sigmoidLayerGPU.cu">
+      <Filter>source</Filter>
+    </CudaCompile>
+    <CudaCompile Include="source\cnnLayer.cu">
       <Filter>source</Filter>
     </CudaCompile>
   </ItemGroup>
