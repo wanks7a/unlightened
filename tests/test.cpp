@@ -2,8 +2,9 @@
 #include "../magic/include/conv_filter.h"
 #include "../magic/include/GpuUtils.h"
 #include "../magic/include/GpuMemory.h"
+#include "../magic/include/LinearLayerGPU.h"
 
-class CNN : public ::testing::Test 
+class gpu_tests : public ::testing::Test 
 {
 protected:
     virtual void SetUp() 
@@ -17,7 +18,7 @@ protected:
     }
 };
 
-TEST(CNN, filter_3x3) 
+TEST(gpu_tests, filter_3x3)
 {
     filter_options opt(2, 2);
     filter_conv2d filter(opt);
@@ -62,3 +63,29 @@ TEST(CNN, filter_3x3)
     }
     std::cout << "works" << std::endl;
 }
+
+
+TEST(gpu_tests, dense_layer1024)
+{
+    std::vector<float> input;
+    input.resize(1024 * 1024, 1.0f);
+    LinearLayerGPU<false> l(1024);
+    l.setInputSize(1024);
+    l.init();
+    EXPECT_EQ(l.getOutputSize(), 1024 + 1); // because of bias
+    EXPECT_EQ(l.getInputSize(), 1024);
+    EXPECT_TRUE(l.set_weights(input));
+    cuVector<float> inputPtr;
+    inputPtr.setValues(input);
+    cuVector<float> weightsGPU;
+    weightsGPU.setValues(input);
+    cuVector<float> outputGPU;
+    EXPECT_TRUE(outputGPU.resize(1025));
+    std::vector<float> result;
+    for (size_t i = 0; i < 1000; i++)
+    {
+        linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr.get(), 1024, 1024);
+    }
+    outputGPU.getCopy(result);
+}
+

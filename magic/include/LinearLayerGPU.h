@@ -46,6 +46,16 @@ public:
         size = size + 1;
     }
 
+    bool set_weights(const std::vector<float>& w)
+    {
+        if (weight.size() == w.size())
+        {
+            weight = w;
+            return weightsGPU.setValues(weight);
+        }
+        return false;
+    }
+
     void forwardPass(Layer* prevLayer) override
     {
         inputPtr = prevLayer->getOutput();

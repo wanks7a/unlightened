@@ -4,7 +4,7 @@
 #include <GpuUtils.h>
 #include <algorithm>
 
-#define trPerBlock 2
+#define trPerBlock 256
 
 template <typename T>
 __global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, size_t inputSize, size_t outputSize)
