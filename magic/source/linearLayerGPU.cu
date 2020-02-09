@@ -12,11 +12,13 @@ __global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, 
     auto i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < outputSize)
     {
-        output[i] = 0.0f;
+        float result = 0.0f;
         for (int j = 0; j < inputSize; j++)
         {
-            output[i] += input[j] * weights[i * inputSize + j];
+            __fmaf_rn(input[j], weights[i * inputSize + j], result); // very fast multiply add = a*b + c
+            //result += input[j] * weights[i * inputSize + j];
         }
+        output[i] = result;
     }
 }
 
