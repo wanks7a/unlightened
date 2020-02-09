@@ -6,12 +6,13 @@
 __global__ void k_filter_forwardPass(const float* input, shape* input_shape, const float* weights, float* output, unsigned int filter_size)
 {
     float conv_result = 0.0f;
-    size_t chunkStartIndex = blockIdx.y*input_shape->width + blockIdx.x;
+    unsigned int width = input_shape->width;
+    unsigned int chunkStartIndex = blockIdx.y* width + blockIdx.x;
     for (unsigned int i = 0; i < filter_size; i++)
     {
         for (unsigned int j = 0; j < filter_size; j++)
         {
-            conv_result += input[chunkStartIndex + i * input_shape->width + j] * weights[i * filter_size + j];
+            conv_result += input[chunkStartIndex + i * width + j] * weights[i * filter_size + j];
         }
     }
     output[blockDim.x * blockIdx.y + blockIdx.x] = conv_result;
