@@ -4,7 +4,7 @@
 #include <memory>
 #include <GpuMemory.h>
 
-void linearLayerForwardPassGPU(float* output, float* weights,const float* input, size_t inputSize, size_t outputSize);
+void linearLayerForwardPassGPU(float* output, const float* weights,const float* input, size_t inputSize, size_t outputSize);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, size_t outputSize, const float* weights);
 void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize);
 

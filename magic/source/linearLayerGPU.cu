@@ -7,7 +7,7 @@
 #define trPerBlock 256
 
 template <typename T>
-__global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, size_t inputSize, size_t outputSize)
+__global__ void k_linearLayerForwardPass(T* output,const T* weights, const T* input, size_t inputSize, size_t outputSize)
 {
     auto i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < outputSize)
@@ -22,7 +22,7 @@ __global__ void k_linearLayerForwardPass(T* output, T* weights, const T* input, 
     }
 }
 
-void linearLayerForwardPassGPU(float* output, float* weights, const float* input, size_t inputSize, size_t outputSize)
+void linearLayerForwardPassGPU(float* output,const float* weights, const float* input, size_t inputSize, size_t outputSize)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
