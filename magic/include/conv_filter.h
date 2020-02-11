@@ -1,17 +1,7 @@
 #pragma once
 #include <GpuMemory.h>
 #include <vector>
-
-struct shape
-{
-    unsigned int width;
-    unsigned int height;
-    unsigned int depth;
-
-    shape(unsigned int x = 1, unsigned int  y = 1, unsigned int  z = 1) : width(x), height(y), depth(z){}
-
-    shape(const shape& sh) = default;
-};
+#include <shape.h>
 
 struct filter_options
 {

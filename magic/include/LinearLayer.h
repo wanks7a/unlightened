@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <thread>
 #include <iostream>
 #include "Layer.h"
 
@@ -11,51 +10,34 @@ private:
     std::vector<float> output;
     std::vector<float> derivativeWRtoInput;
     const float* input;
+    size_t size;
+    size_t input_size;
 public:
-    LinearLayer(size_t neuronSize, bool includeBias = true)
+    LinearLayer(size_t neuron_size) : input(nullptr), input_size(0), size(neuron_size)
     {
-        size = neuronSize;
     }
 
-    void init() override
+    void init(const shape& input) override
     {
-        weight.resize(inputSize * size);
-        derivativeWRtoInput.resize(inputSize);
+        input_size = input.size();
+        weight.resize(input_size * size);
+        derivativeWRtoInput.resize(input_size);
         // +1 is for the bias
         output.resize(size + 1);
         output[size] = 1.0f;
-        for (size_t i = 0; i < inputSize * size; i++)
+        for (size_t i = 0; i < input_size * size; i++)
         {
             weight[i] = 1.0f / (rand() % 1000);
         }
         size = size + 1;
+        output_shape.width = size;
     }
 
     void forwardPass(Layer* prevLayer) override
     {
-        unsigned int n = std::thread::hardware_concurrency();
-        unsigned int neuronsPerThread = (size - 1) / n;
         input = prevLayer->getOutput();
-        if (neuronsPerThread == 0)
-        {
-            forwardPassCalcNeurons(0, size - 1, prevLayer);
-        }
-        else
-        {
-            std::vector<std::thread> threads;
-            for (size_t i = 0; i < n - 1; i++)
-            {
-                threads.push_back(
-                    std::thread(&LinearLayer::forwardPassCalcNeurons, this, i * neuronsPerThread, neuronsPerThread, prevLayer));
-            }
-            unsigned int remainingNeurons = (size - 1) % n;
-            forwardPassCalcNeurons((n - 1) * neuronsPerThread, neuronsPerThread + remainingNeurons, prevLayer);
-            for (auto& tr : threads)
-            {
-                if (tr.joinable())
-                    tr.join();
-            }
-        }
+        forwardPassCalcNeurons(0, size - 1, prevLayer);
+        
         if (output[size - 1] != 1.0f)
         {
             output[size - 1] = 1.0f;
@@ -70,9 +52,9 @@ public:
         for (size_t i = offset; i < offset + numberOfNeurons; i++)
         {
             this->output[i] = 0.0f;
-            for (size_t j = 0; j < inputSize; j++)
+            for (size_t j = 0; j < input_size; j++)
             {
-                output[i] += input[j] * weight[i * inputSize + j];
+                output[i] += input[j] * weight[i * input_size + j];
             }
         }
     }
@@ -80,15 +62,15 @@ public:
     void backprop(Layer* layer) override
     {
         const float* derivativeWRToOutput = layer->derivativeWithRespectToInput();
-        calcDerivativeWRtoInput(0, inputSize, derivativeWRToOutput);
+        calcDerivativeWRtoInput(0, input_size, derivativeWRToOutput);
         updateWeightsAndBias(0, size - 1, derivativeWRToOutput);
     }
 
     void updateWeightsAndBias(size_t neuronIndex, const float* derivativeWRtoOutput)
     {
-        for (size_t i = 0; i < inputSize; i++)
+        for (size_t i = 0; i < input_size; i++)
         {
-            weight[neuronIndex * inputSize + i] = weight[neuronIndex * inputSize + i] - learing_rate * input[i] * derivativeWRtoOutput[neuronIndex];
+            weight[neuronIndex * input_size + i] = weight[neuronIndex * input_size + i] - learing_rate * input[i] * derivativeWRtoOutput[neuronIndex];
         }
     }
 
@@ -107,7 +89,7 @@ public:
         // which does not depenend from the input layer
         for (size_t i = 0; i < size - 1; i++)
         {
-            derivativeWRtoInput[inputIndex] += derivateWRtoOutput[i] * weight[i * inputSize + inputIndex];
+            derivativeWRtoInput[inputIndex] += derivateWRtoOutput[i] * weight[i * input_size + inputIndex];
         }
     }
 
@@ -131,13 +113,13 @@ public:
 
     void printLayer() override
     {
-        std::cout << "Input : " << inputSize << " Output: " << size << std::endl;
+        std::cout << "Input : " << input_size << " Output: " << size << std::endl;
         for (size_t i = 0; i < size - 1; i++)
         {
             std::cout << "Neuron : " << i << std::endl;
-            for (size_t j = 0; j < inputSize; j++)
+            for (size_t j = 0; j < input_size; j++)
             {
-                std::cout << "weight[" << i << "]" << "[" << j << "] = " << weight[i * inputSize + j] << " " << std::endl;
+                std::cout << "weight[" << i << "]" << "[" << j << "] = " << weight[i * input_size + j] << " " << std::endl;
             }
         }
 

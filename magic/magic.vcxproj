@@ -85,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\AllLayers.h" />
+    <ClInclude Include="include\cnn_layer.h" />
     <ClInclude Include="include\conv_filter.h" />
     <ClInclude Include="include\GpuMemory.h" />
     <ClInclude Include="include\GpuUtils.h" />
@@ -94,10 +95,12 @@
     <ClInclude Include="include\LinearLayerGPU.h" />
     <ClInclude Include="include\NeuralNet.h" />
     <ClInclude Include="include\OutputLayer.h" />
+    <ClInclude Include="include\shape.h" />
     <ClInclude Include="include\SigmoidLayer.h" />
     <ClInclude Include="include\SigmoidLayerGPU.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\cnn_layer.cpp" />
     <ClCompile Include="source\GpuUtils.cpp" />
     <ClCompile Include="source\source.cpp" />
   </ItemGroup>

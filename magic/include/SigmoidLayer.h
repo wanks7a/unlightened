@@ -9,14 +9,18 @@ class SigmoidLayer : public Layer
     std::vector<float> derivativeWRtoInput;
     std::vector<float> verifiedGradient;
     std::vector<float> test;
+    size_t size;
+    size_t input_size;
 
-    void init() override
+    void init(const shape& input) override
     {
-        size = inputSize;
+        input_size = input.size();
+        size = input_size;
         output.resize(size);
-        derivativeWRtoInput.resize(inputSize);
-        verifiedGradient.resize(inputSize);
-        test.resize(inputSize);
+        derivativeWRtoInput.resize(input_size);
+        verifiedGradient.resize(input_size);
+        test.resize(input_size);
+        output_shape.width = input_size;
     }
 
     void forwardPass(Layer* prevLayer) override
@@ -32,7 +36,7 @@ class SigmoidLayer : public Layer
     void backprop(Layer* layer) override
     {
         const float* derivativeWRtoOutput = layer->derivativeWithRespectToInput();
-        for (size_t i = 0; i < inputSize; i++)
+        for (size_t i = 0; i < input_size; i++)
         {
             derivativeWRtoInput[i] = output[i] * (1 - output[i]) * derivativeWRtoOutput[i];
         }

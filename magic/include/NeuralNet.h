@@ -8,7 +8,7 @@ class NeuralNet
     std::vector<Layer*> layers;
 public:
 
-    NeuralNet(size_t inputLayerSize, bool useBias = false) : inputSize(inputLayerSize)
+    NeuralNet(size_t inputLayerSize, bool useBias = true) : inputSize(inputLayerSize)
     {
         addLayer(new InputLayer(inputLayerSize, useBias));
     }
@@ -49,6 +49,16 @@ public:
         }
 
     }
+    void set_learning_rate(float learning_rate)
+    {
+        if (learning_rate > 0)
+        {
+            for (const auto& l : layers)
+            {
+                l->set_learning_rate(learning_rate);
+            }
+        }
+    }
 private:
     void updateLastLayer()
     {
@@ -56,8 +66,7 @@ private:
         {
             Layer* last = layers.back();
             Layer* beforeLast = layers[layers.size() - 2];
-            last->setInputSize(beforeLast->getOutputSize());
-            last->init();
+            last->init(beforeLast->get_shape());
         }
     }
 };

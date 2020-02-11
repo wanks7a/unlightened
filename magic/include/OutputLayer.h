@@ -8,17 +8,20 @@ class OutputLayer : public Layer
     const float* predictedValue = nullptr;
     std::vector<float> derivativeWRToInput;
     std::vector<float> observedValues;
+    size_t size;
 public:
 
-    OutputLayer()
+    OutputLayer() : size(0)
     {
     }
 
-    void init() override
+    void init(const shape& input) override
     {
-        size = inputSize;
+        output_shape = input;
+        size = input.size();
         derivativeWRToInput.resize(size);
         observedValues.resize(size);
+        output_shape.width = size;
     }
 
     void forwardPass(Layer* prevLayer) override

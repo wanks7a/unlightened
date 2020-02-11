@@ -3,8 +3,8 @@
 #include <vector>
 #include <GpuMemory.h>
 
-void sigmoidLayer(float* input, float* output, size_t inputSize);
-void sigmoidLayerDerivative(float* derivativeWRtoInput, const float* output, const float* derivativeWRtoOutput, size_t inputSize);
+void sigmoidLayer(float* input, float* output, size_t input_size);
+void sigmoidLayerDerivative(float* derivativeWRtoInput, const float* output, const float* derivativeWRtoOutput, size_t input_size);
 
 class SigmoidLayerGPU : public Layer
 {
@@ -13,21 +13,25 @@ class SigmoidLayerGPU : public Layer
     cuVector<float> outputGPU;
     cuVector<float> derivativeWRtoInputGPU;
     cuVector<float> inOutBuffer;
+    size_t size;
+    size_t input_size;
 
-    void init() override
+    void init(const shape& input) override
     {
-        size = inputSize;
+        input_size = input.size();
+        size = input_size;
         output.resize(size);
         output[size - 1] = 1.0f; // this is the bias so its always 1.0f i.e he is alaways fired
-        derivativeWRtoInput.resize(inputSize);
+        derivativeWRtoInput.resize(input_size);
         outputGPU.setValues(output);
         derivativeWRtoInputGPU.setValues(derivativeWRtoInput);
+        output_shape.width = size;
     }
 
     void forwardPass(Layer* prevLayer) override
     {
         const float* input = prevLayer->getOutput();
-        inOutBuffer.setValues(input, inputSize);
+        inOutBuffer.setValues(input, input_size);
         sigmoidLayer(inOutBuffer.get(), outputGPU.get(), size - 1); // size -1 because of the bias
         outputGPU.getCopy(output);
     }
@@ -36,7 +40,7 @@ class SigmoidLayerGPU : public Layer
     {
         const float* derivativeWRtoOutput = layer->derivativeWithRespectToInput();
         inOutBuffer.setValues(derivativeWRtoOutput, size);
-        sigmoidLayerDerivative(derivativeWRtoInputGPU.get(), outputGPU.get(), inOutBuffer.get(), inputSize);
+        sigmoidLayerDerivative(derivativeWRtoInputGPU.get(), outputGPU.get(), inOutBuffer.get(), input_size);
         derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
     }
 
