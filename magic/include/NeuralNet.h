@@ -59,6 +59,14 @@ public:
             }
         }
     }
+
+    ~NeuralNet()
+    {
+        for (auto& l : layers)
+        {
+            delete l;
+        }
+    }
 private:
     void updateLastLayer()
     {

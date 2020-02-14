@@ -5,7 +5,9 @@
 #include "../magic/include/LinearLayerGPU.h"
 #include "../magic/include/NeuralNet.h"
 #include "../magic/include/SigmoidLayerGPU.h"
+#include "../magic/include/cnn_layer.h"
 #include <array>
+#include <unordered_map>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -20,6 +22,21 @@ protected:
         ASSERT_TRUE(utils::GpuRelase());
     }
 };
+
+TEST(gpu_tests, cnn_basic)
+{
+    shape input_shape;
+    input_shape.width = 7;
+    input_shape.height = 7;
+    cnn_layer layer(3, 5);
+    auto options = layer.get_options();
+    options.zeropadding = false;
+    layer.set_options(options);
+    layer.init(input_shape);
+    EXPECT_EQ(layer.get_shape().depth, 5);
+    EXPECT_EQ(layer.get_shape().height, 5);
+    EXPECT_EQ(layer.get_shape().width, 5);
+}
 
 TEST(gpu_tests, filter_3x3v1)
 {
@@ -52,7 +69,7 @@ TEST(gpu_tests, filter_3x3v1)
     cuVector<float> outputK;
     output.resize(static_cast<size_t>(output_shape.width) * output_shape.height);
     outputK.setValues(output);
-    filter_forwardPass(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
+    conv2d_kernel(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
     outputK.getCopy(output);
     std::vector<float> result = { 0, 1, 2, 2, 2,
                                   -4, -4, -4, -4, -2,
@@ -94,7 +111,7 @@ TEST(gpu_tests, filter_3x3v2)
     cuVector<float> outputK;
     output.resize(static_cast<size_t>(output_shape.width)* output_shape.height);
     outputK.setValues(output);
-    filter_forwardPass(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
+    conv2d_kernel(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
     outputK.getCopy(output);
     std::vector<float> result = { 0,0,0,0,
                                   30,10,-10,-30,
@@ -149,7 +166,7 @@ TEST(gpu_tests, filter_3x3v2_depth3)
     cuVector<float> outputK;
     output.resize(static_cast<size_t>(output_shape.width)* output_shape.height);
     outputK.setValues(output);
-    filter_forwardPass(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
+    conv2d_kernel(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
     outputK.getCopy(output);
     std::vector<float> result = { 0,0,0,0,
                                   30,10,-10,-30,
@@ -192,7 +209,7 @@ TEST(gpu_tests, filter_3x3v3)
     cuVector<float> outputK;
     output.resize(static_cast<size_t>(output_shape.width)* output_shape.height);
     outputK.setValues(output);
-    filter_forwardPass(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
+    conv2d_kernel(inputK.get(), input_shape, weights.get(), outputK.get(), output_shape, 3);
     outputK.getCopy(output);
     std::vector<float> result = { 1,4,3,4,1,
                                   1,2,4,3,3,
@@ -239,11 +256,8 @@ TEST(gpu_tests, test_xor_cpu)
     NeuralNet test(2, true);
     test.addLayer(new LinearLayer(2));
     test.addLayer(new SigmoidLayer());
-    //test.addLayer(new LinearLayerGPU<false>(10));
-    //test.addLayer(new SigmoidLayerGPU());
     test.addLayer(new LinearLayer(1));
     test.addLayer(new SigmoidLayer());
-    //test.addLayer(new SigmoidLayerGPU());
     OutputLayer* loss = new OutputLayer();
     test.addLayer(loss);
     test.set_learning_rate(0.01f);

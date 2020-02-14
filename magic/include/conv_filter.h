@@ -2,6 +2,7 @@
 #include <GpuMemory.h>
 #include <vector>
 #include <shape.h>
+#include <random>
 
 struct filter_options
 {
@@ -15,13 +16,12 @@ struct filter_options
     }
 };
 
-void filter_forwardPass(const float* input, shape input_shape, const float* weights, float* output, shape output_shape, unsigned int filter_size);
-
 class filter_conv2d
 {
     filter_options options;
     shape input_shape;
     shape output_shape;
+    cuVector<float> weights;
 
     unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
@@ -29,6 +29,10 @@ class filter_conv2d
     }
 
 public:
+    filter_conv2d() : options(1,1)
+    {
+    }
+
     filter_conv2d(filter_options opt) : options(opt)
     {
     }
@@ -43,7 +47,22 @@ public:
         }
         output_shape.width = calc_output_dimension(input_shape.width, options.w, options.stride, padding);
         output_shape.height = calc_output_dimension(input_shape.height, options.h, options.stride, padding);
+        if (weights.size() == 0)
+        {
+            std::default_random_engine generator;
+            std::uniform_real_distribution<float> distribution(0.f, 1.0f);
+            std::vector<float> input;
+            for (size_t i = 0; i < options.w * options.h * options.channels; i++)
+            {
+                input.emplace_back(distribution(generator));
+            }
+        }
         return true;
+    }
+
+    cuVector<float>& get_weights()
+    {
+        return weights;
     }
 
     shape get_output_shape()

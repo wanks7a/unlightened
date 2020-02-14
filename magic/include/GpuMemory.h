@@ -81,6 +81,11 @@ public:
 		return true;
 	}
 
+	size_t size()
+	{
+		return currentSize;
+	}
+
 	~cuVector()
 	{
 		dealloc();
