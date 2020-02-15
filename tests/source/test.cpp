@@ -1,13 +1,14 @@
-#include "pch.h"
-#include "../magic/include/conv_filter.h"
-#include "../magic/include/GpuUtils.h"
-#include "../magic/include/GpuMemory.h"
-#include "../magic/include/LinearLayerGPU.h"
-#include "../magic/include/NeuralNet.h"
-#include "../magic/include/SigmoidLayerGPU.h"
-#include "../magic/include/cnn_layer.h"
+#include <conv_filter.h>
+#include <GpuUtils.h>
+#include <GpuMemory.h>
+#include <LinearLayer.h>
+#include <NeuralNet.h>
+#include <SigmoidLayerGPU.h>
+#include <cnn_layer.h>
+#include <LinearLayerGPU.h>
 #include <array>
 #include <unordered_map>
+#include <gtest/gtest.h>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -343,4 +344,10 @@ TEST(gpu_tests, test_xor_gpu)
     test.predict();
     EXPECT_GT(loss->getOutput()[0], 0.9f);
     EXPECT_EQ(loss->getOutput()[1], 1.0f);
+}
+
+int main(int argc, char** argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
