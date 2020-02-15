@@ -17,11 +17,19 @@ void k_conv2d_kernel(const float* input, shape* input_shape, const float* filter
         {
             for (unsigned int j = 0; j < filter_size; j++)
             {
-                conv_result += input[chunkStartIndex + i * width + j] * filter[i * filter_size + j];
+                conv_result += input[chunkStartIndex + i * width + j] * filter[d*filter_size*filter_size + i * filter_size + j];
             }
         }
     }
     output[blockDim.x * blockIdx.y + blockIdx.x] = conv_result;
+}
+
+__global__
+void k_conv2d_full_kernel(const float* input, shape* input_shape, const float* filter, float* output, unsigned int filter_size)
+{
+    unsigned int width = input_shape->width;
+    unsigned int height = input_shape->height;
+    unsigned int depth = input_shape->depth;
 }
 
 void conv2d_kernel(const float* input, const shape& input_shape, const float* weights, float* output, shape output_shape, unsigned int filter_size)
