@@ -43,6 +43,8 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
     int row = tr_index / output_shape->width;
     int col = tr_index % output_shape->width;
     const int d = tr_index / (output_shape->width * output_shape->height);
+    const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
+    const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();
     const int offset = filter_size - 1;
     const int width = input_shape->width;
     const int height = input_shape->height;
@@ -60,19 +62,19 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
             }
             else
             {
-                conv_result += input[d * width * height + width * row_input_idx + col_input_dix] * weights[i * filter_size + j];
+                conv_result += input[batch_offset_input + d * width * height + width * row_input_idx + col_input_dix] * weights[i * filter_size + j];
             }
 
         }
     }
     
-    output[tr_index] = conv_result;
+    output[batch_offset_output + tr_index] = conv_result;
 }
 
 void full_conv_2d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size)
 {
     unsigned int num_blocks = ((output_shape.size() + trPerBlock - 1) / trPerBlock);
-    dim3 blocks(num_blocks);
+    dim3 blocks(num_blocks, input_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
     k_full_conv_2d << <blocks, trPerBlock >> >(input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
