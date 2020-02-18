@@ -24,6 +24,98 @@ protected:
     }
 };
 
+TEST(gpu_tests, cnn_full_conv_2d_001)
+{
+    shape input_shape(5, 5);
+    shape output_shape(6, 6);
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.setValues({ 1, 1, 1, 1 }));
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5
+        }));
+
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(6 * 6));
+    std::vector<float> expected = {
+        1,3,5,7,9,5,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        1,3,5,7,9,5
+    };
+    full_conv_2d(input.get(), input_shape, output.get(), output_shape, weights.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, cnn_full_conv_2d_002)
+{
+    shape input_shape(5, 5, 3);
+    shape output_shape(6, 6, 3);
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.setValues({ 1, 1, 1, 1 }));
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5,
+        6,7,8,9,10,
+        1,2,3,4,5
+        }));
+
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(6 * 6 * 3));
+    std::vector<float> expected = {
+        1,3,5,7,9,5,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        1,3,5,7,9,5,
+        1,3,5,7,9,5,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        1,3,5,7,9,5,
+        1,3,5,7,9,5,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        7,16,20,24,28,15,
+        1,3,5,7,9,5
+    };
+    full_conv_2d(input.get(), input_shape, output.get(), output_shape, weights.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
 TEST(gpu_tests, cnn_basic)
 {
     shape input_shape;
@@ -159,7 +251,13 @@ TEST(gpu_tests, filter_3x3v2_depth3)
     weights.setValues({
                         1,1,1,
                         0,0,0,
-                        -1,-1,-1
+                        -1,-1,-1,
+                        1,1,1,
+                        0,0,0,
+                        -1,-1,-1,
+                        1,1,1,
+                        0,0,0,
+                        -1,-1,-1,
         });
     std::vector<float> output;
     cuVector<float> inputK;

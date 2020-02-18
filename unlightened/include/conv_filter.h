@@ -22,6 +22,7 @@ class filter_conv2d
     shape input_shape;
     shape output_shape;
     cuVector<float> weights;
+    cuVector<float> weights_derivative;
 
     unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
@@ -57,12 +58,18 @@ public:
                 input.emplace_back(distribution(generator));
             }
         }
+        weights_derivative.resize(options.w * options.h * options.channels);
         return true;
     }
 
     cuVector<float>& get_weights()
     {
         return weights;
+    }
+
+    cuVector<float>& get_weights_derivative()
+    {
+        return weights_derivative;
     }
 
     shape get_output_shape()
