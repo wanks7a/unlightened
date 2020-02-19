@@ -4,7 +4,7 @@
 #include <memory>
 #include <GpuMemory.h>
 
-void linearLayerForwardPassGPU(float* output, const float* weights,const float* input, size_t input_size, size_t outputSize);
+void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, size_t outputSize, const float* weights);
 void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize);
 
@@ -62,15 +62,21 @@ public:
     void forwardPass(Layer* prevLayer) override
     {
         inputPtr = prevLayer->getOutput();
+        shape out_shape = output_shape;  
+        out_shape.width = out_shape.width - 1; // -1 because we dont want to calculate for the bias
+        shape input_shape;
+        input_shape.width = prevLayer->get_shape().volume(); // represent the value as 1d array
+        input_shape.batches = prevLayer->get_shape().batches;
+
         if (!smh)
         {
             inputVectorGPU.setValues(inputPtr, input_size);
             inputPtr = inputVectorGPU.get();
-            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_size, size - 1);
+            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, true);
         }
         else
         {
-            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_size, size - 1);
+            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, true);
         }
     }
 

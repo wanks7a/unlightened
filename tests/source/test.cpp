@@ -656,7 +656,7 @@ TEST(gpu_tests, dense_layer1024)
     std::vector<float> result;
     for (size_t i = 0; i < 1000; i++)
     {
-        linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr.get(), 1024, 1024);
+        linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr.get(), 1024, 1024, true);
     }
     outputGPU.getCopy(result);
     for (size_t i = 0; i < result.size()-1; i++)

@@ -6,27 +6,33 @@
 
 #define trPerBlock 256
 
-template <typename T>
+template <typename T, bool BIAS_NOT_INCLUDED>
 __global__ void k_linearLayerForwardPass(T* output,const T* weights, const T* input, size_t inputSize, size_t outputSize)
 {
-    auto i = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int batch_offset_output = BIAS_NOT_INCLUDED ? blockIdx.y * (outputSize + 1) : blockIdx.y * outputSize;
+    const unsigned int batch_offset_input = blockIdx.y * inputSize;
+    const auto i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < outputSize)
     {
         float result = 0.0f;
         for (int j = 0; j < inputSize; j++)
         {
             //result = __fmaf_rn(input[j], weights[i * inputSize + j], result); // very fast multiply add = a*b + c
-            result += input[j] * weights[i * inputSize + j];
+            result += input[batch_offset_input + j] * weights[i * inputSize + j];
         }
-        output[i] = result;
+        output[batch_offset_output + i] = result;
     }
 }
 
-void linearLayerForwardPassGPU(float* output,const float* weights, const float* input, size_t inputSize, size_t outputSize)
+void linearLayerForwardPassGPU(float* output,const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted)
 {
-    auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
-    auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
-    k_linearLayerForwardPass << <blocks, threadsPerBlock >> > (output, weights, input, inputSize, outputSize);
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(output_shape.width, static_cast<size_t>(trPerBlock)));
+    auto num_of_blocks = utils::getBlockSize(threadsPerBlock, output_shape.width);
+    dim3 blocks(num_of_blocks, output_shape.batches);
+    if(bias_subtracted)
+        k_linearLayerForwardPass<float, true> << <blocks, threadsPerBlock >> > (output, weights, input, input_shape.width, output_shape.width);
+    else
+        k_linearLayerForwardPass<float, false> << <blocks, threadsPerBlock >> > (output, weights, input, input_shape.width, output_shape.width);
     utils::waitAndCheckForErrors();
 }
 
