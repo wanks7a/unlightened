@@ -24,7 +24,7 @@ void cnn_layer::forwardPass(Layer* prevLayer)
 	int i = 0;
 	for (auto& f: filters)
 	{
-		conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), f.get_weights().get(), output.get() + filter_step*i, output_shape, static_cast<unsigned int>(options.w));
+		//conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), f.get_weights().get(), output.get() + filter_step*i, output_shape, static_cast<unsigned int>(options.w));
 		i++;
 	}
 }
@@ -40,7 +40,7 @@ void cnn_layer::backprop(Layer* layer)
 	// here is the backprop for the weights here we obtain the filter derivatives
 	for (auto& f : filters)
 	{
-		conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), layer->derivativeWithRespectToInput() + filter_step * i, f.get_weights_derivative().get(), filter_shape, static_cast<unsigned int>(options.w));
+		//conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), layer->derivativeWithRespectToInput() + filter_step * i, f.get_weights_derivative().get(), filter_shape, static_cast<unsigned int>(options.w));
 		i++;
 	}
 	// now obtain the derivatives with respect to the input

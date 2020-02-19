@@ -2,8 +2,8 @@
 #include <Layer.h>
 #include <conv_filter.h>
 
-void conv2d_kernel(const float* input, const shape& input_shape, const float* weights, float* output, shape output_shape, unsigned int filter_size);
 void full_conv_2d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size);
+void conv_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size, bool same);
 
 class cnn_layer : public Layer
 {
