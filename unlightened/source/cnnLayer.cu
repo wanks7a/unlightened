@@ -45,7 +45,7 @@ void k_conv_3d(const float* input, shape* input_shape, float* output, shape* out
 
 void conv_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size, bool same)
 {
-    unsigned int num_blocks = ((output_shape.size() + trPerBlock - 1) / trPerBlock);
+    unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
     dim3 blocks(num_blocks, input_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
@@ -95,7 +95,7 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
 
 void full_conv_2d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size)
 {
-    unsigned int num_blocks = ((output_shape.size() + trPerBlock - 1) / trPerBlock);
+    unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
     dim3 blocks(num_blocks, input_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
