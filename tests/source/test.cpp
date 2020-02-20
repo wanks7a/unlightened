@@ -9,6 +9,7 @@
 #include <array>
 #include <unordered_map>
 #include <gtest/gtest.h>
+#include <max_pool.h>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -23,6 +24,199 @@ protected:
         ASSERT_TRUE(utils::GpuRelase());
     }
 };
+
+TEST(gpu_tests, max_pool_depth1)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,0,0,0,0,
+        0,0,1,0,0,
+        0,0,0,1,0,
+        0,1,0,0,0,
+        0,0,0,0,0
+        }));
+    shape input_shape;
+    input_shape.width = 5;
+    input_shape.height = 5;
+    input_shape.depth = 1;
+    shape output_shape;
+    output_shape.width = 3;
+    output_shape.height = 3;
+    output_shape.depth = 1;
+    cuVector<char> mask;
+    EXPECT_TRUE(mask.resize(output_shape.size()));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 0.0f));
+
+    std::vector<float> expected =
+    {
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0
+    };
+    std::vector<int> mask_expected =
+    {
+        0, 2, 0,
+        3, 1, 0,
+        0, 0, 0
+    };
+    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    std::vector<char> mask_result;
+    mask.getCopy(mask_result);
+    EXPECT_EQ(expected.size(), result.size());
+    EXPECT_EQ(mask_expected.size(), mask_result.size());
+    for (size_t i = 0; i < output.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(mask_expected[i], mask_result[i]);
+    }
+}
+
+TEST(gpu_tests, max_pool_depth2)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,0,0,0,0,
+        0,0,1,0,0,
+        0,0,0,1,0,
+        0,1,0,0,0,
+        0,0,0,0,0,
+        0,1,0,0,0,
+        0,0,0,1,0,
+        0,0,0,0,0,
+        0,1,1,0,0,
+        0,0,0,0,0
+    }));
+    shape input_shape;
+    input_shape.width = 5;
+    input_shape.height = 5;
+    input_shape.depth = 2;
+    shape output_shape;
+    output_shape.width = 3;
+    output_shape.height = 3;
+    output_shape.depth = 2;
+    cuVector<char> mask;
+    EXPECT_TRUE(mask.resize(output_shape.size()));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 0.0f));
+
+    std::vector<float> expected =
+    {
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0,
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0
+    };
+    std::vector<int> mask_expected =
+    {
+        0, 2, 0,
+        3, 1, 0,
+        0, 0, 0,
+        1, 3, 0,
+        3, 2, 0,
+        0, 0, 0
+    };
+    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    std::vector<char> mask_result;
+    mask.getCopy(mask_result);
+    EXPECT_EQ(expected.size(), result.size());
+    EXPECT_EQ(mask_expected.size(), mask_result.size());
+    for (size_t i = 0; i < output.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(mask_expected[i], mask_result[i]);
+    }
+}
+
+TEST(gpu_tests, max_pool_depth2_batch2)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,0,0,0,0,
+        0,0,1,0,0,
+        0,0,0,1,0,
+        0,1,0,0,0,
+        0,0,0,0,0,
+        0,1,0,0,0,
+        0,0,0,1,0,
+        0,0,0,0,0,
+        0,1,1,0,0,
+        0,0,0,0,0,
+        1,0,0,0,0,
+        0,0,1,0,0,
+        0,0,0,1,0,
+        0,1,0,0,0,
+        0,0,0,0,0,
+        0,1,0,0,0,
+        0,0,0,1,0,
+        0,0,0,0,0,
+        0,1,1,0,0,
+        0,0,0,0,0,
+        }));
+    shape input_shape;
+    input_shape.width = 5;
+    input_shape.height = 5;
+    input_shape.depth = 2;
+    input_shape.batches = 2;
+    shape output_shape;
+    output_shape.width = 3;
+    output_shape.height = 3;
+    output_shape.depth = 2;
+    output_shape.batches = 2;
+    cuVector<char> mask;
+    EXPECT_TRUE(mask.resize(output_shape.size()));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 0.0f));
+
+    std::vector<float> expected =
+    {
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0,
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0,
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0,
+        1, 1, 0,
+        1, 1, 0,
+        0, 0, 0,
+    };
+    std::vector<int> mask_expected =
+    {
+        0, 2, 0,
+        3, 1, 0,
+        0, 0, 0,
+        1, 3, 0,
+        3, 2, 0,
+        0, 0, 0,
+        0, 2, 0,
+        3, 1, 0,
+        0, 0, 0,
+        1, 3, 0,
+        3, 2, 0,
+        0, 0, 0,
+    };
+    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    std::vector<char> mask_result;
+    mask.getCopy(mask_result);
+    EXPECT_EQ(expected.size(), result.size());
+    EXPECT_EQ(mask_expected.size(), mask_result.size());
+    for (size_t i = 0; i < output.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(mask_expected[i], mask_result[i]);
+    }
+}
 
 TEST(gpu_tests, cnn_conv_3d_depth1_same)
 {

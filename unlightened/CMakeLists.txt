@@ -14,12 +14,14 @@ add_library(
     include/shape.h
     include/SigmoidLayer.h
     include/SigmoidLayerGPU.h
+    include/max_pool.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
     source/GpuUtils.cpp
     source/LinearLayerGPU.cu
     source/SigmoidLayerGPU.cu
+    source/max_pool.cu
 )
 
 target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
