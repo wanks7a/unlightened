@@ -81,6 +81,27 @@ public:
 		return true;
 	}
 
+	bool resize(size_t size,const T& value)
+	{
+		if (currentSize != size)
+		{
+			dealloc();
+			currentSize = size;
+			std::vector<T> values;
+			values.resize(size, value);
+			if (cudaSuccess != cudaMalloc(&ptr, sizeof(T) * size))
+			{
+				std::cout << "cudaMalloc failed" << std::endl;
+				return false;
+			}
+			if (cudaSuccess != cudaMemcpy(ptr, values.data(), sizeof(T) * size, cudaMemcpyKind::cudaMemcpyHostToDevice))
+			{
+				std::cout << "cudaMemcpy failed" << std::endl;
+			}
+		}
+		return true;
+	}
+
 	size_t size()
 	{
 		return currentSize;

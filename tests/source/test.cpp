@@ -665,6 +665,52 @@ TEST(gpu_tests, dense_layer1024)
     }
 }
 
+TEST(gpu_tests, dense_layer1024_batches2_v1)
+{
+    shape input_shape(1024, 1, 1, 2);
+    cuVector<float> input;
+    EXPECT_TRUE(input.resize(input_shape.size(), 1.0f));
+    shape output_shape(1024, 1, 1, 2);
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size()));
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.resize(1024 * 1024, 1.0f));
+    std::vector<float> result;
+    linearLayerForwardPassGPU(output.get(), weights.get(), input.get(), input_shape, output_shape, false);
+    output.getCopy(result);
+    EXPECT_EQ(result.size(), output_shape.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(1024, result[i]);
+    }
+}
+
+TEST(gpu_tests, dense_layer1024_batches2_v2)
+{
+    shape input_shape(1024, 1, 1, 2);
+    cuVector<float> input;
+    EXPECT_TRUE(input.resize(input_shape.size(), 1.0f));
+    shape output_shape(1025, 1, 1, 2);
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size()));
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.resize(1024 * 1024, 1.0f));
+    std::vector<float> result;
+    linearLayerForwardPassGPU(output.get(), weights.get(), input.get(), input_shape, shape(1024,1,1,2), true);
+    output.getCopy(result);
+    EXPECT_EQ(result.size(), output_shape.size());
+    for (size_t i = 0; i < 1024; i++)
+    {
+        EXPECT_EQ(1024, result[i]);
+    }
+    EXPECT_EQ(0, result[1024]);
+    for (size_t i = 1025; i < result.size() - 1; i++)
+    {
+        EXPECT_EQ(1024, result[i]);
+    }
+    EXPECT_EQ(0, result[result.size() - 1]);
+}
+
 TEST(gpu_tests, test_xor_cpu)
 {
     NeuralNet test(2, true);
