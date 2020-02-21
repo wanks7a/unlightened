@@ -25,6 +25,164 @@ protected:
     }
 };
 
+TEST(gpu_tests, max_pool_back_prop_depth1)
+{
+    shape input_shape(3, 3);
+    shape output_shape(5, 5);
+
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,2,3,
+        4,5,6,
+        7,8,9
+        }));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 20.0f));
+    cuVector<char> mask;
+    mask.setValues({
+        0, 1, 2,
+        3, 0, 2,
+        1, 0, 0
+        });
+
+    std::vector<float> expected = {
+        1, 0, 0, 2, 0,
+        0, 0, 0, 0, 3,
+        0, 0, 5, 0, 0,
+        0, 4, 0, 0, 6,
+        0, 7, 8, 0, 9
+    };
+
+    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(expected.size(), result.size());
+    for (size_t i = 0; i < expected.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+    }
+}
+
+TEST(gpu_tests, max_pool_back_prop_depth2)
+{
+    shape input_shape(3, 3, 2);
+    shape output_shape(5, 5, 2);
+
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,2,3,
+        4,5,6,
+        7,8,9,
+        9,8,7,
+        6,5,4,
+        3,2,1,
+        }));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 20.0f));
+    cuVector<char> mask;
+    mask.setValues({
+        0, 1, 2,
+        3, 0, 2,
+        1, 0, 0,
+        1, 3, 2,
+        2, 0, 0,
+        1, 1, 0
+        });
+
+    std::vector<float> expected = {
+        1, 0, 0, 2, 0,
+        0, 0, 0, 0, 3,
+        0, 0, 5, 0, 0,
+        0, 4, 0, 0, 6,
+        0, 7, 8, 0, 9,
+        0, 9, 0, 0, 0,
+        0, 0, 0, 8, 7,
+        0, 0, 5, 0, 4,
+        6, 0, 0, 0, 0,
+        0, 3, 0, 2, 1
+    };
+
+    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(expected.size(), result.size());
+    for (size_t i = 0; i < expected.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+    }
+}
+
+TEST(gpu_tests, max_pool_back_prop_depth2_batch2)
+{
+    shape input_shape(3, 3, 2, 2);
+    shape output_shape(5, 5, 2, 2);
+
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,2,3,
+        4,5,6,
+        7,8,9,
+        9,8,7,
+        6,5,4,
+        3,2,1,
+        9,8,7,
+        6,5,4,
+        3,2,1,
+        1,2,3,
+        4,5,6,
+        7,8,9
+        }));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size(), 20.0f));
+    cuVector<char> mask;
+    mask.setValues({
+        0, 1, 2,
+        3, 0, 2,
+        1, 0, 0,
+        1, 3, 2,
+        2, 0, 0,
+        1, 1, 0,
+        1, 3, 2,
+        2, 0, 0,
+        1, 1, 0,
+        0, 1, 2,
+        3, 0, 2,
+        1, 0, 0
+        });
+
+    std::vector<float> expected = {
+        1, 0, 0, 2, 0,
+        0, 0, 0, 0, 3,
+        0, 0, 5, 0, 0,
+        0, 4, 0, 0, 6,
+        0, 7, 8, 0, 9,
+        0, 9, 0, 0, 0,
+        0, 0, 0, 8, 7,
+        0, 0, 5, 0, 4,
+        6, 0, 0, 0, 0,
+        0, 3, 0, 2, 1,
+        0, 9, 0, 0, 0,
+        0, 0, 0, 8, 7,
+        0, 0, 5, 0, 4,
+        6, 0, 0, 0, 0,
+        0, 3, 0, 2, 1,
+        1, 0, 0, 2, 0,
+        0, 0, 0, 0, 3,
+        0, 0, 5, 0, 0,
+        0, 4, 0, 0, 6,
+        0, 7, 8, 0, 9
+    };
+
+    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(expected.size(), result.size());
+    for (size_t i = 0; i < expected.size(); i++)
+    {
+        EXPECT_EQ(expected[i], result[i]);
+    }
+}
+
 TEST(gpu_tests, max_pool_depth1)
 {
     cuVector<float> input;
