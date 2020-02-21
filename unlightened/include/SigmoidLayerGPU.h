@@ -1,7 +1,7 @@
 #pragma once
 #include "Layer.h"
 #include <vector>
-#include <GpuMemory.h>
+#include <device_memory.h>
 
 void sigmoidLayer(float* input, float* output, size_t input_size);
 void sigmoidLayerDerivative(float* derivativeWRtoInput, const float* output, const float* derivativeWRtoOutput, size_t input_size);

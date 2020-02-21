@@ -1,6 +1,6 @@
 #include <conv_filter.h>
 #include <GpuUtils.h>
-#include <GpuMemory.h>
+#include <device_memory.h>
 #include <LinearLayer.h>
 #include <NeuralNet.h>
 #include <SigmoidLayerGPU.h>
@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <gtest/gtest.h>
 #include <max_pool.h>
+#include <activation_layer.h>
+#include <cmath>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -24,6 +26,142 @@ protected:
         ASSERT_TRUE(utils::GpuRelase());
     }
 };
+
+struct test_layer : public Layer
+{
+    test_layer()
+    {
+        device_layer = true;
+    }
+
+    cuVector<float> output;
+    void init(const shape& input) override {};
+    void forwardPass(Layer* prevLayer) override {};
+    void backprop(Layer* layer) override {};
+    const float* getOutput()  override
+    {
+        return output.get();
+    };
+    const float* derivativeWithRespectToInput() override
+    {
+        return nullptr;
+    };
+
+    void printLayer() override
+    {
+    }
+
+    void set_output_shape(const shape& sh)
+    {
+        output_shape = sh;
+    }
+};
+
+TEST(gpu_tests, activation_2d)
+{
+    test_layer  test;
+    test.set_output_shape(shape(3, 3));
+    test.output.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3
+        });
+    activation_layer act(activation_layer::activation_function::Identity);
+    act.init(test.get_shape());
+    act.forwardPass(&test);
+    std::vector<float> expected = {
+        1,1,1,
+        2,2,2,
+        3,3,3
+    };
+
+    std::vector<float> result = act.get_native_output();
+   
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+
+TEST(gpu_tests, activation_3d)
+{
+    test_layer  test;
+    test.set_output_shape(shape(3, 3, 2));
+    test.output.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        5,5,5,
+        6,6,6,
+        7,7,7
+        });
+    activation_layer act(activation_layer::activation_function::Identity);
+    act.init(test.get_shape());
+    act.forwardPass(&test);
+    std::vector<float> expected = {
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        5,5,5,
+        6,6,6,
+        7,7,7
+    };
+
+    std::vector<float> result = act.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, activation_3d_batch2)
+{
+    test_layer  test;
+    test.set_output_shape(shape(3, 3, 2, 2));
+    test.output.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        10,10,10,
+        11,11,11,
+        12,12,12,
+        13,13,13,
+        14,14,14,
+        15,15,15
+        });
+    activation_layer act(activation_layer::activation_function::Identity);
+    act.init(test.get_shape());
+    act.forwardPass(&test);
+    std::vector<float> expected = {
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        10,10,10,
+        11,11,11,
+        12,12,12,
+        13,13,13,
+        14,14,14,
+        15,15,15
+    };
+
+    std::vector<float> result = act.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
 
 TEST(gpu_tests, max_pool_back_prop_depth1)
 {

@@ -14,7 +14,7 @@ public:
 	
 	cuVector(const cuVector<T>& v) = delete;
 
-	cuVector(cuVector<T>&& v)
+	cuVector(cuVector<T>&& v) noexcept
 	{
 		currentSize = v.currentSize;
 		ptr = v.ptr;
@@ -37,6 +37,17 @@ public:
 		{
 			std::cout << "cudaMemcpy failed" << std::endl;
 		}
+	}
+
+	static std::vector<T> from_device_host(const T* ptr, size_t size)
+	{
+		std::vector<T> result;
+		result.resize(size);
+		if (cudaSuccess != cudaMemcpy(result.data(), ptr, sizeof(T) * size, cudaMemcpyKind::cudaMemcpyDeviceToHost))
+		{
+			std::cout << "cudaMemcpy failed" << std::endl;
+		}
+		return result;
 	}
 
 	bool setValues(const T* values, size_t count)

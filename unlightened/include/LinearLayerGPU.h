@@ -2,7 +2,7 @@
 #include <Layer.h>
 #include <vector>
 #include <memory>
-#include <GpuMemory.h>
+#include <device_memory.h>
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, size_t outputSize, const float* weights);

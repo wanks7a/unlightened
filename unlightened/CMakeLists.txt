@@ -3,7 +3,7 @@ add_library(
     include/AllLayers.h
     include/cnn_layer.h
     include/conv_filter.h
-    include/GpuMemory.h
+    include/device_memory.h
     include/GpuUtils.h
     include/InputLayer.h
     include/Layer.h
@@ -15,6 +15,7 @@ add_library(
     include/SigmoidLayer.h
     include/SigmoidLayerGPU.h
     include/max_pool.h
+    include/activation_layer.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -22,6 +23,8 @@ add_library(
     source/LinearLayerGPU.cu
     source/SigmoidLayerGPU.cu
     source/max_pool.cu
+    source/activation_layer.cpp
+    source/activation_layer.cu
 )
 
 target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

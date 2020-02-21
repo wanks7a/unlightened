@@ -1,5 +1,5 @@
 #pragma once
-#include <GpuMemory.h>
+#include <device_memory.h>
 #include <vector>
 #include <shape.h>
 #include <random>
