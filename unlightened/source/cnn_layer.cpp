@@ -17,14 +17,14 @@ void cnn_layer::init(const shape& input)
 	output.resize(output_shape.size());
 }
 
-void cnn_layer::forwardPass(Layer* prevLayer)
+void cnn_layer::forward_pass(Layer* prevLayer)
 {
 	input_layer = prevLayer;
 	size_t filter_step = output_shape.width * output_shape.height;
 	int i = 0;
 	for (auto& f: filters)
 	{
-		//conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), f.get_weights().get(), output.get() + filter_step*i, output_shape, static_cast<unsigned int>(options.w));
+		//conv2d_kernel(input_layer->get_output(), input_layer->get_shape(), f.get_weights().get(), output.get() + filter_step*i, output_shape, static_cast<unsigned int>(options.w));
 		i++;
 	}
 }
@@ -40,7 +40,7 @@ void cnn_layer::backprop(Layer* layer)
 	// here is the backprop for the weights here we obtain the filter derivatives
 	for (auto& f : filters)
 	{
-		//conv2d_kernel(input_layer->getOutput(), input_layer->get_shape(), layer->derivativeWithRespectToInput() + filter_step * i, f.get_weights_derivative().get(), filter_shape, static_cast<unsigned int>(options.w));
+		//conv2d_kernel(input_layer->get_output(), input_layer->get_shape(), layer->derivative_wr_to_input() + filter_step * i, f.get_weights_derivative().get(), filter_shape, static_cast<unsigned int>(options.w));
 		i++;
 	}
 	// now obtain the derivatives with respect to the input
@@ -49,12 +49,12 @@ void cnn_layer::backprop(Layer* layer)
 	// the output is the derivative with respect to the input layer
 }
 
-const float* cnn_layer::getOutput()
+const float* cnn_layer::get_output()
 {
 	return nullptr;
 }
 
-const float* cnn_layer::derivativeWithRespectToInput()
+const float* cnn_layer::derivative_wr_to_input()
 {
 	return nullptr;
 }

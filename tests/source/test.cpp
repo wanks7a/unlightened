@@ -36,15 +36,15 @@ struct test_layer : public Layer
 
     cuVector<float> output;
     void init(const shape& input) override {};
-    void forwardPass(Layer* prevLayer) override {};
+    void forward_pass(Layer* prevLayer) override {};
     void backprop(Layer* layer) override {};
-    const float* getOutput()  override
+    const float* get_output()  override
     {
         return output.get();
     };
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
-        return nullptr;
+        return output.get();
     };
 
     void printLayer() override
@@ -60,15 +60,16 @@ struct test_layer : public Layer
 TEST(gpu_tests, activation_2d)
 {
     test_layer  test;
+    test.init_base(shape(3, 3));
     test.set_output_shape(shape(3, 3));
-    test.output.setValues({
+    EXPECT_TRUE(test.output.setValues({
         1,1,1,
         2,2,2,
         3,3,3
-        });
+        }));
     activation_layer act(activation_layer::activation_function::Identity);
-    act.init(test.get_shape());
-    act.forwardPass(&test);
+    act.init_base(test.get_shape());
+    act.forward_pass(&test);
     std::vector<float> expected = {
         1,1,1,
         2,2,2,
@@ -82,12 +83,31 @@ TEST(gpu_tests, activation_2d)
     {
         EXPECT_EQ(result[i], expected[i]);
     }
+    EXPECT_TRUE(test.output.setValues({
+        5,5,5,
+        6,6,6,
+        7,7,7
+        }));
+    expected = {
+        5,5,5,
+        6,6,6,
+        7,7,7
+    };
+    act.backprop(&test);
+    result = act.get_native_derivative();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
 }
 
 
 TEST(gpu_tests, activation_3d)
 {
     test_layer  test;
+    test.init_base(shape(3, 3, 2));
     test.set_output_shape(shape(3, 3, 2));
     test.output.setValues({
         1,1,1,
@@ -98,8 +118,8 @@ TEST(gpu_tests, activation_3d)
         7,7,7
         });
     activation_layer act(activation_layer::activation_function::Identity);
-    act.init(test.get_shape());
-    act.forwardPass(&test);
+    act.init_base(test.get_shape());
+    act.forward_pass(&test);
     std::vector<float> expected = {
         1,1,1,
         2,2,2,
@@ -110,6 +130,31 @@ TEST(gpu_tests, activation_3d)
     };
 
     std::vector<float> result = act.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+
+    EXPECT_TRUE(test.output.setValues({
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1
+        }));
+    expected = {
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1
+    };
+    act.backprop(&test);
+    result = act.get_native_derivative();
 
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
@@ -138,7 +183,7 @@ TEST(gpu_tests, activation_3d_batch2)
         });
     activation_layer act(activation_layer::activation_function::Identity);
     act.init(test.get_shape());
-    act.forwardPass(&test);
+    act.forward_pass(&test);
     std::vector<float> expected = {
         1,1,1,
         2,2,2,
@@ -271,7 +316,7 @@ TEST(gpu_tests, max_pool_back_prop_depth2_batch2)
         7,8,9
         }));
     cuVector<float> output;
-    EXPECT_TRUE(output.resize(output_shape.size(), 20.0f));
+    EXPECT_TRUE(output.resize(output_shape.size(), 20.0f)); 
     cuVector<char> mask;
     mask.setValues({
         0, 1, 2,
@@ -1232,20 +1277,20 @@ TEST(gpu_tests, test_xor_cpu)
     }
     test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
     test.predict();
-    EXPECT_GT(loss->getOutput()[0], 0.95f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_GT(loss->get_output()[0], 0.95f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
     test.predict();
-    EXPECT_LT(loss->getOutput()[0], 0.05f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_LT(loss->get_output()[0], 0.05f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
     test.predict();
-    EXPECT_LT(loss->getOutput()[0], 0.05f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_LT(loss->get_output()[0], 0.05f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
     test.predict();
-    EXPECT_GT(loss->getOutput()[0], 0.95f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_GT(loss->get_output()[0], 0.95f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
 }
 
 TEST(gpu_tests, test_xor_gpu)
@@ -1279,20 +1324,20 @@ TEST(gpu_tests, test_xor_gpu)
     }
     test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
     test.predict();
-    EXPECT_GT(loss->getOutput()[0], 0.9f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_GT(loss->get_output()[0], 0.9f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
     test.predict();
-    EXPECT_LT(loss->getOutput()[0], 0.1f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_LT(loss->get_output()[0], 0.1f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
     test.predict();
-    EXPECT_LT(loss->getOutput()[0], 0.1f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_LT(loss->get_output()[0], 0.1f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
     test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
     test.predict();
-    EXPECT_GT(loss->getOutput()[0], 0.9f);
-    EXPECT_EQ(loss->getOutput()[1], 1.0f);
+    EXPECT_GT(loss->get_output()[0], 0.9f);
+    EXPECT_EQ(loss->get_output()[1], 1.0f);
 }
 
 int main(int argc, char** argv)

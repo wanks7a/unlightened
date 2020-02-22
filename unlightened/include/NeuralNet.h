@@ -28,7 +28,7 @@ public:
     {
         for (size_t i = 1; i < layers.size(); i++)
         {
-            layers[i]->forwardPass(layers[i - 1]);
+            layers[i]->forward_pass(layers[i - 1]);
         }
     }
     void backprop()
@@ -74,7 +74,7 @@ private:
         {
             Layer* last = layers.back();
             Layer* beforeLast = layers[layers.size() - 2];
-            last->init(beforeLast->get_shape());
+            last->init_base(beforeLast->get_shape());
         }
     }
 };

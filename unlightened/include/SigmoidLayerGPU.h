@@ -28,9 +28,9 @@ class SigmoidLayerGPU : public Layer
         output_shape.width = size;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
-        const float* input = prevLayer->getOutput();
+        const float* input = prevLayer->get_output();
         inOutBuffer.setValues(input, input_size);
         sigmoidLayer(inOutBuffer.get(), outputGPU.get(), size - 1); // size -1 because of the bias
         outputGPU.getCopy(output);
@@ -38,18 +38,18 @@ class SigmoidLayerGPU : public Layer
 
     void backprop(Layer* layer) override
     {
-        const float* derivativeWRtoOutput = layer->derivativeWithRespectToInput();
+        const float* derivativeWRtoOutput = layer->derivative_wr_to_input();
         inOutBuffer.setValues(derivativeWRtoOutput, size);
         sigmoidLayerDerivative(derivativeWRtoInputGPU.get(), outputGPU.get(), inOutBuffer.get(), input_size);
         derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
     }
 
-    const float* getOutput() override
+    const float* get_output() override
     {
         return output.data();
     }
 
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
         return derivativeWRtoInput.data();
     }

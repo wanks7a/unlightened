@@ -24,9 +24,9 @@ public:
         output_shape.width = size;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
-        predictedValue = prevLayer->getOutput();
+        predictedValue = prevLayer->get_output();
     };
 
     void backprop(Layer* layer) override
@@ -47,11 +47,11 @@ public:
         return false;
     }
 
-    const float* getOutput() override
+    const float* get_output() override
     {
         return predictedValue;
     }
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
         return derivativeWRToInput.data();
     }

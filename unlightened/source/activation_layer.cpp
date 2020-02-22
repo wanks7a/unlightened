@@ -8,16 +8,17 @@ void activation_layer::init(const shape& input)
 {
 	output_shape = input;
 	output.resize(output_shape.size());
+	derivative.resize(output_shape.size());
 }
 
-const float* activation_layer::getOutput()
+const float* activation_layer::get_output()
 {
 	return output.get();
 }
 
-const float* activation_layer::derivativeWithRespectToInput()
+const float* activation_layer::derivative_wr_to_input()
 {
-	return nullptr;
+	return derivative.get();
 }
 
 void activation_layer::printLayer()

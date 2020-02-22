@@ -15,10 +15,10 @@ class cnn_layer : public Layer
 public:
     cnn_layer(size_t filter_dimension, size_t num_of_filters);
     void init(const shape& input) override;
-    void forwardPass(Layer* prevLayer) override;
+    void forward_pass(Layer* prevLayer) override;
     void backprop(Layer* layer) override;
-    const float* getOutput() override;
-    const float* derivativeWithRespectToInput() override;
+    const float* get_output() override;
+    const float* derivative_wr_to_input() override;
     void printLayer() override;
 
     filter_options get_options() const

@@ -30,7 +30,7 @@ public:
         return true;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
     }
 
@@ -38,12 +38,12 @@ public:
     {
     }
 
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
         return nullptr;
     }
 
-    const float* getOutput() override
+    const float* get_output() override
     {
         return outputNeurons.data();
     };

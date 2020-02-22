@@ -23,9 +23,9 @@ class SigmoidLayer : public Layer
         output_shape.width = input_size;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
-        const float* input = prevLayer->getOutput();
+        const float* input = prevLayer->get_output();
         for (size_t i = 0; i < size; i++)
         {
             output[i] = sigmoid(input[i]);
@@ -35,19 +35,19 @@ class SigmoidLayer : public Layer
 
     void backprop(Layer* layer) override
     {
-        const float* derivativeWRtoOutput = layer->derivativeWithRespectToInput();
+        const float* derivativeWRtoOutput = layer->derivative_wr_to_input();
         for (size_t i = 0; i < input_size; i++)
         {
             derivativeWRtoInput[i] = output[i] * (1 - output[i]) * derivativeWRtoOutput[i];
         }
     }
 
-    const float* getOutput() override
+    const float* get_output() override
     {
         return output.data();
     }
 
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
         return derivativeWRtoInput.data();
     }

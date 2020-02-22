@@ -7,13 +7,19 @@ class Layer
 protected:
     float learing_rate = 0.1f;
     shape output_shape;
+    shape input_shape;
     bool device_layer;
 public:
+    void init_base(const shape& input)
+    {
+        input_shape = input;
+        init(input);
+    }
     virtual void init(const shape& input) = 0;
-    virtual void forwardPass(Layer* prevLayer) = 0;
+    virtual void forward_pass(Layer* prevLayer) = 0;
     virtual void backprop(Layer* layer) = 0;
-    virtual const float* getOutput() = 0;
-    virtual const float* derivativeWithRespectToInput() = 0;
+    virtual const float* get_output() = 0;
+    virtual const float* derivative_wr_to_input() = 0;
     virtual void printLayer() = 0;
     virtual ~Layer() = default;
     void set_learning_rate(float rate)
@@ -28,7 +34,7 @@ public:
     {
         cuVector<float> result;
         if(!device_layer)
-            result.setValues(getOutput(), output_shape.size());
+            result.setValues(get_output(), output_shape.size());
         return result;
     }
 
@@ -36,7 +42,23 @@ public:
     {
         std::vector<float> result;
         if (device_layer)
-            result = cuVector<float>::from_device_host(getOutput(), output_shape.size());
+            result = cuVector<float>::from_device_host(get_output(), output_shape.size());
+        return result;
+    }
+
+    cuVector<float> get_device_derivative()
+    {
+        cuVector<float> result;
+        if (!device_layer)
+            result.setValues(derivative_wr_to_input(), input_shape.size());
+        return result;
+    }
+
+    std::vector<float> get_native_derivative()
+    {
+        std::vector<float> result;
+        if (device_layer)
+            result = cuVector<float>::from_device_host(derivative_wr_to_input(), input_shape.size());
         return result;
     }
 

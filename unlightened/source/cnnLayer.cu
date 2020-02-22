@@ -12,7 +12,7 @@ void k_conv_3d(const float* input, shape* input_shape, float* output, shape* out
     if (tr_index >= (output_shape->width * output_shape->height * output_shape->depth))
         return;
     int row = tr_index / output_shape->width;
-    int col = tr_index % output_shape->width;
+    int col = tr_index - row * output_shape->width;
     const int d = tr_index / (output_shape->width * output_shape->height);
     const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
     const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();
@@ -63,7 +63,7 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
     if (tr_index >= (output_shape->width * output_shape->height * output_shape->depth))
         return;
     int row = tr_index / output_shape->width;
-    int col = tr_index % output_shape->width;
+    int col = tr_index - row * output_shape->width;
     const int d = tr_index / (output_shape->width * output_shape->height);
     const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
     const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();

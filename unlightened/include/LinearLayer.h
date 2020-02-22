@@ -33,9 +33,9 @@ public:
         output_shape.width = size;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
-        input = prevLayer->getOutput();
+        input = prevLayer->get_output();
         forwardPassCalcNeurons(0, size - 1, prevLayer);
         
         if (output[size - 1] != 1.0f)
@@ -61,7 +61,7 @@ public:
 
     void backprop(Layer* layer) override
     {
-        const float* derivativeWRToOutput = layer->derivativeWithRespectToInput();
+        const float* derivativeWRToOutput = layer->derivative_wr_to_input();
         calcDerivativeWRtoInput(0, input_size, derivativeWRToOutput);
         updateWeightsAndBias(0, size - 1, derivativeWRToOutput);
     }
@@ -101,12 +101,12 @@ public:
         }
     }
 
-    const float* getOutput() override
+    const float* get_output() override
     {
         return output.data();
     }
 
-    const float* derivativeWithRespectToInput() override
+    const float* derivative_wr_to_input() override
     {
         return this->derivativeWRtoInput.data();
     }

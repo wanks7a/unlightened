@@ -59,9 +59,9 @@ public:
         return false;
     }
 
-    void forwardPass(Layer* prevLayer) override
+    void forward_pass(Layer* prevLayer) override
     {
-        inputPtr = prevLayer->getOutput();
+        inputPtr = prevLayer->get_output();
         shape out_shape = output_shape;  
         out_shape.width = out_shape.width - 1; // -1 because we dont want to calculate for the bias
         shape input_shape;
@@ -83,17 +83,17 @@ public:
     void backprop(Layer* layer) override
     {
         cuVector<float> derivativeWRToOutput;
-        derivativeWRToOutput.setValues(layer->derivativeWithRespectToInput(), size);
+        derivativeWRToOutput.setValues(layer->derivative_wr_to_input(), size);
         calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), size - 1, weightsGPU.get());
         updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1);
     }
 
-    const float* getOutput()
+    const float* get_output()
     {
         outputGPU.getCopy(output);
         return output.data();
     };
-    const float* derivativeWithRespectToInput()
+    const float* derivative_wr_to_input()
     {
         derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
         return derivativeWRtoInput.data();
