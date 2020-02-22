@@ -61,6 +61,7 @@ class SigmoidLayer : public Layer
         }
     }
 
+    ~SigmoidLayer() = default;
 private:
     float sigmoid(float input)
     {

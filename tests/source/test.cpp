@@ -16,15 +16,15 @@
 class gpu_tests : public ::testing::Test 
 {
 protected:
-    virtual void SetUp() 
-    {
-        ASSERT_TRUE(utils::GpuInit());
-    }
+    //virtual void SetUp() 
+    //{
+    //    ASSERT_TRUE(utils::GpuInit());
+    //}
 
-    virtual void TearDown() 
-    {
-        ASSERT_TRUE(utils::GpuRelase());
-    }
+    //virtual void TearDown() 
+    //{
+    //    ASSERT_TRUE(utils::GpuRelase());
+    //}
 };
 
 struct test_layer : public Layer
@@ -56,6 +56,336 @@ struct test_layer : public Layer
         output_shape = sh;
     }
 };
+
+TEST(gpu_tests, cnn_2filters5x5_1_1batch)
+{
+    test_layer  test;
+    test.init_base(shape(5, 5, 1));
+    test.set_output_shape(shape(5, 5, 1));
+    test.output.setValues({
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2
+        });
+    cnn_layer cnn_l(3, 3);
+    auto opt = cnn_l.get_options();
+    opt.zeropadding = true;
+    cnn_l.set_options(opt);
+    cnn_l.init_base(test.get_shape());
+    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
+    {
+
+        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
+            0,-1,-1,
+            0,0,-1,
+            0, 1, 1
+            }));
+    }
+
+    cnn_l.forward_pass(&test);
+
+    std::vector<float> expected = {
+        1, 2, 3, 3, 3,
+        -3, -3, -3, -3, -1,
+        1, 0, -1, 0, 1,
+        0, 2, 3, 2, 3,
+        -3, -3, -3, -4, -1,
+        1, 2, 3, 3, 3,
+        -3, -3, -3, -3, -1,
+        1, 0, -1, 0, 1,
+        0, 2, 3, 2, 3,
+        -3, -3, -3, -4, -1,
+        1, 2, 3, 3, 3,
+        -3, -3, -3, -3, -1,
+        1, 0, -1, 0, 1,
+        0, 2, 3, 2, 3,
+        -3, -3, -3, -4, -1,
+    };
+
+    std::vector<float> result = cnn_l.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, cnn_2filters5x5_2depth_1batch)
+{
+    test_layer  test;
+    test.init_base(shape(5, 5, 2));
+    test.set_output_shape(shape(5, 5, 2));
+    test.output.setValues({
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        });
+    cnn_layer cnn_l(3,3);
+    auto opt = cnn_l.get_options();
+    opt.zeropadding = true;
+    cnn_l.set_options(opt);
+    cnn_l.init_base(test.get_shape());
+    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
+    {
+
+        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
+            0,-1,-1,
+            0,0,-1,
+            0, 1, 1,
+            0,-1,-1,
+            0,0,-1,
+            0, 1, 1,
+            }));
+    }
+
+    cnn_l.forward_pass(&test);
+ 
+    std::vector<float> expected = { 
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+    };
+
+    std::vector<float> result = cnn_l.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, cnn_2filters5x5_2depth_2batch)
+{
+    test_layer  test;
+    test.init_base(shape(5, 5, 2, 2));
+    test.set_output_shape(shape(5, 5, 2, 2));
+    test.output.setValues({
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        2,2,2,1,2,
+        0,2,1,2,2,
+        1,1,0,1,0,
+        2,1,1,1,2,
+        1,1,2,2,2,
+        });
+    cnn_layer cnn_l(3, 3);
+    auto opt = cnn_l.get_options();
+    opt.zeropadding = true;
+    cnn_l.set_options(opt);
+    cnn_l.init_base(test.get_shape());
+    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
+    {
+
+        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
+            0,-1,-1,
+            0,0,-1,
+            0, 1, 1,
+            0,-1,-1,
+            0,0,-1,
+            0, 1, 1,
+            }));
+    }
+
+    cnn_l.forward_pass(&test);
+
+    std::vector<float> expected = {
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+        2, 4, 6, 6, 6,
+        -6, -6, -6, -6, -2,
+        2, 0, -2, 0, 2,
+        0, 4, 6, 4, 6,
+        -6, -6, -6, -8, -2,
+    };
+
+    std::vector<float> result = cnn_l.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, merge_conv_with_bias_2d)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        }));
+    shape input_shape(3, 3, 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        1,2
+        }));
+    cuVector<float> output;
+    output.resize(input_shape.area());
+    merge_conv_with_bias(input.get(), input_shape, bias.get(), output.get(), 0);
+    std::vector<float> expected = {
+        5,5,5,
+        7,7,7,
+        9,9,9
+    };
+    std::vector<float> result;
+    output.getCopy(result);
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, merge_conv_with_bias_2d_batch2)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        }));
+    shape input_shape(3, 3, 2, 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        1,2
+        }));
+    cuVector<float> output;
+    output.resize(input_shape.area() * input_shape.batches);
+    merge_conv_with_bias(input.get(), input_shape, bias.get(), output.get(), input_shape.area());
+    std::vector<float> expected = {
+        5,5,5,
+        7,7,7,
+        9,9,9,
+        5,5,5,
+        7,7,7,
+        9,9,9,
+    };
+    std::vector<float> result;
+    output.getCopy(result);
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(gpu_tests, merge_conv_with_bias_2d_batch2_bigger_offset)
+{
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        1,1,1,
+        2,2,2,
+        3,3,3,
+        }));
+    shape input_shape(3, 3, 2, 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        1,2
+        }));
+    cuVector<float> output;
+    output.resize(input_shape.area() * input_shape.batches + 3);
+    merge_conv_with_bias(input.get(), input_shape, bias.get(), output.get(), input_shape.area() + 3);
+    std::vector<float> expected = {
+        5,5,5,
+        7,7,7,
+        9,9,9,
+        0,0,0,
+        5,5,5,
+        7,7,7,
+        9,9,9,
+    };
+    std::vector<float> result;
+    output.getCopy(result);
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
 
 TEST(gpu_tests, activation_2d)
 {
@@ -166,6 +496,7 @@ TEST(gpu_tests, activation_3d)
 TEST(gpu_tests, activation_3d_batch2)
 {
     test_layer  test;
+    test.init_base(shape(3, 3, 2, 2));
     test.set_output_shape(shape(3, 3, 2, 2));
     test.output.setValues({
         1,1,1,
@@ -182,7 +513,7 @@ TEST(gpu_tests, activation_3d_batch2)
         15,15,15
         });
     activation_layer act(activation_layer::activation_function::Identity);
-    act.init(test.get_shape());
+    act.init_base(test.get_shape());
     act.forward_pass(&test);
     std::vector<float> expected = {
         1,1,1,
@@ -200,6 +531,43 @@ TEST(gpu_tests, activation_3d_batch2)
     };
 
     std::vector<float> result = act.get_native_output();
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+
+    EXPECT_TRUE(test.output.setValues({
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1,
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1
+        }));
+    expected = {
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1,
+        5,5,5,
+        6,6,6,
+        7,7,7,
+        8,8,8,
+        9,9,9,
+        1,1,1
+    };
+    act.backprop(&test);
+    result = act.get_native_derivative();
 
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
@@ -1342,6 +1710,8 @@ TEST(gpu_tests, test_xor_gpu)
 
 int main(int argc, char** argv)
 {
+    EXPECT_TRUE(utils::GpuInit());
     ::testing::InitGoogleTest(&argc, argv);
+    EXPECT_TRUE(utils::GpuRelase());
     return RUN_ALL_TESTS();
 }

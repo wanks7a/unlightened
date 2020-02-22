@@ -22,6 +22,16 @@ public:
 		v.currentSize = 0;
 	}
 
+	cuVector<T>& operator=(cuVector<T>&& v) noexcept
+	{
+		dealloc();
+		currentSize = v.currentSize;
+		ptr = v.ptr;
+		v.ptr = nullptr;
+		v.currentSize = 0;
+		return *this;
+	}
+
 	T* get() const
 	{
 		return ptr;

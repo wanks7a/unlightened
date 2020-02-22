@@ -101,4 +101,8 @@ public:
     void printLayer()
     {
     }
+
+    ~LinearLayerGPU()
+    {
+    }
 };

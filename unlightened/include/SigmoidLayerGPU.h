@@ -57,4 +57,6 @@ class SigmoidLayerGPU : public Layer
     void printLayer() override
     {
     }
+
+    ~SigmoidLayerGPU() = default;
 };

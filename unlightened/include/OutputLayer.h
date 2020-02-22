@@ -65,4 +65,5 @@ public:
         }
     }
 
+    ~OutputLayer() = default;
 };

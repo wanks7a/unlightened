@@ -102,3 +102,31 @@ void full_conv_2d(const float* input,const shape& input_shape, float* output, co
     k_full_conv_2d << <blocks, trPerBlock >> >(input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
     utils::waitAndCheckForErrors();
 }
+
+
+__global__
+void merge_conv_with_bias(const float* input, const shape* input_shape, const float* bias_vector, float* output, const unsigned int batch_offset)
+{
+    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned int area = input_shape->area();
+    if (tr_index >= area)
+        return;
+    const unsigned int depth = input_shape->depth;
+    const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
+    float result = 0.0f;
+    for (unsigned int i = 0; i < depth; i++)
+    {
+        result += (input[batch_offset_input + i * area +  tr_index] + bias_vector[i]);
+    }
+    
+    output[batch_offset * blockIdx.y + tr_index] = result;
+}
+
+void merge_conv_with_bias(const float* input, const shape& input_shape, const float* bias_vector, float* output, const unsigned int batch_offset)
+{
+    unsigned int num_blocks = ((input_shape.area() + trPerBlock - 1) / trPerBlock);
+    dim3 blocks(num_blocks, input_shape.batches);
+    utils::device_struct<shape> device_input_shape(input_shape);
+    merge_conv_with_bias << <blocks, trPerBlock >> > (input, device_input_shape.get(), bias_vector, output, batch_offset);
+    utils::waitAndCheckForErrors();
+}

@@ -40,6 +40,8 @@ public:
 
     bool init(shape input)
     {
+        if (input.depth != options.channels)
+            options.channels = input.depth;
         input_shape = input;
         size_t padding = 0;
         if (options.zeropadding)
@@ -48,15 +50,19 @@ public:
         }
         output_shape.width = calc_output_dimension(input_shape.width, options.w, options.stride, padding);
         output_shape.height = calc_output_dimension(input_shape.height, options.h, options.stride, padding);
+        output_shape.depth = input_shape.depth;
+        output_shape.batches = input_shape.batches;
+
         if (weights.size() == 0)
         {
             std::default_random_engine generator;
             std::uniform_real_distribution<float> distribution(0.f, 1.0f);
-            std::vector<float> input;
+            std::vector<float> weights_values;
             for (size_t i = 0; i < options.w * options.h * options.channels; i++)
             {
-                input.emplace_back(distribution(generator));
+                weights_values.emplace_back(distribution(generator));
             }
+            weights.setValues(weights_values);
         }
         weights_derivative.resize(options.w * options.h * options.channels);
         return true;
@@ -75,5 +81,10 @@ public:
     shape get_output_shape()
     {
         return output_shape;
+    }
+
+    const filter_options& get_options() const
+    {
+        return options;
     }
 };

@@ -14,7 +14,9 @@ void cnn_layer::init(const shape& input)
 	}
 	output_shape = filters.back().get_output_shape();
 	output_shape.depth = filters_size;
+	output_shape.batches = input.batches;
 	output.resize(output_shape.size());
+	bias.resize(filters_size, 1.0f);
 }
 
 void cnn_layer::forward_pass(Layer* prevLayer)
@@ -22,10 +24,24 @@ void cnn_layer::forward_pass(Layer* prevLayer)
 	input_layer = prevLayer;
 	size_t filter_step = output_shape.width * output_shape.height;
 	int i = 0;
-	for (auto& f: filters)
+	cuVector<float> filter_output;
+	cuVector<float> layer_input;
+	const float* input = nullptr;
+	if (prevLayer->is_device_layer())
+		input = prevLayer->get_output();
+	else
 	{
-		//conv2d_kernel(input_layer->get_output(), input_layer->get_shape(), f.get_weights().get(), output.get() + filter_step*i, output_shape, static_cast<unsigned int>(options.w));
-		i++;
+		layer_input = prevLayer->get_device_output();
+		input = layer_input.get();
+	}
+
+	for (int i = 0; i < filters.size(); i++)
+	{
+		auto& filter = filters[i];
+		auto filter_shape = filter.get_output_shape();
+		filter_output.resize(filter_shape.size());
+		conv_3d(input, filter_shape, filter_output.get(), filter_shape, filter.get_weights().get(), filter.get_options().w, filter.get_options().zeropadding);
+		merge_conv_with_bias(filter_output.get(), filter_shape, bias.get(), output.get() + i*filter_shape.area(), output_shape.volume());
 	}
 }
 
@@ -51,7 +67,7 @@ void cnn_layer::backprop(Layer* layer)
 
 const float* cnn_layer::get_output()
 {
-	return nullptr;
+	return output.get();
 }
 
 const float* cnn_layer::derivative_wr_to_input()
