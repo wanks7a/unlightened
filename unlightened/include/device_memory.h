@@ -60,6 +60,25 @@ public:
 		return result;
 	}
 
+	static cuVector<T> from_device_to_device(const cuVector<T>& obj)
+	{
+		cuVector<T> result;
+
+		if (cudaSuccess != cudaMalloc(&result.ptr, sizeof(T) * obj.currentSize))
+		{
+			std::cout << "cudaMalloc failed" << std::endl;
+		}
+
+		if (cudaSuccess != cudaMemcpy(result.ptr, obj.ptr, sizeof(T) * obj.currentSize, cudaMemcpyKind::cudaMemcpyDeviceToDevice))
+		{
+			std::cout << "cudaMemcpy failed" << std::endl;
+		}
+
+		result.currentSize = obj.currentSize;
+
+		return result;
+	}
+
 	bool setValues(const T* values, size_t count)
 	{
 		if (currentSize != count || ptr == nullptr)
@@ -121,6 +140,14 @@ public:
 			}
 		}
 		return true;
+	}
+
+	void memset(int val = 0)
+	{
+		if (cudaSuccess != cudaMemset(ptr, val, sizeof(T) * currentSize))
+		{
+			std::cout << "failed to zero out the new memory" << std::endl;
+		}
 	}
 
 	size_t size()
