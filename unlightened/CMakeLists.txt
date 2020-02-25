@@ -16,6 +16,7 @@ add_library(
     include/SigmoidLayerGPU.h
     include/max_pool.h
     include/activation_layer.h
+    include/csv_parser.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu

@@ -2,6 +2,7 @@
 
 activation_layer::activation_layer(activation_function function) : activ_func(function)
 {
+	device_layer = true;
 }
 
 void activation_layer::init(const shape& input)

@@ -24,10 +24,16 @@ public:
 
     bool setInput(const float* data, size_t dataSize)
     {
-        if (dataSize != input_shape.height)
+        if (dataSize != input_shape.size())
             return false;
         memcpy(outputNeurons.data(), data, dataSize * sizeof(float));
         return true;
+    }
+
+    void set_output_shape(shape output_sh)
+    {
+        output_shape = output_sh;
+        input_shape = output_sh;
     }
 
     void forward_pass(Layer* prevLayer) override

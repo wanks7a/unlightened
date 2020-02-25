@@ -5,59 +5,69 @@
 
 #define trPerBlock 256
 
-template <bool SAME> __global__
-void k_conv_3d(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights, unsigned int filter_size)
+__global__
+void full_convoltion_3d_filter(const float* input,const shape* input_shape,
+    float* output, const shape* output_shape,
+    const float* weights,
+    const float* bias,
+    unsigned int filter_row, unsigned int filter_col, unsigned int offset_filter)
 {
-    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tr_index >= (output_shape->width * output_shape->height * output_shape->depth))
+    const unsigned int trIndex = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned int width = output_shape->width;
+    const unsigned int height = output_shape->height;
+    if (trIndex >= (width * height))
         return;
-    int row = tr_index / output_shape->width;
-    int col = tr_index - row * output_shape->width;
-    const int d = tr_index / (output_shape->width * output_shape->height);
-    const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
-    const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();
-    const int offset = SAME ? (filter_size - 1) / 2 : 0;
-    const int width = input_shape->width;
-    const int height = input_shape->height;
-    const unsigned int filter_offset = d * filter_size * filter_size;
+    const unsigned int input_width = input_shape->width;
+    const unsigned int input_height = input_shape->height;
+    const unsigned int input_depth = input_shape->depth;
+    const unsigned int input_depth_offset = input_shape->area();
+    const unsigned int input_batch_offset = input_shape->volume() * blockIdx.y;
+
+    unsigned int row = trIndex / width;
+    unsigned int col = trIndex - row * width;
+    const int offset = filter_row - offset_filter;
 
     float conv_result = 0.0f;
-    row = row - d * output_shape->height;
-    for (int i = 0; i < filter_size; i++)
+    for (int depth = 0; depth < input_depth; depth++)
     {
-        for (int j = 0; j < filter_size; j++)
+        for (int i = 0; i < filter_row; i++)
         {
-            int row_input_idx = row - offset + i;
-            int col_input_dix = col - offset + j;
-            if (SAME && (row_input_idx < 0 || row_input_idx >= height || col_input_dix < 0 || col_input_dix >= width))
+            for (int j = 0; j < filter_col; j++)
             {
-            }
-            else
-            {
-                conv_result += input[batch_offset_input + d * width * height + width * row_input_idx + col_input_dix] * weights[filter_offset + i * filter_size + j];
-            }
+                int row_input_idx = row - offset + i;
+                int col_input_dix = col - offset + j;
+                if (row_input_idx < 0 || row_input_idx >= input_height || col_input_dix < 0 || col_input_dix >= input_width)
+                {
+                }
+                else
+                {
+                    conv_result += input[input_batch_offset + input_depth_offset * depth + input_width * row_input_idx + col_input_dix] * weights[depth * filter_row * filter_col + i * filter_row + j];
+                }
 
-        }
+            }
+        }       
+        conv_result += bias[depth];
     }
 
-    output[batch_offset_output + tr_index] = conv_result;
+    output[output_shape->volume() * blockIdx.y + trIndex] = conv_result;
 }
 
-void conv_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size, bool same)
+void conv_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, const float* bias, unsigned int filter_row, unsigned int filter_col, unsigned int offset)
 {
     unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
     dim3 blocks(num_blocks, output_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
-    if(same)
-        k_conv_3d<true><< <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
-    else
-        k_conv_3d<false> << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
+    full_convoltion_3d_filter<<<blocks, trPerBlock>>>(input, device_input_shape.get(), output, device_output_shape.get(), weights, bias, filter_row, filter_col, offset);
     utils::waitAndCheckForErrors();
 }
 
-template <bool KEEP_RESULT = false> __global__
-void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights, unsigned int filter_size)
+__global__
+void backprop_conv(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights, 
+    unsigned int filter_row, 
+    unsigned int filter_col, 
+    unsigned int filter_offset, 
+    unsigned int weights_offset_batch)
 {
     const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
     if (tr_index >= (output_shape->width * output_shape->height * output_shape->depth))
@@ -67,15 +77,15 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
     const int d = tr_index / (output_shape->width * output_shape->height);
     const unsigned int batch_offset_input = blockIdx.y * input_shape->volume();
     const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();
-    const int offset = filter_size - 1;
+    const int offset = filter_row - filter_offset;
     const int width = input_shape->width;
     const int height = input_shape->height;
 
     float conv_result = 0.0f;
     row = row - d * output_shape->height;
-    for (int i = 0; i < filter_size; i++)
+    for (int i = 0; i < filter_row; i++)
     {
-        for (int j = 0; j < filter_size; j++)
+        for (int j = 0; j < filter_col; j++)
         {
             int row_input_idx = row - offset + i;
             int col_input_dix = col - offset + j;
@@ -84,27 +94,26 @@ void k_full_conv_2d(const float* input, shape* input_shape, float* output, shape
             }
             else
             {
-                conv_result += input[batch_offset_input + d * width * height + width * row_input_idx + col_input_dix] * weights[i * filter_size + j];
+                conv_result += input[batch_offset_input + d * width * height + width * row_input_idx + col_input_dix] * weights[blockIdx.y * weights_offset_batch + i * filter_row + j];
             }
 
         }
     }
-    if(KEEP_RESULT)
-        output[batch_offset_output + tr_index] += conv_result;
-    else
-        output[batch_offset_output + tr_index] = conv_result;
+
+    output[batch_offset_output + tr_index] = conv_result;
 }
 
-void full_conv_2d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_size, bool keep_result)
+void full_conv_2d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights, 
+    unsigned int filter_row, 
+    unsigned int filter_col, 
+    unsigned int filter_offset, 
+    unsigned int weights_offset_batch)
 {
     unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
     dim3 blocks(num_blocks, output_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
-    if(keep_result)
-        k_full_conv_2d<true><< <blocks, trPerBlock >> >(input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
-    else
-        k_full_conv_2d<false><< <blocks, trPerBlock >> >(input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_size);
+    backprop_conv << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_row, filter_col, filter_offset, weights_offset_batch);
     utils::waitAndCheckForErrors();
 }
 
@@ -163,6 +172,7 @@ void flip_filter(float* input,const shape& filter_shape, bool horizontal)
         flip_horizontal<true><<<blocks, threads>>>(input);
     else
         flip_horizontal<false><<<blocks, threads>>>(input);
+    utils::waitAndCheckForErrors();
 }
 
 __global__

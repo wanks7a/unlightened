@@ -8,7 +8,7 @@ protected:
     float learing_rate = 0.1f;
     shape output_shape;
     shape input_shape;
-    bool device_layer;
+    bool device_layer = false;
 public:
     void init_base(const shape& input)
     {

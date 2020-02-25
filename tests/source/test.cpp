@@ -12,6 +12,7 @@
 #include <max_pool.h>
 #include <activation_layer.h>
 #include <cmath>
+#include <csv_parser.h>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -56,6 +57,151 @@ struct test_layer : public Layer
         output_shape = sh;
     }
 };
+//#include <chrono>
+//TEST(gpu_tests, mnist_d)
+//{
+//    NeuralNet net(28 * 28);
+//    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_train.csv");
+//
+//    std::unordered_map<float, std::array<float, 10>> mm =
+//    {
+//        {0.0f, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
+//        {1.0f, {0, 1, 0, 0, 0, 0, 0, 0, 0, 0} },
+//        {2.0f, {0, 0, 1, 0, 0, 0, 0, 0, 0, 0} },
+//        {3.0f, {0, 0, 0, 1, 0, 0, 0, 0, 0, 0} },
+//        {4.0f, {0, 0, 0, 0, 1, 0, 0, 0, 0, 0} },
+//        {5.0f, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0} },
+//        {6.0f, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0} },
+//        {7.0f, {0, 0, 0, 0, 0, 0, 0, 1, 0, 0} },
+//        {8.0f, {0, 0, 0, 0, 0, 0, 0, 0, 1, 0} },
+//        {9.0f, {0, 0, 0, 0, 0, 0, 0, 0, 0, 1} },
+//    };
+//    net.getInputLayer().set_output_shape(shape(28, 28));
+//    net.addLayer(new LinearLayerGPU<false>(128));
+//    net.addLayer(new SigmoidLayerGPU());
+//    net.addLayer(new LinearLayerGPU<false>(128));
+//    net.addLayer(new SigmoidLayerGPU());
+//    net.addLayer(new LinearLayerGPU<false>(10));
+//    net.addLayer(new SigmoidLayerGPU());
+//    OutputLayer* loss = new OutputLayer();
+//    net.addLayer(loss);
+//
+//    for (size_t i = 0; i < mnist.rows.size(); i++)
+//    {
+//        net.getInputLayer().setInput(mnist.rows[i].elements.data() + 1, 28 * 28);
+//        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//
+//        net.predict();
+//        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+//        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
+//        //auto it = mm.find(mnist.rows[i].elements[0]);
+//        //net.
+//        //net.backprop()
+//    }
+//}
+//
+
+TEST(gpu_tests, backprop_filter_test)
+{
+    shape input_shape(4, 4, 2, 2);
+    shape output_shape(4, 4, 3, 2); // 3 filters
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        0, 0, 0, 0,
+        }));
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.setValues({
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+        }));
+
+    std::vector<float> expected = {
+
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        2, 2, 1,
+        1, 2, 2,
+        1, 1, 1,
+        };
+
+    shape weights_deriv(3, 3, 2, 2);
+    cuVector<float> output;
+    output.resize(weights_deriv.size() + 30, 100.0f);
+    full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get(), output_shape.width, output_shape.height, 3, output_shape.volume());
+    std::vector<float> result;
+    output.getCopy(result);
+    //full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get() output_shape. , output_shape.width, output_shape.height, 3);
+    std::cout << "kur";
+}
 
 TEST(gpu_tests, cnn_2filters5x5_1_1batch)
 {
@@ -74,15 +220,19 @@ TEST(gpu_tests, cnn_2filters5x5_1_1batch)
     opt.zeropadding = false;
     cnn_l.set_options(opt);
     cnn_l.init_base(test.get_shape());
-    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
-    {
 
-        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
-            0,-1,-1,
-            0,0,-1,
-            0, 1, 1
-            }));
-    }
+    EXPECT_TRUE(cnn_l.get_filters().get_weights().setValues({
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        }));
+    
 
     cnn_l.forward_pass(&test);
 
@@ -129,18 +279,28 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_1batch)
     opt.zeropadding = false;
     cnn_l.set_options(opt);
     cnn_l.init_base(test.get_shape());
-    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
-    {
 
-        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
-            0,-1,-1,
-            0,0,-1,
-            0, 1, 1,
-            0,-1,-1,
-            0,0,-1,
-            0, 1, 1,
-            }));
-    }
+    EXPECT_TRUE(cnn_l.get_filters().get_weights().setValues({
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        }));
+    
 
     cnn_l.forward_pass(&test);
  
@@ -197,18 +357,28 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_2batch)
     opt.zeropadding = false;
     cnn_l.set_options(opt);
     cnn_l.init_base(test.get_shape());
-    for (size_t i = 0; i < cnn_l.get_filters().size(); i++)
-    {
 
-        EXPECT_TRUE(cnn_l.get_filters()[i].get_weights().setValues({
-            0,-1,-1,
-            0,0,-1,
-            0, 1, 1,
-            0,-1,-1,
-            0,0,-1,
-            0, 1, 1,
-            }));
-    }
+    EXPECT_TRUE(cnn_l.get_filters().get_weights().setValues({
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        0,-1,-1,
+        0,0,-1,
+        0, 1, 1,
+        }));
+    
 
     cnn_l.forward_pass(&test);
 
@@ -240,8 +410,6 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_2batch)
     {
         EXPECT_EQ(result[i], expected[i]);
     }
-
-    cnn_l.backprop(&test);
 }
 
 TEST(gpu_tests, merge_conv_with_bias_2d)
@@ -928,8 +1096,10 @@ TEST(gpu_tests, cnn_conv_3d_depth1_same)
                         0, 1, 1
         }));
     cuVector<float> output;
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0 }));
     EXPECT_TRUE(output.resize(output_shape.area()));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, true);
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = { 0, 1, 2, 2, 2,
@@ -953,7 +1123,6 @@ TEST(gpu_tests, cnn_conv_3d_depth3_same)
     shape output_shape;
     output_shape.width = 5;
     output_shape.height = 5;
-    output_shape.depth = 3;
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
                                  2,2,2,1,2,
@@ -985,8 +1154,10 @@ TEST(gpu_tests, cnn_conv_3d_depth3_same)
                         0, 1, 1
         }));
     cuVector<float> output;
-    EXPECT_TRUE(output.resize(output_shape.volume()));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, true);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    EXPECT_TRUE(output.resize(output_shape.size()));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = { 
@@ -994,22 +1165,12 @@ TEST(gpu_tests, cnn_conv_3d_depth3_same)
                         -4, -4, -4, -4, -2,
                         0, -1, -2, -1, 0,
                         -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2, 
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
+                        -4, -4, -4, -5, -2
     };
     EXPECT_EQ(expected.size(), result.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ((expected[i] * input_shape.depth), result[i]);
     }
 }
 
@@ -1023,7 +1184,7 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_same)
     shape output_shape;
     output_shape.width = 5;
     output_shape.height = 5;
-    output_shape.depth = 3;
+    output_shape.depth = 1;
     output_shape.batches = 2;
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
@@ -1072,30 +1233,12 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_same)
         }));
     cuVector<float> output;
     EXPECT_TRUE(output.resize(output_shape.size()));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, true);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = {
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
-                        0, 1, 2, 2, 2,
-                        -4, -4, -4, -4, -2,
-                        0, -1, -2, -1, 0,
-                        -1, 1, 2, 1, 2,
-                        -4, -4, -4, -5, -2,
                         0, 1, 2, 2, 2,
                         -4, -4, -4, -4, -2,
                         0, -1, -2, -1, 0,
@@ -1110,7 +1253,100 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_same)
     EXPECT_EQ(expected.size(), result.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(expected[i] * input_shape.depth, result[i]);
+    }
+}
+
+TEST(gpu_tests, cnn_conv_3d_depth3_batch2_same_v2)
+{
+    shape input_shape;
+    input_shape.width = 5;
+    input_shape.height = 5;
+    input_shape.depth = 3;
+    input_shape.batches = 2;
+    shape output_shape;
+    output_shape.width = 5;
+    output_shape.height = 5;
+    output_shape.depth = 2;
+    output_shape.batches = 2;
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+                                 2,2,2,1,2,
+                                 0,2,1,2,2,
+                                 1,1,0,1,0,
+                                 2,1,1,1,2,
+                                 1,1,2,2,2,
+        }));
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.setValues({
+                        0,-1,-1,
+                        0,0,-1,
+                        0, 1, 1,
+                        0,-1,-1,
+                        0,0,-1,
+                        0, 1, 1,
+                        0,-1,-1,
+                        0,0,-1,
+                        0, 1, 1
+        }));
+    cuVector<float> output;
+    EXPECT_TRUE(output.resize(output_shape.size()));
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 2);
+    std::vector<float> result;
+    output.getCopy(result);
+    std::vector<float> expected = {
+                        0, 1, 2, 2, 2,
+                        -4, -4, -4, -4, -2,
+                        0, -1, -2, -1, 0,
+                        -1, 1, 2, 1, 2,
+                        -4, -4, -4, -5, -2,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0, 1, 2, 2, 2,
+                        -4, -4, -4, -4, -2,
+                        0, -1, -2, -1, 0,
+                        -1, 1, 2, 1, 2,
+                        -4, -4, -4, -5, -2,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+                        0,0,0,0,0,
+    };
+    EXPECT_EQ(expected.size(), result.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(expected[i] * input_shape.depth, result[i]);
     }
 }
 
@@ -1139,7 +1375,9 @@ TEST(gpu_tests, cnn_conv_3d_depth1_valid)
         }));
     cuVector<float> output;
     EXPECT_TRUE(output.resize(static_cast<size_t>(output_shape.width) * output_shape.height));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, false);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 3);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = { 0,0,0,0,
@@ -1163,7 +1401,7 @@ TEST(gpu_tests, cnn_conv_3d_depth3_valid)
     shape output_shape;
     output_shape.width = 4;
     output_shape.height = 4;
-    output_shape.depth = 3;
+    output_shape.depth = 1;
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
                         10,10,10,0,0,0,
@@ -1199,26 +1437,20 @@ TEST(gpu_tests, cnn_conv_3d_depth3_valid)
         }));
     cuVector<float> output;
     EXPECT_TRUE(output.resize(output_shape.volume()));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, false);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 3);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = { 0,0,0,0,
                                     30,10,-10,-30,
                                     30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
+                                    0,0,0,0
     };
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(expected[i] * input_shape.depth, result[i]);
     }
 }
 
@@ -1232,7 +1464,7 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_valid)
     shape output_shape;
     output_shape.width = 4;
     output_shape.height = 4;
-    output_shape.depth = 3;
+    output_shape.depth = 1;
     output_shape.batches = 2;
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
@@ -1287,26 +1519,12 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_valid)
         }));
     cuVector<float> output;
     EXPECT_TRUE(output.resize(output_shape.size()));
-    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), 3, false);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 3, 3, 3);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<float> expected = { 0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
-                                    30,10,-10,-30,
-                                    30,10,-10,-30,
-                                    0,0,0,0,
-                                    0,0,0,0,
                                     30,10,-10,-30,
                                     30,10,-10,-30,
                                     0,0,0,0,
@@ -1318,7 +1536,7 @@ TEST(gpu_tests, cnn_conv_3d_depth3_batch2_valid)
     EXPECT_EQ(expected.size(), result.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(expected[i], result[i]);
+        EXPECT_EQ(expected[i] * input_shape.depth, result[i]);
     }
 }
 
@@ -1347,7 +1565,9 @@ TEST(gpu_tests, cnn_full_conv_2d_001)
         7,16,20,24,28,15,
         1,3,5,7,9,5
     };
-    full_conv_2d(input.get(), input_shape, output.get(), output_shape, weights.get(), 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 2, 2, 1);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(result.size(), expected.size());
@@ -1360,9 +1580,13 @@ TEST(gpu_tests, cnn_full_conv_2d_001)
 TEST(gpu_tests, cnn_full_conv_2d_002)
 {
     shape input_shape(5, 5, 3);
-    shape output_shape(6, 6, 3);
+    shape output_shape(6, 6, 1);
     cuVector<float> weights;
-    EXPECT_TRUE(weights.setValues({ 1, 1, 1, 1 }));
+    EXPECT_TRUE(weights.setValues({ 
+            1, 1, 1, 1,
+            1, 1, 1, 1,
+            1, 1, 1, 1
+        }));
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
         1,2,3,4,5,
@@ -1383,20 +1607,8 @@ TEST(gpu_tests, cnn_full_conv_2d_002)
         }));
 
     cuVector<float> output;
-    EXPECT_TRUE(output.resize(6 * 6 * 3));
+    EXPECT_TRUE(output.resize(output_shape.size()));
     std::vector<float> expected = {
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
         1,3,5,7,9,5,
         7,16,20,24,28,15,
         7,16,20,24,28,15,
@@ -1404,22 +1616,28 @@ TEST(gpu_tests, cnn_full_conv_2d_002)
         7,16,20,24,28,15,
         1,3,5,7,9,5
     };
-    full_conv_2d(input.get(), input_shape, output.get(), output_shape, weights.get(), 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 2, 2, 1);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(result[i], expected[i]);
+        EXPECT_EQ(result[i], expected[i] * input_shape.depth);
     }
 }
 
 TEST(gpu_tests, cnn_full_conv_2d_003)
 {
     shape input_shape(5, 5, 3, 2);
-    shape output_shape(6, 6, 3, 2);
+    shape output_shape(6, 6, 1, 2);
     cuVector<float> weights;
-    EXPECT_TRUE(weights.setValues({ 1, 1, 1, 1 }));
+    EXPECT_TRUE(weights.setValues({
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1
+        }));
     cuVector<float> input;
     EXPECT_TRUE(input.setValues({
         1,2,3,4,5,
@@ -1468,39 +1686,18 @@ TEST(gpu_tests, cnn_full_conv_2d_003)
         7,16,20,24,28,15,
         7,16,20,24,28,15,
         7,16,20,24,28,15,
-        1,3,5,7,9,5,
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
-        1,3,5,7,9,5,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        7,16,20,24,28,15,
-        1,3,5,7,9,5,
+        1,3,5,7,9,5
     };
-    full_conv_2d(input.get(), input_shape, output.get(), output_shape, weights.get(), 2);
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({ 0, 0, 0 }));
+
+    conv_3d(input.get(), input_shape, output.get(), output_shape, weights.get(), bias.get(), 2, 2, 1);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
     {
-        EXPECT_EQ(result[i], expected[i]);
+        EXPECT_EQ(result[i], expected[i] * input_shape.depth);
     }
 }
 
