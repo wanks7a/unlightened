@@ -144,63 +144,44 @@ TEST(gpu_tests, backprop_filter_test)
         0, 0, 0, 0,
         0, 0, 0, 1,
         1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
         0, 0, 0, 1,
         1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
         0, 0, 0, 1,
         }));
 
     std::vector<float> expected = {
-
         2, 2, 1,
         1, 2, 2,
         1, 1, 1,
         2, 2, 1,
         1, 2, 2,
         1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
-        2, 2, 1,
-        1, 2, 2,
-        1, 1, 1,
+        1, 1, 0,
+        0, 1, 1,
+        0, 0, 0,
+        1, 1, 0,
+        0, 1, 1,
+        0, 0, 0
         };
 
     shape weights_deriv(3, 3, 2, 2);
     cuVector<float> output;
-    output.resize(weights_deriv.size() + 30, 100.0f);
-    full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get(), output_shape.width, output_shape.height, 3, output_shape.volume());
-    std::vector<float> result;
-    output.getCopy(result);
-    //full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get() output_shape. , output_shape.width, output_shape.height, 3);
-    std::cout << "kur";
+    output.resize(weights_deriv.size());
+    for (size_t i = 0; i < 3; i++) // 3 because there are 3 filters
+    {
+        full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get() + i * output_shape.area(), output_shape.width, output_shape.height, 3, output_shape.volume());
+        std::vector<float> result;
+        output.getCopy(result);
+        EXPECT_TRUE(result.size(), expected.size());
+        for (size_t j = 0; j < result.size(); j++)
+        {
+            EXPECT_EQ(result[i], expected[i]);
+        }
+    }
 }
 
 TEST(gpu_tests, cnn_2filters5x5_1_1batch)
