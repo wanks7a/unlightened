@@ -63,7 +63,7 @@ void conv_3d(const float* input, const shape& input_shape, float* output, const 
 }
 
 __global__
-void backprop_conv(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights, 
+void backprop_weights(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights, 
     unsigned int filter_row, 
     unsigned int filter_col, 
     unsigned int filter_offset, 
@@ -103,7 +103,7 @@ void backprop_conv(const float* input, shape* input_shape, float* output, shape*
     output[batch_offset_output + tr_index] = conv_result;
 }
 
-void full_conv_2d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights, 
+void backprop_weights_3d(const float* input,const shape& input_shape, float* output, const shape& output_shape, const float* weights,
     unsigned int filter_row, 
     unsigned int filter_col, 
     unsigned int filter_offset, 
@@ -113,7 +113,7 @@ void full_conv_2d(const float* input,const shape& input_shape, float* output, co
     dim3 blocks(num_blocks, output_shape.batches);
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
-    backprop_conv << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_row, filter_col, filter_offset, weights_offset_batch);
+    backprop_weights << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_row, filter_col, filter_offset, weights_offset_batch);
     utils::waitAndCheckForErrors();
 }
 
@@ -189,5 +189,64 @@ void update_weights(const float* error, float* weights,const shape& weights_shap
     unsigned int num_blocks = ((weights_shape.volume() + trPerBlock - 1) / trPerBlock);
     utils::device_struct<shape> device_input_shape(weights_shape);
     k_update_weights << <num_blocks, trPerBlock >> > (error, weights, device_input_shape.get(), learning_rate);
+    utils::waitAndCheckForErrors();
+}
+
+__global__
+void derivative_input(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights,
+                      unsigned int filter_row,
+                      unsigned int filter_col,
+                      unsigned int filter_offset,
+                      unsigned int weights_offset_batch)
+{
+    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (tr_index >= (output_shape->width * output_shape->height * output_shape->depth))
+        return;
+    int row = tr_index / output_shape->width;
+    int col = tr_index - row * output_shape->width;
+    const int d = tr_index / (output_shape->width * output_shape->height);
+    const unsigned int batch_offset_output = blockIdx.y * output_shape->volume();
+    const int offset = filter_row - filter_offset;
+    const int width = input_shape->width;
+    const int height = input_shape->height;
+    const unsigned int input_shape_volume = input_shape->volume();
+
+    float whole_result = 0.0f;
+    row = row - d * output_shape->height;
+    for (size_t channel = 0; channel < output_shape->depth; channel++)
+    {
+        float conv_result = 0.0f;
+        for (int i = 0; i < filter_row; i++)
+        {
+            for (int j = 0; j < filter_col; j++)
+            {
+                int row_input_idx = row - offset + i;
+                int col_input_dix = col - offset + j;
+                if (row_input_idx < 0 || row_input_idx >= height || col_input_dix < 0 || col_input_dix >= width)
+                {
+                }
+                else
+                {
+                    conv_result += input[input_shape_volume * channel + d * width * height + width * row_input_idx + col_input_dix] * weights[blockIdx.y * weights_offset_batch + channel * filter_row * filter_col + i * filter_row + j];
+                }
+
+            }
+        }
+        whole_result += conv_result;
+    }
+    output[batch_offset_output + tr_index] = whole_result;
+}
+
+void derivative_input_3d(const float* input,const shape& input_shape, float* output,const shape& output_shape, const float* weights,
+    unsigned int filter_row,
+    unsigned int filter_col,
+    unsigned int filter_offset,
+    unsigned int weights_offset_batch)
+{
+    unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
+    dim3 blocks(num_blocks, output_shape.batches);
+    utils::device_struct<shape> device_input_shape(input_shape);
+    utils::device_struct<shape> device_output_shape(output_shape);
+    derivative_input << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_row, filter_col, filter_offset, weights_offset_batch);
     utils::waitAndCheckForErrors();
 }

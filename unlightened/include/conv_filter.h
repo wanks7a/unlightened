@@ -25,6 +25,7 @@ class filter_conv2d
     cuVector<float> weights;
     cuVector<float> weights_derivative;
     size_t padding = 0;
+    shape derivatives_shape;
 
     unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
@@ -67,6 +68,10 @@ public:
             weights.setValues(weights_values);
         }
         weights_derivative.resize(options.w * options.h * options.channels * options.num_of_filters * output_shape.batches);
+        derivatives_shape.width = options.w;
+        derivatives_shape.height = options.h;
+        derivatives_shape.depth = options.channels;
+        derivatives_shape.batches = input_shape.batches;
         return true;
     }
 
@@ -117,10 +122,16 @@ public:
 
     shape get_weights_derivative_shape() const
     {
-        shape derivatives_shape;
-        derivatives_shape.width = options.w;
-        derivatives_shape.height = options.h;
-        derivatives_shape.depth = options.channels;
         return derivatives_shape;
+    }
+
+    float* get_derivative(size_t index) const
+    {
+        if (index >= options.num_of_filters)
+        {
+            std::cout << "wrong derivative number" << std::endl;
+        }
+
+        return weights_derivative.get() + index *get_weights_derivative_shape().size();
     }
 };

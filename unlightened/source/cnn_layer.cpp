@@ -55,23 +55,18 @@ void cnn_layer::backprop(Layer* layer)
 	shape filter_derivative_shape = filters.get_weights_derivative_shape();
 	shape input_shape_temp = input_shape;
 	input_shape.batches = 1;
-	for (size_t b = 0; b < input_shape.batches; b++)
+	// calculate the derivative for the weights
+	// output depth should equals number of filters
+	for (size_t i = 0; i < options.num_of_filters; i++)
 	{
-		for (size_t i = 0; i < output_shape.depth; i++)
-		{
-			int filter_offset = i * filter_derivative_shape.volume() + b * filter_derivative_shape.volume() * output_shape.depth;
-			int derivative_offset = i * output_shape.area() + b * output_shape.volume();
-
-	/*		conv_3d(input + b * input_shape.volume(), input_shape_temp, filters.get_weights_derivative().get() + filter_offset, filter_derivative_shape, 
-					derivative + derivative_offset, 
-					nullptr, 
-					output_shape.width, 
-					output_shape.height, 
-					options.w - filters.get_padding());
-			std::vector<float> res;
-			filters.get_weights_derivative().getCopy(res);*/
-		}
+		backprop_weights_3d(input, input_layer->get_shape(), filters.get_derivative(i), filter_derivative_shape,
+			derivative + i * output_shape.area(),
+			output_shape.width,
+			output_shape.height, options.w - filters.get_padding(), output_shape.volume());
 	}
+	// now calculate the derivative for the input input
+
+
 }
 
 const float* cnn_layer::get_output()

@@ -13,6 +13,7 @@
 #include <activation_layer.h>
 #include <cmath>
 #include <csv_parser.h>
+#include <tests_objects.h>
 
 class gpu_tests : public ::testing::Test 
 {
@@ -28,35 +29,6 @@ protected:
     //}
 };
 
-struct test_layer : public Layer
-{
-    test_layer()
-    {
-        device_layer = true;
-    }
-
-    cuVector<float> output;
-    void init(const shape& input) override {};
-    void forward_pass(Layer* prevLayer) override {};
-    void backprop(Layer* layer) override {};
-    const float* get_output()  override
-    {
-        return output.get();
-    };
-    const float* derivative_wr_to_input() override
-    {
-        return output.get();
-    };
-
-    void printLayer() override
-    {
-    }
-
-    void set_output_shape(const shape& sh)
-    {
-        output_shape = sh;
-    }
-};
 //#include <chrono>
 //TEST(gpu_tests, mnist_d)
 //{
@@ -173,10 +145,10 @@ TEST(gpu_tests, backprop_filter_test)
     output.resize(weights_deriv.size());
     for (size_t i = 0; i < 3; i++) // 3 because there are 3 filters
     {
-        full_conv_2d(input.get(), input_shape, output.get(), weights_deriv, weights.get() + i * output_shape.area(), output_shape.width, output_shape.height, 3, output_shape.volume());
+        backprop_weights_3d(input.get(), input_shape, output.get(), weights_deriv, weights.get() + i * output_shape.area(), output_shape.width, output_shape.height, 3, output_shape.volume());
         std::vector<float> result;
         output.getCopy(result);
-        EXPECT_TRUE(result.size(), expected.size());
+        EXPECT_EQ(result.size(), expected.size());
         for (size_t j = 0; j < result.size(); j++)
         {
             EXPECT_EQ(result[i], expected[i]);
@@ -1770,99 +1742,99 @@ TEST(gpu_tests, dense_layer1024_batches2_v2)
     EXPECT_EQ(0, result[result.size() - 1]);
 }
 
-TEST(gpu_tests, test_xor_cpu)
-{
-    NeuralNet test(2, true);
-    test.addLayer(new LinearLayer(2));
-    test.addLayer(new SigmoidLayer());
-    test.addLayer(new LinearLayer(1));
-    test.addLayer(new SigmoidLayer());
-    OutputLayer* loss = new OutputLayer();
-    test.addLayer(loss);
-    test.set_learning_rate(0.01f);
-    for (int i = 0; i < 1000000; i++)
-    {
-        test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 1,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 0,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 0,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 1,0 });
-        test.backprop();
-    }
-    test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
-    test.predict();
-    EXPECT_GT(loss->get_output()[0], 0.95f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
-    test.predict();
-    EXPECT_LT(loss->get_output()[0], 0.05f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
-    test.predict();
-    EXPECT_LT(loss->get_output()[0], 0.05f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
-    test.predict();
-    EXPECT_GT(loss->get_output()[0], 0.95f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-}
-
-TEST(gpu_tests, test_xor_gpu)
-{
-    NeuralNet test(2, true);
-    test.addLayer(new LinearLayerGPU<false>(10));
-    test.addLayer(new SigmoidLayerGPU());
-    test.addLayer(new LinearLayerGPU<false>(1));
-    test.addLayer(new SigmoidLayerGPU());
-    OutputLayer* loss = new OutputLayer();
-    test.addLayer(loss);
-    test.set_learning_rate(0.01f);
-    for (int i = 0; i < 10000; i++)
-    {
-        test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 1,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 0,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 0,0 });
-        test.backprop();
-        test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
-        test.predict();
-        loss->setObservedValue({ 1,0 });
-        test.backprop();
-    }
-    test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
-    test.predict();
-    EXPECT_GT(loss->get_output()[0], 0.9f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
-    test.predict();
-    EXPECT_LT(loss->get_output()[0], 0.1f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
-    test.predict();
-    EXPECT_LT(loss->get_output()[0], 0.1f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-    test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
-    test.predict();
-    EXPECT_GT(loss->get_output()[0], 0.9f);
-    EXPECT_EQ(loss->get_output()[1], 1.0f);
-}
+//TEST(gpu_tests, test_xor_cpu)
+//{
+//    NeuralNet test(2, true);
+//    test.addLayer(new LinearLayer(2));
+//    test.addLayer(new SigmoidLayer());
+//    test.addLayer(new LinearLayer(1));
+//    test.addLayer(new SigmoidLayer());
+//    OutputLayer* loss = new OutputLayer();
+//    test.addLayer(loss);
+//    test.set_learning_rate(0.01f);
+//    for (int i = 0; i < 1000000; i++)
+//    {
+//        test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 1,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 0,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 0,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 1,0 });
+//        test.backprop();
+//    }
+//    test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
+//    test.predict();
+//    EXPECT_GT(loss->get_output()[0], 0.95f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
+//    test.predict();
+//    EXPECT_LT(loss->get_output()[0], 0.05f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
+//    test.predict();
+//    EXPECT_LT(loss->get_output()[0], 0.05f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
+//    test.predict();
+//    EXPECT_GT(loss->get_output()[0], 0.95f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//}
+//
+//TEST(gpu_tests, test_xor_gpu)
+//{
+//    NeuralNet test(2, true);
+//    test.addLayer(new LinearLayerGPU<false>(10));
+//    test.addLayer(new SigmoidLayerGPU());
+//    test.addLayer(new LinearLayerGPU<false>(1));
+//    test.addLayer(new SigmoidLayerGPU());
+//    OutputLayer* loss = new OutputLayer();
+//    test.addLayer(loss);
+//    test.set_learning_rate(0.01f);
+//    for (int i = 0; i < 10000; i++)
+//    {
+//        test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 1,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 0,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 0,0 });
+//        test.backprop();
+//        test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
+//        test.predict();
+//        loss->setObservedValue({ 1,0 });
+//        test.backprop();
+//    }
+//    test.getInputLayer().setInput(std::array<float, 2>{1, 0}.data(), 2);
+//    test.predict();
+//    EXPECT_GT(loss->get_output()[0], 0.9f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{0, 0}.data(), 2);
+//    test.predict();
+//    EXPECT_LT(loss->get_output()[0], 0.1f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{1, 1}.data(), 2);
+//    test.predict();
+//    EXPECT_LT(loss->get_output()[0], 0.1f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//    test.getInputLayer().setInput(std::array<float, 2>{0, 1}.data(), 2);
+//    test.predict();
+//    EXPECT_GT(loss->get_output()[0], 0.9f);
+//    EXPECT_EQ(loss->get_output()[1], 1.0f);
+//}
 
 int main(int argc, char** argv)
 {
