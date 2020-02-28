@@ -270,7 +270,7 @@ TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
         1, 1, 0,
         1, 1, 0,
         1, 1, 1,
-        0, 1, 1, // every batch for the first weights only
+        0, 1, 1, // every batch for the first filter weights only
         2, 0, 0,
         0, 3, 0,
         0, 0, 2,
@@ -282,7 +282,7 @@ TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
         1, 0, 1,
         2, 0, 0,
         0, 3, 0,
-        0, 0, 2, // and now 2 batches for the 2nd weights
+        0, 0, 2, // and now 2 batches for the 2nd filter
     };
 
     EXPECT_EQ(result.size(), expected.size());
