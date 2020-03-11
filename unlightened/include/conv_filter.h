@@ -26,6 +26,7 @@ class filter_conv2d
     cuVector<float> weights_derivative;
     size_t padding = 0;
     shape derivatives_shape;
+    shape filter_shape;
 
     unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
@@ -72,6 +73,10 @@ public:
         derivatives_shape.height = options.h;
         derivatives_shape.depth = options.channels;
         derivatives_shape.batches = input_shape.batches;
+        filter_shape.width = options.w;
+        filter_shape.height = options.h;
+        filter_shape.depth = options.channels;
+        filter_shape.batches = 1;
         return true;
     }
 
@@ -133,5 +138,10 @@ public:
         }
 
         return weights_derivative.get() + index *get_weights_derivative_shape().size();
+    }
+
+    shape get_filter_shape() const
+    {
+        return filter_shape;
     }
 };

@@ -66,6 +66,19 @@ void cnn_layer::backprop(Layer* layer)
 	}
 	// now calculate the derivative for the input input
 
+	cuVector<float> weights_flipped = cuVector<float>::from_device_to_device(filters.get_weights());
+	shape filter_shape = filters.get_filter_shape();
+	filter_shape.depth = filter_shape.depth * options.num_of_filters;
+	flip_filter(weights_flipped.get(), filter_shape, false);
+	flip_filter(weights_flipped.get(), filter_shape, true);
+	filter_shape = filters.get_filter_shape();
+	filter_shape.batches = options.num_of_filters;
+	std::vector<float> result = cuVector<float>::from_device_host(weights_flipped.get(), weights_flipped.size());
+	for (size_t i = 0; i < input_shape.depth; i++)
+	{
+		derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
+			derivative, output_shape.width, output_shape.height, options.w - filters.get_padding(), output_shape.volume());
+	}
 
 }
 
@@ -76,7 +89,7 @@ const float* cnn_layer::get_output()
 
 const float* cnn_layer::derivative_wr_to_input()
 {
-	return nullptr;
+	return input_derivative.get();
 }
 
 void cnn_layer::printLayer()

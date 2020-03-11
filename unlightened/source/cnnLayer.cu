@@ -145,33 +145,48 @@ void merge_conv_with_bias(const float* input, const shape& input_shape, const fl
     utils::waitAndCheckForErrors();
 }
 
-template <bool HORIZONTAL>  __global__
-void flip_horizontal(float* input)
+template <bool HORIZONTAL_LINES>  __global__
+void flip_horizontal(float* input, const shape* input_shape)
 {
-    if ((blockDim.x / 2) < threadIdx.x)
+    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (tr_index >= input_shape->size())
         return;
-    if (HORIZONTAL)
+    unsigned int area = input_shape->area();
+    unsigned int width = input_shape->width;
+    unsigned int row = tr_index / width;
+    unsigned int col = tr_index - row * width;
+    const int d = tr_index / area;
+    if (!HORIZONTAL_LINES)
     {
-        float temp = input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + blockDim.x - 1 - threadIdx.x];
-        input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + blockDim.x - 1 - threadIdx.x] = input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + threadIdx.x];
-        input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + threadIdx.x] = temp;
+        if ((width / 2) < col)
+            return;
+
+        float temp = input[width * row + col];
+        input[width * row + col] = input[width * row + width - 1 - col];
+        input[width * row + width - 1 - col] = temp;
+        
     }
     else
     {
-        float temp = input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * (blockDim.y - 1 - threadIdx.y) + threadIdx.x];
-        input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * (blockDim.y - 1 - threadIdx.y) + threadIdx.x] = input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + threadIdx.x];
-        input[blockDim.x * blockDim.y * blockIdx.x + blockDim.x * threadIdx.y + threadIdx.x] = temp;
+        unsigned int height = input_shape->height;
+        unsigned int relative_row = row - d * height;
+        if (relative_row < (height / 2))
+        {
+            float temp = input[width * row + col];
+            input[width * row + col] = input[width * (row - relative_row + height - 1 - relative_row) + col];
+            input[width * (row - relative_row + height - 1 - relative_row) + col] = temp;
+        }
     }
 }
 
-void flip_filter(float* input,const shape& filter_shape, bool horizontal)
+void flip_filter(float* input,const shape& filter_shape, bool horizontal_lines)
 {
-    dim3 blocks(filter_shape.depth);
-    dim3 threads(filter_shape.width, filter_shape.height);
-    if (horizontal)
-        flip_horizontal<true><<<blocks, threads>>>(input);
+    unsigned int num_blocks = ((filter_shape.size() + trPerBlock - 1) / trPerBlock);
+    utils::device_struct<shape> device_input_shape(filter_shape);
+    if (horizontal_lines)
+        flip_horizontal<true><<<num_blocks, trPerBlock>>>(input, device_input_shape.get());
     else
-        flip_horizontal<false><<<blocks, threads>>>(input);
+        flip_horizontal<false><<<num_blocks, trPerBlock>>>(input, device_input_shape.get());
     utils::waitAndCheckForErrors();
 }
 
@@ -211,11 +226,11 @@ void derivative_input(const float* input, shape* input_shape, float* output, sha
     const int height = input_shape->height;
     const unsigned int input_shape_volume = input_shape->volume();
 
-    float whole_result = 0.0f;
+    float conv_result = 0.0f;
     row = row - d * output_shape->height;
-    for (size_t channel = 0; channel < output_shape->depth; channel++)
+    // here we are using the batches for the number of filters
+    for (size_t channel = 0; channel < input_shape->batches; channel++)
     {
-        float conv_result = 0.0f;
         for (int i = 0; i < filter_row; i++)
         {
             for (int j = 0; j < filter_col; j++)
@@ -232,9 +247,8 @@ void derivative_input(const float* input, shape* input_shape, float* output, sha
 
             }
         }
-        whole_result += conv_result;
     }
-    output[batch_offset_output + tr_index] = whole_result;
+    output[batch_offset_output + tr_index] = conv_result;
 }
 
 void derivative_input_3d(const float* input,const shape& input_shape, float* output,const shape& output_shape, const float* weights,
