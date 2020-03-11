@@ -318,13 +318,13 @@ TEST(CNN_TESTS, backprop_input_v1)
         0, 0, 0,
         1, 0, 0,
         0, 1, 0,
-        3, 0, 1,
+        0, 0, 1,
         0, 0, 0,
         1, 1, 1,
         0, 0, 0,
         0, 0, 1,
         0, 1, 0,
-        1, 0, 3
+        1, 0, 0
         }));
     cnn_l.forward_pass(&test);
 
@@ -340,7 +340,23 @@ TEST(CNN_TESTS, backprop_input_v1)
         1, 0, 0
         });
     cnn_l.backprop(&backprop_l);
+
     std::vector<float> result = cnn_l.get_native_derivative();
+    
+    std::vector<float> expected = {
+        1, 2, 1,
+        2, 2, 2,
+        1, 2, 1,
+        2, 0, 2,
+        0, 6, 0,
+        2, 0, 2,
+    };
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
 }
 
 TEST(CNN_TESTS, flip_test_horizontal_v1)
