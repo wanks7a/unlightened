@@ -73,13 +73,19 @@ void cnn_layer::backprop(Layer* layer)
 	flip_filter(weights_flipped.get(), filter_shape, true);
 	filter_shape = filters.get_filter_shape();
 	filter_shape.batches = options.num_of_filters;
-	std::vector<float> result = cuVector<float>::from_device_host(weights_flipped.get(), weights_flipped.size());
 	for (size_t i = 0; i < input_shape.depth; i++)
 	{
 		derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
 			derivative, output_shape.width, output_shape.height, options.w - filters.get_padding(), output_shape.volume());
 	}
 
+	flip_filter(input_derivative.get(), input_shape, false);
+	flip_filter(input_derivative.get(), input_shape, true);
+
+	// TODO calculate bias error
+
+	// TODO Update weights
+	update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
 }
 
 const float* cnn_layer::get_output()

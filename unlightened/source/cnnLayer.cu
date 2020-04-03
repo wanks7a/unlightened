@@ -191,23 +191,6 @@ void flip_filter(float* input,const shape& filter_shape, bool horizontal_lines)
 }
 
 __global__
-void k_update_weights(const float* error, float* weights, const shape* weights_shape, float learning_rate)
-{
-    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (tr_index >= weights_shape->volume())
-        return;
-    weights[tr_index] = weights[tr_index] - learning_rate * error[tr_index];
-}
-
-void update_weights(const float* error, float* weights,const shape& weights_shape, float learning_rate)
-{
-    unsigned int num_blocks = ((weights_shape.volume() + trPerBlock - 1) / trPerBlock);
-    utils::device_struct<shape> device_input_shape(weights_shape);
-    k_update_weights << <num_blocks, trPerBlock >> > (error, weights, device_input_shape.get(), learning_rate);
-    utils::waitAndCheckForErrors();
-}
-
-__global__
 void derivative_input(const float* input, shape* input_shape, float* output, shape* output_shape, const float* weights,
                       unsigned int filter_row,
                       unsigned int filter_col,
@@ -262,5 +245,38 @@ void derivative_input_3d(const float* input,const shape& input_shape, float* out
     utils::device_struct<shape> device_input_shape(input_shape);
     utils::device_struct<shape> device_output_shape(output_shape);
     derivative_input << <blocks, trPerBlock >> > (input, device_input_shape.get(), output, device_output_shape.get(), weights, filter_row, filter_col, filter_offset, weights_offset_batch);
+    utils::waitAndCheckForErrors();
+}
+
+__global__
+void update_weights_kernel(const float* weights_error, shape* weights_shape, float* weights, float learning_rate)
+{
+    const unsigned int tr_index = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned int batches = weights_shape->batches;
+    const unsigned int offset = weights_shape->size();
+    const unsigned int per_batch_offset = weights_shape->volume();
+
+    if (tr_index >= per_batch_offset)
+        return;
+
+    float error = 0.0f;
+    for (int batch = 0; batch < batches; batch++)
+    {
+        error += weights_error[blockIdx.y * offset + batch * per_batch_offset + tr_index];
+    }
+    
+    error = learning_rate * (error / batches);
+    
+    weights[blockIdx.y * per_batch_offset + tr_index] -= error;
+}
+
+void update_weights(const float* weights_error, shape weights_shape, unsigned int num_of_filters, float* weights, float learning_rate)
+{
+    unsigned int num_blocks = ((weights_shape.volume() + trPerBlock - 1) / trPerBlock);
+    dim3 blocks(num_blocks, num_of_filters);
+    utils::device_struct<shape> device_input_shape(weights_shape);
+
+    update_weights_kernel << <blocks, trPerBlock >> > (weights_error, device_input_shape.get(), weights, learning_rate);
+
     utils::waitAndCheckForErrors();
 }

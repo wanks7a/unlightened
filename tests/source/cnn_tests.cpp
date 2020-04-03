@@ -13,6 +13,7 @@ TEST(CNN_TESTS, full_cnn_backprop_v1)
         0, 0, 1
         });
     cnn_layer cnn_l(3, 2);
+    cnn_l.set_learning_rate(1.0f);
     auto opt = cnn_l.get_options();
     opt.zeropadding = true;
     cnn_l.set_options(opt);
@@ -40,6 +41,15 @@ TEST(CNN_TESTS, full_cnn_backprop_v1)
         2, 0, 0,
         0, 3, 0,
         0, 0, 2,
+    };
+
+    std::vector<float> expected_weights = {
+        -1, -1, 0,
+        0, 0, 0,
+        0, -1, -1,
+        -1, 0, 0,
+        0, -2, 0,
+        0,  0, -1
     };
 
     std::vector<float> result = cnn_l.get_native_output();
@@ -70,6 +80,13 @@ TEST(CNN_TESTS, full_cnn_backprop_v1)
     {
         EXPECT_EQ(result[i], expected[i]);
     }
+
+    cnn_l.get_filters().get_weights().getCopy(result);
+    EXPECT_EQ(result.size(), expected_weights.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected_weights[i]);
+    }
 }
 
 TEST(CNN_TESTS, full_cnn_backprop_v2)
@@ -86,6 +103,7 @@ TEST(CNN_TESTS, full_cnn_backprop_v2)
         1, 0, 0
         });
     cnn_layer cnn_l(3, 2);
+    cnn_l.set_learning_rate(1.0f);
     auto opt = cnn_l.get_options();
     opt.zeropadding = true;
     cnn_l.set_options(opt);
@@ -165,6 +183,32 @@ TEST(CNN_TESTS, full_cnn_backprop_v2)
     {
         EXPECT_EQ(result[i], expected[i]);
     }
+
+
+    // testing the weights update here
+    expected = {
+        -1, -1, 0,
+        0, 0, 0,
+        0, -1, -1,
+        0, -1, -1,
+        0, 0, 0,
+        -1, -1, 0,
+        -1, 0, 0,
+        0, -2, 0,
+        0, 0, -1,
+        0, 0, -1,
+        0, 0, 0,
+        -1, 0, 0
+    };
+
+    cnn_l.get_filters().get_weights().getCopy(result);
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+
 }
 
 TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
@@ -191,8 +235,8 @@ TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
     opt.zeropadding = true;
     cnn_l.set_options(opt);
     cnn_l.init_base(test.get_shape());
-
-    EXPECT_TRUE(cnn_l.get_filters().get_weights().setValues({
+    cnn_l.set_learning_rate(1.0f);
+    std::vector<float> weights_values = {
         0, 0, 0,
         1, 1, 1,
         0, 0, 0,
@@ -205,7 +249,9 @@ TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
         1, 0, 0,
         0, 1, 0,
         0, 0, 1
-        }));
+    };
+
+    EXPECT_TRUE(cnn_l.get_filters().get_weights().setValues(weights_values));
 
     EXPECT_TRUE(cnn_l.get_bias_vector().setValues({
         0, 0
@@ -282,8 +328,37 @@ TEST(CNN_TESTS, full_cnn_backprop_v2_batched)
         1, 0, 1,
         2, 0, 0,
         0, 3, 0,
-        0, 0, 2, // and now 2 batches for the 2nd filter
+        0, 0, 2, // and now the batches for the 2nd filter
     };
+
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+
+    // testing the weights update here
+    expected = {
+        1, 2, 1,
+        2, 2, 2,
+        1, 2, 1,
+        1, 2, 1,
+        2, 2, 2,
+        1, 2, 1,
+        3, 0, 1,
+        0, 4, 0,
+        1, 0, 3,
+        3, 0, 1,
+        0, 4, 0,
+        1, 0, 3
+    };
+
+    for (size_t i = 0; i < expected.size(); i++)
+    {
+        expected[i] = weights_values[i] - expected[i] / 2.0f;
+    }
+
+    cnn_l.get_filters().get_weights().getCopy(result);
 
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)
