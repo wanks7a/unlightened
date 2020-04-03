@@ -26,6 +26,7 @@ add_library(
     source/max_pool.cu
     source/activation_layer.cpp
     source/activation_layer.cu
+    source/max_pool.cpp
 )
 
 target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

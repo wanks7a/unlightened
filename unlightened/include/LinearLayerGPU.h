@@ -80,10 +80,18 @@ public:
 
     void backprop(Layer* layer) override
     {
-        cuVector<float> derivativeWRToOutput;
-        derivativeWRToOutput.setValues(layer->derivative_wr_to_input(), size);
-        calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), size - 1, weightsGPU.get());
-        updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1);
+        
+        if (layer->is_device_layer())
+        {
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), size - 1, weightsGPU.get());
+            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1);
+        }
+        else
+        {
+            cuVector<float> derivativeWRToOutput = layer->get_device_derivative();
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), size - 1, weightsGPU.get());
+            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1);
+        }
     }
 
     const float* get_output()
