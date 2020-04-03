@@ -54,9 +54,9 @@ TEST(model, xor_cpu)
 TEST(model, test_xor_gpu)
 {
     NeuralNet test(2, true);
-    test.addLayer(new LinearLayerGPU<false>(10));
+    test.addLayer(new LinearLayerGPU(10));
     test.addLayer(new SigmoidLayerGPU());
-    test.addLayer(new LinearLayerGPU<false>(1));
+    test.addLayer(new LinearLayerGPU(1));
     test.addLayer(new SigmoidLayerGPU());
     OutputLayer* loss = new OutputLayer();
     test.addLayer(loss);

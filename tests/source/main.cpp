@@ -1673,7 +1673,7 @@ TEST(gpu_tests, dense_layer1024)
 {
     std::vector<float> input;
     input.resize(1024 * 1024, 1.0f);
-    LinearLayerGPU<false> l(1024);
+    LinearLayerGPU l(1024);
     shape input_shape(1, 1024);
     l.init(input_shape);
     EXPECT_EQ(l.get_shape().size(), 1024 + 1); // because of bias

@@ -8,11 +8,9 @@ void linearLayerForwardPassGPU(float* output, const float* weights, const float*
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, size_t outputSize, const float* weights);
 void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize);
 
-template <bool val>
 class LinearLayerGPU : public Layer
 {
 private:
-    static constexpr bool smh = val;
     std::vector<float> weight;
     std::vector<float> output;
     std::vector<float> derivativeWRtoInput;
@@ -68,9 +66,9 @@ public:
         input_shape.width = prevLayer->get_shape().volume(); // represent the value as 1d array
         input_shape.batches = prevLayer->get_shape().batches;
 
-        if (!smh)
+        if (!prevLayer->is_device_layer())
         {
-            inputVectorGPU.setValues(inputPtr, input_size);
+            inputVectorGPU = prevLayer->get_device_output();
             inputPtr = inputVectorGPU.get();
             linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, true);
         }
