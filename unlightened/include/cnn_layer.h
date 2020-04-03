@@ -12,14 +12,14 @@ void derivative_input_3d(const float* input, const shape& input_shape, float* ou
     unsigned int filter_offset,
     unsigned int weights_offset_batch);
 void update_weights(const float* weights_error, shape weights_shape, unsigned int num_of_filters, float* weights, float learning_rate);
+void update_bias(const float* derivative, shape derivative_shape, float* bias, float learning_rate);
 
 class cnn_layer : public Layer
 {
     filter_options options;
-    filter_conv2d filters;
+    filter filters;
     size_t filters_size;
     cuVector<float> output;
-    cuVector<float> bias;
     cuVector<float> input_derivative;
     Layer* input_layer;
     cuVector<float> layer_input;
@@ -38,7 +38,7 @@ public:
         return options;
     }
 
-    filter_conv2d& get_filters()
+    filter& get_filters()
     {
         return filters;
     }
@@ -50,6 +50,6 @@ public:
 
     cuVector<float>& get_bias_vector()
     {
-        return bias;
+        return filters.get_bias();
     }
 };

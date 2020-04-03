@@ -4,6 +4,7 @@
 #include <GpuUtils.h>
 
 #define trPerBlock 256
+#define biasThreadPerBlock 1024
 
 __global__
 void full_convoltion_3d_filter(const float* input,const shape* input_shape,
@@ -277,6 +278,59 @@ void update_weights(const float* weights_error, shape weights_shape, unsigned in
     utils::device_struct<shape> device_input_shape(weights_shape);
 
     update_weights_kernel << <blocks, trPerBlock >> > (weights_error, device_input_shape.get(), weights, learning_rate);
+
+    utils::waitAndCheckForErrors();
+}
+
+
+__global__
+void update_bias_kernel(const float* derivative, shape* derivative_shape, float* bias, float learning_rate)
+{
+    __shared__ float bias_shared[biasThreadPerBlock];
+    const unsigned int tr_index = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int batches = derivative_shape->batches;
+    const unsigned int offset = derivative_shape->area();
+    const unsigned int batch_offset = derivative_shape->volume();
+    bias_shared[tr_index] = 0.0f;
+
+    if (tr_index >= derivative_shape->area())
+        return;
+
+    for (int b = 0; b < batches; b++)
+    {
+        bias_shared[tr_index] += derivative[b * batch_offset + blockIdx.y * offset + tr_index];
+    }
+    __syncthreads();
+
+    int loop = biasThreadPerBlock;
+
+    while (loop > 1)
+    {
+        loop = loop / 2;
+        if (tr_index < loop)
+        {
+            bias_shared[tr_index] += bias_shared[tr_index + loop];
+        }
+        else
+            return;
+        __syncthreads();
+    }
+    
+    if (tr_index == 0)
+    {
+        bias_shared[0] = -(learning_rate * bias_shared[0]);
+        atomicAdd(&bias[blockIdx.y], bias_shared[0]);
+    }
+}
+
+
+void update_bias(const float* derivative, shape derivative_shape, float* bias, float learning_rate)
+{
+    unsigned int num_blocks = ((derivative_shape.area() + biasThreadPerBlock - 1) / biasThreadPerBlock);
+    dim3 blocks(num_blocks, derivative_shape.depth);
+    utils::device_struct<shape> device_input_shape(derivative_shape);
+
+    update_bias_kernel << <blocks, biasThreadPerBlock >> > (derivative, device_input_shape.get(), bias, learning_rate);
 
     utils::waitAndCheckForErrors();
 }

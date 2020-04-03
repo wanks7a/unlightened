@@ -650,3 +650,102 @@ TEST(CNN_TESTS, flip_test_vertical_v3)
         EXPECT_EQ(result[i], expected[i]);
     }
 }
+
+TEST(CNN_TESTS, bias_update_v1)
+{
+    shape deriv_shape(3, 3, 2, 1);
+    cuVector<float> derivative;
+    EXPECT_TRUE(derivative.setValues(
+        {
+            1,2,3,
+            4,5,6,
+            7,8,9,
+            1,1,1,
+            2,2,2,
+            3,3,3
+        }));
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        0, 0
+        }));
+    update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
+
+    std::vector<float> expected = {
+        -45, -18
+    };
+
+    std::vector<float> result;
+    bias.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(CNN_TESTS, bias_update_v2)
+{
+    shape deriv_shape(3, 3, 2, 2);
+    cuVector<float> derivative;
+    EXPECT_TRUE(derivative.setValues(
+        {
+            1,2,3,
+            4,5,6,
+            7,8,9,
+            1,1,1,
+            2,2,2,
+            3,3,3,
+            1,2,3,
+            4,5,6,
+            7,8,9,
+            1,1,1,
+            2,2,2,
+            3,3,3,
+        }));
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        0, 0
+        }));
+    update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
+
+    std::vector<float> expected = {
+        -90, -36
+    };
+
+    std::vector<float> result;
+    bias.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}
+
+TEST(CNN_TESTS, bias_update_v3)
+{
+    shape deriv_shape(3, 3, 1);
+    cuVector<float> derivative;
+    EXPECT_TRUE(derivative.setValues(
+        {
+            1,2,3,
+            4,5,6,
+            7,8,9
+        }));
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        0
+        }));
+    update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
+
+    std::vector<float> expected = {
+        -45
+    };
+
+    std::vector<float> result;
+    bias.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], expected[i]);
+    }
+}

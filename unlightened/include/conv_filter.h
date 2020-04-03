@@ -17,13 +17,14 @@ struct filter_options
     }
 };
 
-class filter_conv2d
+class filter
 {
     filter_options options;
     shape input_shape;
     shape output_shape;
     cuVector<float> weights;
     cuVector<float> weights_derivative;
+    cuVector<float> bias;
     size_t padding = 0;
     shape derivatives_shape;
     shape filter_shape;
@@ -34,11 +35,11 @@ class filter_conv2d
     }
 
 public:
-    filter_conv2d() : options(1,1,1)
+    filter() : options(1,1,1)
     {
     }
 
-    filter_conv2d(filter_options opt) : options(opt)
+    filter(filter_options opt) : options(opt)
     {
     }
 
@@ -77,6 +78,7 @@ public:
         filter_shape.height = options.h;
         filter_shape.depth = options.channels;
         filter_shape.batches = 1;
+        bias.resize(options.num_of_filters, 1.0f);
         return true;
     }
 
@@ -143,5 +145,10 @@ public:
     shape get_filter_shape() const
     {
         return filter_shape;
+    }
+
+    cuVector<float>& get_bias()
+    {
+        return bias;
     }
 };

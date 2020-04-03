@@ -13,7 +13,6 @@ void cnn_layer::init(const shape& input)
 	output_shape = filters.get_output_shape();
 	output.resize(output_shape.size());
 	input_derivative.resize(input.size());
-	bias.resize(filters_size, 1.0f);
 }
 
 void cnn_layer::forward_pass(Layer* prevLayer)
@@ -30,7 +29,7 @@ void cnn_layer::forward_pass(Layer* prevLayer)
 
 	for (int i = 0; i < filters.size(); i++)
 	{
-		conv_3d(input, input_layer->get_shape(), output.get() + i * output_shape.area(), output_shape, filters[i], bias.get(), options.w, options.h, options.w - filters.get_padding());
+		conv_3d(input, input_layer->get_shape(), output.get() + i * output_shape.area(), output_shape, filters[i], filters.get_bias().get(), options.w, options.h, options.w - filters.get_padding());
 	}
 }
 
@@ -82,7 +81,7 @@ void cnn_layer::backprop(Layer* layer)
 	flip_filter(input_derivative.get(), input_shape, false);
 	flip_filter(input_derivative.get(), input_shape, true);
 
-	// TODO calculate bias error
+	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
 
 	update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
 }
