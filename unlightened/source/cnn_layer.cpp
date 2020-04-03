@@ -84,7 +84,6 @@ void cnn_layer::backprop(Layer* layer)
 
 	// TODO calculate bias error
 
-	// TODO Update weights
 	update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
 }
 
