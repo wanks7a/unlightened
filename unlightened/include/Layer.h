@@ -38,6 +38,12 @@ public:
         return result;
     }
 
+    void get_device_output(cuVector<float>& v)
+    {
+        if (!device_layer)
+            v.setValues(get_output(), output_shape.size());
+    }
+
     std::vector<float> get_native_output()
     {
         if (device_layer)

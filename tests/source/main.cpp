@@ -703,7 +703,7 @@ TEST(gpu_tests, max_pool_back_prop_depth1)
         0, 7, 8, 0, 9
     };
 
-    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(expected.size(), result.size());
@@ -752,7 +752,7 @@ TEST(gpu_tests, max_pool_back_prop_depth2)
         0, 3, 0, 2, 1
     };
 
-    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(expected.size(), result.size());
@@ -823,7 +823,7 @@ TEST(gpu_tests, max_pool_back_prop_depth2_batch2)
         0, 7, 8, 0, 9
     };
 
-    max_pool_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling_backprop(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     EXPECT_EQ(expected.size(), result.size());
@@ -868,7 +868,7 @@ TEST(gpu_tests, max_pool_depth1)
         3, 1, 0,
         0, 0, 0
     };
-    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<char> mask_result;
@@ -928,7 +928,7 @@ TEST(gpu_tests, max_pool_depth2)
         3, 2, 0,
         0, 0, 0
     };
-    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<char> mask_result;
@@ -1012,7 +1012,7 @@ TEST(gpu_tests, max_pool_depth2_batch2)
         3, 2, 0,
         0, 0, 0,
     };
-    max_pool(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
+    max_pooling(input.get(), input_shape, output.get(), output_shape, mask.get(), 2);
     std::vector<float> result;
     output.getCopy(result);
     std::vector<char> mask_result;

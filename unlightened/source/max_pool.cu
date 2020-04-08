@@ -42,7 +42,7 @@ void k_max_pool(const float* input, shape* input_shape, float* output, shape* ou
     mask[batch_offset_output + tr_index] = mask_temp;
 }
 
-void max_pool(const float* input,const shape& input_shape, float* output, const shape& output_shape, char* mask, int filter_size)
+void max_pooling(const float* input,const shape& input_shape, float* output, const shape& output_shape, char* mask, int filter_size)
 {
     unsigned int threads_per_block = 256;
     unsigned int num_blocks = ((output_shape.volume() + threads_per_block - 1) / threads_per_block);
@@ -96,7 +96,7 @@ void k_max_pool_backprop(const float* input, shape* input_shape, float* output, 
     output[batch_offset_output + depth_offset_output + (row * FILTER_SIZE + mask_row_idx) * output_width + col * FILTER_SIZE + mask_col_idx] = input[batch_offset_input + tr_index];
 }
 
-void max_pool_backprop(const float* input, const shape& input_shape, float* output, const shape& output_shape, char* mask, int filter_size)
+void max_pooling_backprop(const float* input, const shape& input_shape, float* output, const shape& output_shape, char* mask, int filter_size)
 {
     unsigned int threads_per_block = 256;
     unsigned int num_blocks = ((input_shape.volume() + threads_per_block - 1) / threads_per_block);
