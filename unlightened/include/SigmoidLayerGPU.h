@@ -18,6 +18,7 @@ class SigmoidLayerGPU : public Layer
 
     void init(const shape& input) override
     {
+        device_layer = true;
         input_size = input.size();
         size = input_size;
         output.resize(size);
@@ -46,16 +47,12 @@ class SigmoidLayerGPU : public Layer
 
     const float* get_output() override
     {
-        return output.data();
+        return outputGPU.get();
     }
 
     const float* derivative_wr_to_input() override
     {
-        return derivativeWRtoInput.data();
-    }
-
-    void printLayer() override
-    {
+        return derivativeWRtoInputGPU.get();
     }
 
     ~SigmoidLayerGPU() = default;

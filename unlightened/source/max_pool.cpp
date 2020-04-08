@@ -1,2 +1,2 @@
-//#include <max_pool.h>
-//
+#include <max_pool.h>
+

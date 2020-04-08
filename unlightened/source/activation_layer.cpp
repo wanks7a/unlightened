@@ -21,9 +21,3 @@ const float* activation_layer::derivative_wr_to_input()
 {
 	return derivative.get();
 }
-
-void activation_layer::printLayer()
-{
-
-}
-

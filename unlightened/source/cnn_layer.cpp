@@ -95,7 +95,3 @@ const float* cnn_layer::derivative_wr_to_input()
 {
 	return input_derivative.get();
 }
-
-void cnn_layer::printLayer()
-{
-}

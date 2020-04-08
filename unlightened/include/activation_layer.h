@@ -22,5 +22,4 @@ public:
     void backprop(Layer* layer) override;
     const float* get_output() override;
     const float* derivative_wr_to_input() override;
-    void printLayer() override;
 };

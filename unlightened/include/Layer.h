@@ -20,7 +20,7 @@ public:
     virtual void backprop(Layer* layer) = 0;
     virtual const float* get_output() = 0;
     virtual const float* derivative_wr_to_input() = 0;
-    virtual void printLayer() = 0;
+
     virtual ~Layer() = default;
     void set_learning_rate(float rate)
     {
@@ -40,10 +40,14 @@ public:
 
     std::vector<float> get_native_output()
     {
-        std::vector<float> result;
         if (device_layer)
-            result = cuVector<float>::from_device_host(get_output(), output_shape.size());
-        return result;
+            return cuVector<float>::from_device_host(get_output(), output_shape.size());
+        else
+        {
+            std::vector<float> result(output_shape.size());
+            memcpy(result.data(), get_output(), output_shape.size() * sizeof(float));
+            return result;
+        }
     }
 
     cuVector<float> get_device_derivative()

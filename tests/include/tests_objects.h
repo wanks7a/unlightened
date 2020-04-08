@@ -21,10 +21,6 @@ struct test_layer : public Layer
         return output.get();
     };
 
-    void printLayer() override
-    {
-    }
-
     void set_output_shape(const shape& sh)
     {
         output_shape = sh;

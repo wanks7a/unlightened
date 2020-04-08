@@ -53,13 +53,4 @@ public:
     {
         return outputNeurons.data();
     };
-
-    void printLayer() override
-    {
-        std::cout << "Input Layer" << std::endl;
-        for (size_t i = 0; i < output_shape.height; i++)
-        {
-            std::cout << "input[" << i << "] = " << outputNeurons[i] << std::endl;
-        }
-    }
 };

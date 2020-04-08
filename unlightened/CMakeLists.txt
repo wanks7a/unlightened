@@ -17,6 +17,7 @@ add_library(
     include/max_pool.h
     include/activation_layer.h
     include/csv_parser.h
+    include/loss_layer.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -27,6 +28,8 @@ add_library(
     source/activation_layer.cpp
     source/activation_layer.cu
     source/max_pool.cpp
+    source/loss_layer.cu
+    source/loss_layer.cpp
 )
 
 target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

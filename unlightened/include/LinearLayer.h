@@ -111,20 +111,6 @@ public:
         return this->derivativeWRtoInput.data();
     }
 
-    void printLayer() override
-    {
-        std::cout << "Input : " << input_size << " Output: " << size << std::endl;
-        for (size_t i = 0; i < size - 1; i++)
-        {
-            std::cout << "Neuron : " << i << std::endl;
-            for (size_t j = 0; j < input_size; j++)
-            {
-                std::cout << "weight[" << i << "]" << "[" << j << "] = " << weight[i * input_size + j] << " " << std::endl;
-            }
-        }
-
-    }
-
     ~LinearLayer()
     {
     }

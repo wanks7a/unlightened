@@ -4,8 +4,8 @@
 #include <iostream>
 
 class OutputLayer : public Layer
-{
-    const float* predictedValue = nullptr;
+{   
+    std::vector<float> predictedValue;
     std::vector<float> derivativeWRToInput;
     std::vector<float> observedValues;
     size_t size;
@@ -26,7 +26,7 @@ public:
 
     void forward_pass(Layer* prevLayer) override
     {
-        predictedValue = prevLayer->get_output();
+        predictedValue = prevLayer->get_native_output();
     };
 
     void backprop(Layer* layer) override
@@ -49,20 +49,11 @@ public:
 
     const float* get_output() override
     {
-        return predictedValue;
+        return predictedValue.data();
     }
     const float* derivative_wr_to_input() override
     {
         return derivativeWRToInput.data();
-    }
-
-    void printLayer() override
-    {
-        std::cout << "Output Layer" << std::endl;
-        for (size_t i = 0; i < size; i++)
-        {
-            std::cout << "output[" << i << "] = " << predictedValue[i] << std::endl;
-        }
     }
 
     ~OutputLayer() = default;

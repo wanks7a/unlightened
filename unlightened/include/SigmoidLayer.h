@@ -52,15 +52,6 @@ class SigmoidLayer : public Layer
         return derivativeWRtoInput.data();
     }
 
-    void printLayer() override
-    {
-        std::cout << "Sigmoid Layer" << std::endl;
-        for (size_t i = 0; i < size; i++)
-        {
-            std::cout << "output[" << i << "] = " << output[i] << std::endl;
-        }
-    }
-
     ~SigmoidLayer() = default;
 private:
     float sigmoid(float input)

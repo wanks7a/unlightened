@@ -25,6 +25,7 @@ public:
 
     LinearLayerGPU(size_t neuron_size) : size(neuron_size)
     {
+        device_layer = true;
     }
 
     void init(const shape& input) override
@@ -103,9 +104,6 @@ public:
     {
         derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
         return derivativeWRtoInput.data();
-    }
-    void printLayer()
-    {
     }
 
     ~LinearLayerGPU()

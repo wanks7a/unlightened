@@ -40,15 +40,7 @@ public:
             layers[i]->backprop(layers[i + 1]);
         }
     }
-    void print()
-    {
-        for (const auto& l : layers)
-        {
-            l->printLayer();
-            std::cout << std::endl;
-        }
 
-    }
     void set_learning_rate(float learning_rate)
     {
         if (learning_rate > 0)
