@@ -4,13 +4,12 @@
 
 class NeuralNet
 {
-    size_t inputSize;
     std::vector<Layer*> layers;
 public:
 
-    NeuralNet(size_t inputLayerSize, bool useBias = true) : inputSize(inputLayerSize)
+    NeuralNet(shape input_shape)
     {
-        addLayer(new InputLayer(inputLayerSize, useBias));
+        addLayer(new InputLayer(input_shape));
     }
 
     void addLayer(Layer* layer)

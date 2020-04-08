@@ -5,35 +5,25 @@
 
 class InputLayer : public Layer
 {
-    std::vector<float> outputNeurons;
-    shape input_shape;
+    std::vector<float> output;
 public:
-    InputLayer(size_t size, bool useBias)
+    InputLayer(shape shape)
     {
-        input_shape.height = size;
-        if (useBias)
-            size = size + 1;
-        outputNeurons.resize(size);
-        output_shape.height = size;
-        outputNeurons.back() = 1.0f;
+        input_shape = shape;
+        output_shape = shape;
+        output.resize(output_shape.size());
     }
 
     void init(const shape& input) override
     {
     }
 
-    bool setInput(const float* data, size_t dataSize)
+    bool set_input(const float* data, size_t size)
     {
-        if (dataSize != input_shape.size())
+        if (size != input_shape.size())
             return false;
-        memcpy(outputNeurons.data(), data, dataSize * sizeof(float));
+        memcpy(output.data(), data, size * sizeof(float));
         return true;
-    }
-
-    void set_output_shape(shape output_sh)
-    {
-        output_shape = output_sh;
-        input_shape = output_sh;
     }
 
     void forward_pass(Layer* prevLayer) override
@@ -51,6 +41,6 @@ public:
 
     const float* get_output() override
     {
-        return outputNeurons.data();
+        return output.data();
     };
 };
