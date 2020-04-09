@@ -5,15 +5,13 @@
 #include <device_memory.h>
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted);
-void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, size_t outputSize, const float* weights);
-void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize);
+void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, shape output_shape, const float* weights);
+void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape);
 
 class LinearLayerGPU : public Layer
 {
 private:
     std::vector<float> weight;
-    std::vector<float> output;
-    std::vector<float> derivativeWRtoInput;
     cuVector<float> weightsGPU;
     cuVector<float> outputGPU;
     cuVector<float> derivativeWRtoInputGPU;
@@ -30,22 +28,21 @@ public:
 
     void init(const shape& input) override
     {
-        input_size = input.size();
+        input_size = input.volume();
         weight.resize(input_size * size);
-        derivativeWRtoInput.resize(input_size);
-        derivativeWRtoInputGPU.setValues(derivativeWRtoInput);
+        derivativeWRtoInputGPU.resize(input.size(), 0.0f);
         // +1 is for the bias
-        output.resize(size + 1);
-        output[size] = 1.0f;
-        outputGPU.setValues(output);
+        outputGPU.resize((size + 1) * input.batches, 1.0f);
 
         for (size_t i = 0; i < input_size * size; i++)
         {
             weight[i] = 1.0f / (rand() % 1000);
         }
         weightsGPU.setValues(weight);
+        weightsGPU.randomize();
         size = size + 1;
         output_shape.width = size;
+        output_shape.batches = input_shape.batches;
     }
 
     bool set_weights(const std::vector<float>& w)
@@ -81,17 +78,17 @@ public:
 
     void backprop(Layer* layer) override
     {
-        
+        shape temp_out_shape = output_shape;
         if (layer->is_device_layer())
         {
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), size - 1, weightsGPU.get());
-            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get());
+            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape);
         }
         else
         {
             cuVector<float> derivativeWRToOutput = layer->get_device_derivative();
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), size - 1, weightsGPU.get());
-            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get());
+            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape);
         }
     }
 

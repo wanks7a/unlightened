@@ -29,51 +29,6 @@ protected:
     //}
 };
 
-//#include <chrono>
-//TEST(gpu_tests, mnist_d)
-//{
-//    NeuralNet net(28 * 28);
-//    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_train.csv");
-//
-//    std::unordered_map<float, std::array<float, 10>> mm =
-//    {
-//        {0.0f, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0} },
-//        {1.0f, {0, 1, 0, 0, 0, 0, 0, 0, 0, 0} },
-//        {2.0f, {0, 0, 1, 0, 0, 0, 0, 0, 0, 0} },
-//        {3.0f, {0, 0, 0, 1, 0, 0, 0, 0, 0, 0} },
-//        {4.0f, {0, 0, 0, 0, 1, 0, 0, 0, 0, 0} },
-//        {5.0f, {0, 0, 0, 0, 0, 1, 0, 0, 0, 0} },
-//        {6.0f, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0} },
-//        {7.0f, {0, 0, 0, 0, 0, 0, 0, 1, 0, 0} },
-//        {8.0f, {0, 0, 0, 0, 0, 0, 0, 0, 1, 0} },
-//        {9.0f, {0, 0, 0, 0, 0, 0, 0, 0, 0, 1} },
-//    };
-//    net.getInputLayer().set_output_shape(shape(28, 28));
-//    net.addLayer(new LinearLayerGPU<false>(128));
-//    net.addLayer(new SigmoidLayerGPU());
-//    net.addLayer(new LinearLayerGPU<false>(128));
-//    net.addLayer(new SigmoidLayerGPU());
-//    net.addLayer(new LinearLayerGPU<false>(10));
-//    net.addLayer(new SigmoidLayerGPU());
-//    OutputLayer* loss = new OutputLayer();
-//    net.addLayer(loss);
-//
-//    for (size_t i = 0; i < mnist.rows.size(); i++)
-//    {
-//        net.getInputLayer().setInput(mnist.rows[i].elements.data() + 1, 28 * 28);
-//        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-//
-//        net.predict();
-//        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-//        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-//        std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
-//        //auto it = mm.find(mnist.rows[i].elements[0]);
-//        //net.
-//        //net.backprop()
-//    }
-//}
-//
-
 TEST(gpu_tests, backprop_filter_test)
 {
     shape input_shape(4, 4, 2, 2);

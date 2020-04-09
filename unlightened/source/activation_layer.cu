@@ -93,10 +93,10 @@ void activation_layer::backprop(Layer* layer)
     const float* input = nullptr;
     cuVector<float> temp;
     if (layer->is_device_layer())
-        input = layer->get_output();
+        input = layer->derivative_wr_to_input();
     else
     {
-        temp.setValues(layer->get_output(), layer->get_shape().size());
+        temp.setValues(layer->derivative_wr_to_input(), output_shape.size());
         input = temp.get();
     }
     unsigned int blocks = (output_shape.volume() + 255) / 256;

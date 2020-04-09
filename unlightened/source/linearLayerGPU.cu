@@ -4,7 +4,7 @@
 #include <GpuUtils.h>
 #include <algorithm>
 
-#define trPerBlock 256
+#define trPerBlock 1024
 
 template <typename T, bool BIAS_NOT_INCLUDED>
 __global__ void k_linearLayerForwardPass(T* output,const T* weights, const T* input, size_t inputSize, size_t outputSize)
@@ -50,12 +50,23 @@ __global__ void k_calcDerivativeWRtoInput(T* derivativeWRtoInput, size_t inputSi
     }
 }
 
-void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, size_t outputSize, const float* weights)
+void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
-    k_calcDerivativeWRtoInput << <blocks, threadsPerBlock >> > (derivativeWRtoInput, inputSize, derivateWRtoOutput, outputSize, weights);
+    std::vector<cudaStream_t> streams;
+    size_t outputSize = output_shape.volume() - 1;
+    streams.resize(output_shape.batches);
+    for (size_t i = 0; i <  streams.size(); i++)
+    {
+        cudaStreamCreate(&streams[i]);
+        k_calcDerivativeWRtoInput << <blocks, threadsPerBlock,0, streams[i]>> > (derivativeWRtoInput + i * inputSize, inputSize, derivateWRtoOutput + i * output_shape.volume(), outputSize, weights);
+    }
     utils::waitAndCheckForErrors();
+    for (size_t i = 0; i < streams.size(); i++)
+    {
+        cudaStreamDestroy(streams[i]);
+    }
 }
 
 template <typename T>
@@ -72,10 +83,20 @@ __global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput
     }
 }
 
-void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize)
+void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
-    k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize);
+    std::vector<cudaStream_t> streams;
+    streams.resize(output_shape.batches);
+    for (size_t i = 0; i < output_shape.batches; i++)
+    {
+        cudaStreamCreate(&streams[i]);
+        k_updateWeightsAndBias << <blocks, threadsPerBlock, 0, streams[i] >> > (weights, derivativeWRtoOutput + i * output_shape.volume(), input, inputSize, outputSize);
+    }
     utils::waitAndCheckForErrors();
+    for (size_t i = 0; i < streams.size(); i++)
+    {
+        cudaStreamDestroy(streams[i]);
+    }
 }

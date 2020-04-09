@@ -26,6 +26,14 @@ public:
         return true;
     }
 
+    bool set_input(const std::vector<float>& data)
+    {
+        if (data.size() != input_shape.size())
+            return false;
+        output = data;
+        return true;
+    }
+
     void forward_pass(Layer* prevLayer) override
     {
     }

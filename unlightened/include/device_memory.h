@@ -3,6 +3,8 @@
 #include "device_launch_parameters.h"
 #include <iostream>
 #include <vector>
+#include <random>
+#include <chrono>
 
 template <typename T>
 class cuVector
@@ -140,6 +142,28 @@ public:
 			}
 		}
 		return true;
+	}
+
+	void randomize()
+	{
+		if (ptr != nullptr)
+		{
+			std::vector<T> rand_vals;
+			rand_vals.reserve(currentSize);
+			std::mt19937_64 rng;
+			// initialize the random number generator with time-dependent seed
+			uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+			std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
+			rng.seed(ss);
+			// initialize a uniform distribution between 0 and 1
+			std::uniform_real_distribution<T> unif(0.0f, 1.0f);
+
+			for (int i = 0; i < currentSize; i++)
+			{
+				rand_vals.emplace_back(unif(rng));
+			}
+			setValues(rand_vals);
+		}
 	}
 
 	void memset(int val = 0)
