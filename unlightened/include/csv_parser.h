@@ -24,20 +24,19 @@ public:
         {
             while (!file.eof())
             {
-                row<std::string> temp_row;
+                row<T> temp_row;
                 temp_row.elements = std::move(get_line_tokens(file));
-                csv_rows.emplace_back(std::move(temp_row));
+                rows.emplace_back(std::move(temp_row));
             }
             file.close();
-            csv_rows.erase(csv_rows.begin() + csv_rows.size() - 1);
-            convert_csv_rows(csv_rows);
+            rows.erase(rows.begin() + rows.size() - 1);
         }
     }
 
 private:
-    std::vector<std::string> get_line_tokens(std::istream& str)
+    std::vector<T> get_line_tokens(std::istream& str)
     {
-        std::vector<std::string>   result;
+        std::vector<T>             result;
         std::string                line;
         std::getline(str, line);
 
@@ -46,27 +45,14 @@ private:
 
         while (std::getline(lineStream, cell, ','))
         {
-            result.push_back(cell);
+            result.push_back(convert(cell));
         }
 
         if (!lineStream && cell.empty())
         {
-            result.push_back("");
+            result.push_back(T());
         }
         return result;
-    }
-
-    void convert_csv_rows(std::vector<row<std::string>>& csv_rows)
-    {
-        for (const auto& r : csv_rows)
-        {
-            row<T> temp_row;
-            for (const auto& str : r.elements)
-            {
-                temp_row.elements.emplace_back(convert(str));
-            }
-            rows.emplace_back(std::move(temp_row));
-        }
     }
 
     template <typename Value = T, std::enable_if_t<std::is_floating_point<Value>::value, void*> = nullptr>

@@ -66,7 +66,7 @@ public:
         shape input_shape;
         input_shape.width = prevLayer->get_shape().volume(); // represent the value as 1d array
         input_shape.batches = prevLayer->get_shape().batches;
-
+        
         if (!prevLayer->is_device_layer())
         {
             inputVectorGPU = prevLayer->get_device_output();
@@ -97,13 +97,11 @@ public:
 
     const float* get_output()
     {
-        outputGPU.getCopy(output);
-        return output.data();
+        return outputGPU.get();
     };
     const float* derivative_wr_to_input()
     {
-        derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
-        return derivativeWRtoInput.data();
+        return derivativeWRtoInputGPU.get();
     }
 
     ~LinearLayerGPU()
