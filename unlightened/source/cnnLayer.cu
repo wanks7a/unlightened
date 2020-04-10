@@ -318,7 +318,7 @@ void update_bias_kernel(const float* derivative, shape* derivative_shape, float*
     
     if (tr_index == 0)
     {
-        bias_shared[0] = -(learning_rate * bias_shared[0]);
+        bias_shared[0] = -(learning_rate * (bias_shared[0] / (derivative_shape->area()  * batches)));
         atomicAdd(&bias[blockIdx.y], bias_shared[0]);
     }
 }
