@@ -671,7 +671,7 @@ TEST(CNN_TESTS, bias_update_v1)
     update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
 
     std::vector<float> expected = {
-        -45, -18
+        -5, -2
     };
 
     std::vector<float> result;
@@ -709,7 +709,7 @@ TEST(CNN_TESTS, bias_update_v2)
     update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
 
     std::vector<float> expected = {
-        -90, -36
+        -5, -2
     };
 
     std::vector<float> result;
@@ -738,7 +738,7 @@ TEST(CNN_TESTS, bias_update_v3)
     update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
 
     std::vector<float> expected = {
-        -45
+        -5
     };
 
     std::vector<float> result;
