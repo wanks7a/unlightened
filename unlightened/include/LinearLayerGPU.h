@@ -5,8 +5,8 @@
 #include <device_memory.h>
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted);
-void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, shape output_shape, const float* weights);
-void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape);
+void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, shape output_shape, const float* weights, bool last_out_is_bias);
+void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape, float learning_rate);
 
 class LinearLayerGPU : public Layer
 {
@@ -34,10 +34,6 @@ public:
         // +1 is for the bias
         outputGPU.resize((size + 1) * input.batches, 1.0f);
 
-        for (size_t i = 0; i < input_size * size; i++)
-        {
-            weight[i] = 1.0f / (rand() % 1000);
-        }
         weightsGPU.setValues(weight);
         weightsGPU.randomize();
         size = size + 1;
@@ -81,14 +77,14 @@ public:
         shape temp_out_shape = output_shape;
         if (layer->is_device_layer())
         {
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get());
-            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get(), true);
+            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape, learing_rate);
         }
         else
         {
             cuVector<float> derivativeWRToOutput = layer->get_device_derivative();
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get());
-            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get(), true);
+            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape, learing_rate);
         }
     }
 

@@ -49,7 +49,14 @@ public:
         }
         return false;
     }
-
+    void print_predicted()
+    {
+        std::cout << "Values :" << std::endl;
+        for (size_t i = 0; i < size; i++)
+        {
+            printf("Value [%d] = %.2f\n", i, predictedValue[i]);
+        }
+    }
     const float* get_output() override
     {
         return predictedValue.data();

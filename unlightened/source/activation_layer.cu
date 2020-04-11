@@ -34,6 +34,27 @@ struct sigmoid
     }
 };
 
+struct relu
+{
+    __host__ __device__
+    inline float operator()(const float& input) const
+    {
+        if (input > 0)
+            return  input;
+        else
+            return 0;
+    }
+
+    __host__ __device__
+    inline float operator()(const float& chain_rule_input, const float& activation_output) const
+    {
+        if (activation_output > 0)
+            return chain_rule_input;
+        else
+            return 0.01f;
+    }
+};
+
 
 template <typename Func> __global__
 void activation(const float* input, shape* input_shape, float* output)
@@ -82,6 +103,7 @@ void activation_layer::forward_pass(Layer* prevLayer)
     {
     case activation_function::Sigmoid: activation<sigmoid><<<blocks, 256>>>(input, input_shape.get(), output.get()); break;
     case activation_function::Identity: activation<identity><<<blocks, 256>>>(input, input_shape.get(), output.get()); break;
+    case activation_function::ReLU: activation<relu> << <blocks, 256 >> > (input, input_shape.get(), output.get()); break;
     default:
         break;
     }
@@ -105,6 +127,7 @@ void activation_layer::backprop(Layer* layer)
     {
     case activation_function::Sigmoid: activation_derivative<sigmoid> << <blocks, 256 >> > (input, input_shape.get(), output.get(), derivative.get()); break;
     case activation_function::Identity: activation_derivative<identity> << <blocks, 256 >> > (input, input_shape.get(), output.get(), derivative.get()); break;
+    case activation_function::ReLU: activation_derivative<relu> << <blocks, 256 >> > (input, input_shape.get(), output.get(), derivative.get()); break;
     default:
         break;
     }

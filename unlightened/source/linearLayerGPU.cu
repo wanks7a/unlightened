@@ -50,12 +50,14 @@ __global__ void k_calcDerivativeWRtoInput(T* derivativeWRtoInput, size_t inputSi
     }
 }
 
-void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights)
+void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights, bool last_out_is_bias)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
     std::vector<cudaStream_t> streams;
-    size_t outputSize = output_shape.volume() - 1;
+    size_t outputSize = output_shape.volume();
+    if(last_out_is_bias)
+        outputSize -= 1;
     streams.resize(output_shape.batches);
     for (size_t i = 0; i <  streams.size(); i++)
     {
@@ -70,33 +72,28 @@ void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const
 }
 
 template <typename T>
-__global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize)
+__global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize, float learning_rate, size_t batches, size_t out_offset)
 {
-    float learning_rate = 0.1f;
-    size_t neuronIndex = blockIdx.x * blockDim.x + threadIdx.x;
-    if( neuronIndex < outputSize )
+    size_t weightIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    size_t derivOutIdx = weightIndex / inputSize;
+    size_t inpIdx = weightIndex - derivOutIdx * inputSize;
+    if(weightIndex < (inputSize * outputSize))
     {
-        for (size_t i = 0; i < inputSize; i++)
+        float error = 0.0f;
+        for (int i = 0; i < batches; i++)
         {
-            weights[neuronIndex * inputSize + i] = weights[neuronIndex * inputSize + i] - learning_rate * input[i] * derivativeWRtoOutput[neuronIndex];
+            error += input[inpIdx + i * inputSize] * derivativeWRtoOutput[derivOutIdx + i * out_offset];
         }
+        weights[weightIndex] = weights[weightIndex] - learning_rate * error / batches;
     }
 }
 
-void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape)
+void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape, float learning_rate)
 {
-    auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize, static_cast<size_t>(trPerBlock)));
-    auto blocks = utils::getBlockSize(threadsPerBlock, outputSize);
-    std::vector<cudaStream_t> streams;
-    streams.resize(output_shape.batches);
-    for (size_t i = 0; i < output_shape.batches; i++)
-    {
-        cudaStreamCreate(&streams[i]);
-        k_updateWeightsAndBias << <blocks, threadsPerBlock, 0, streams[i] >> > (weights, derivativeWRtoOutput + i * output_shape.volume(), input, inputSize, outputSize);
-    }
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize * inputSize, static_cast<size_t>(trPerBlock)));
+    auto blocks = utils::getBlockSize(threadsPerBlock, outputSize * inputSize);
+
+    k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput /*+ i * output_shape.volume()*/, input /*+ i * inputSize*/, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
+    
     utils::waitAndCheckForErrors();
-    for (size_t i = 0; i < streams.size(); i++)
-    {
-        cudaStreamDestroy(streams[i]);
-    }
 }

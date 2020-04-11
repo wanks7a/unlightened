@@ -78,7 +78,8 @@ public:
         filter_shape.height = options.h;
         filter_shape.depth = options.channels;
         filter_shape.batches = 1;
-        bias.resize(options.num_of_filters, 1.0f);
+        bias.resize(options.num_of_filters);
+        bias.randomize();
         weights.randomize();
         return true;
     }
