@@ -141,6 +141,7 @@ TEST(gpu_tests, cnn_2filters5x5_1_1batch)
         0, 1, 1,
         }));
     
+    cnn_l.get_filters().get_bias().setValues({ 1 });
 
     cnn_l.forward_pass(&test);
 
@@ -208,7 +209,8 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_1batch)
         0,0,-1,
         0, 1, 1,
         }));
-    
+
+    cnn_l.get_bias_vector().setValues({ 1, 1, 1 });
 
     cnn_l.forward_pass(&test);
  
@@ -287,6 +289,7 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_2batch)
         0, 1, 1,
         }));
     
+    cnn_l.get_bias_vector().setValues({ 1, 1, 1 });
 
     cnn_l.forward_pass(&test);
 
