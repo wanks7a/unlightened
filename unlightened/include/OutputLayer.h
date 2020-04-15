@@ -49,12 +49,14 @@ public:
         }
         return false;
     }
-    void print_predicted()
+    void print_predicted(size_t values = 0)
     {
+        if (values > size || values == 0)
+            values = size;
         std::cout << "Values :" << std::endl;
-        for (size_t i = 0; i < size; i++)
+        for (int i = 0; i < values; i++)
         {
-            printf("Value [%d] = %.2f\n", i, predictedValue[i]);
+            printf("Value [%d] = %.2f      Actual = %.2f \n", i, predictedValue[i], observedValues[i]);
         }
     }
     const float* get_output() override

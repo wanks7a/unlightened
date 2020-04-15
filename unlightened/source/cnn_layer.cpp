@@ -35,8 +35,6 @@ void cnn_layer::forward_pass(Layer* prevLayer)
 
 void cnn_layer::backprop(Layer* layer)
 {
-	input_derivative.memset(0);
-
 	size_t filter_step = output_shape.width * output_shape.height;
 	int i = 0;
 	cuVector<float> filter_output;
@@ -52,8 +50,6 @@ void cnn_layer::backprop(Layer* layer)
 	}
 
 	shape filter_derivative_shape = filters.get_weights_derivative_shape();
-	shape input_shape_temp = input_shape;
-	input_shape.batches = 1;
 	// calculate the derivative for the weights
 	// output depth should equals number of filters
 	for (size_t i = 0; i < options.num_of_filters; i++)
@@ -61,7 +57,7 @@ void cnn_layer::backprop(Layer* layer)
 		backprop_weights_3d(input, input_layer->get_shape(), filters.get_derivative(i), filter_derivative_shape,
 			derivative + i * output_shape.area(),
 			output_shape.width,
-			output_shape.height, options.w - filters.get_padding(), output_shape.volume());
+			output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
 	}
 	// now calculate the derivative for the input input
 
@@ -75,14 +71,13 @@ void cnn_layer::backprop(Layer* layer)
 	for (size_t i = 0; i < input_shape.depth; i++)
 	{
 		derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
-			derivative, output_shape.width, output_shape.height, options.w - filters.get_padding(), output_shape.volume());
+			derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
 	}
 
 	flip_filter(input_derivative.get(), input_shape, false);
 	flip_filter(input_derivative.get(), input_shape, true);
 
 	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
-
 	update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
 }
 
