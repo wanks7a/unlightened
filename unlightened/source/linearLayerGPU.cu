@@ -93,7 +93,7 @@ void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, con
     auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize * inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize * inputSize);
 
-    k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput /*+ i * output_shape.volume()*/, input /*+ i * inputSize*/, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
+    k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
     
     utils::waitAndCheckForErrors();
 }

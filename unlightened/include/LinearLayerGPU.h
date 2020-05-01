@@ -17,11 +17,12 @@ private:
     cuVector<float> derivativeWRtoInputGPU;
     cuVector<float> inputVectorGPU;
     const float* inputPtr;
+    bool add_bias_to_output;
     size_t size;
     size_t input_size;
 public:
 
-    LinearLayerGPU(size_t neuron_size) : size(neuron_size)
+    LinearLayerGPU(size_t neuron_size, bool add_bias = true) : size(neuron_size), add_bias_to_output(add_bias)
     {
         device_layer = true;
     }
@@ -32,11 +33,17 @@ public:
         weight.resize(input_size * size);
         derivativeWRtoInputGPU.resize(input.size(), 0.0f);
         // +1 is for the bias
-        outputGPU.resize((size + 1) * input.batches, 1.0f);
+        if(add_bias_to_output)
+            outputGPU.resize((size + 1) * input.batches, 1.0f);
+        else
+            outputGPU.resize(size * input.batches, 1.0f);
 
         weightsGPU.setValues(weight);
         weightsGPU.randomize();
-        size = size + 1;
+
+        if(add_bias_to_output)
+            size = size + 1;
+
         output_shape.width = size;
         output_shape.batches = input_shape.batches;
     }
@@ -54,8 +61,10 @@ public:
     void forward_pass(Layer* prevLayer) override
     {
         inputPtr = prevLayer->get_output();
-        shape out_shape = output_shape;  
-        out_shape.width = out_shape.width - 1; // -1 because we dont want to calculate for the bias
+        shape out_shape = output_shape;
+        if (add_bias_to_output)
+            out_shape.width = out_shape.width - 1; // -1 because we dont want to calculate for the bias
+
         shape input_shape;
         input_shape.width = prevLayer->get_shape().volume(); // represent the value as 1d array
         input_shape.batches = prevLayer->get_shape().batches;
@@ -64,11 +73,11 @@ public:
         {
             inputVectorGPU = prevLayer->get_device_output();
             inputPtr = inputVectorGPU.get();
-            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, true);
+            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, add_bias_to_output);
         }
         else
         {
-            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, true);
+            linearLayerForwardPassGPU(outputGPU.get(), weightsGPU.get(), inputPtr, input_shape, out_shape, add_bias_to_output);
         }
     }
 
@@ -77,14 +86,20 @@ public:
         shape temp_out_shape = output_shape;
         if (layer->is_device_layer())
         {
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get(), true);
-            updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get(), add_bias_to_output);
+            if(add_bias_to_output)
+                updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+            else
+                updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape, learing_rate);
         }
         else
         {
             cuVector<float> derivativeWRToOutput = layer->get_device_derivative();
-            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get(), true);
-            updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+            calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get(), add_bias_to_output);
+            if (add_bias_to_output)
+                updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+            else
+                updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape, learing_rate);
         }
     }
 

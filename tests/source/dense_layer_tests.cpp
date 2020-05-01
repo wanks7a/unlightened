@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <LinearLayerGPU.h>
+#include <tests_objects.h>
 
 TEST(dense_layer, derivative_to_input_v1)
 {
@@ -173,5 +174,101 @@ TEST(dense_layer, weights_update_v3)
 	for (size_t i = 0; i < expected.size(); i++)
 	{
 		result[i] = expected[i];
+	}
+}
+
+TEST(dense_layer, test_forward_backprop_without_bias_v1)
+{
+	shape input_sh(10);
+	test_layer  test;
+	test.init_base(input_sh);
+	test.set_output_shape(input_sh);
+	EXPECT_TRUE(test.output.setValues({
+		1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1
+		}));
+
+	LinearLayerGPU dense(3, false);
+	dense.init_base(input_sh);
+	std::vector<float> weights(10 * 3, 1.0f);
+	EXPECT_TRUE(dense.set_weights(weights));
+	dense.forward_pass(&test);
+	std::vector<float> result = dense.get_native_output();
+	std::vector<float> expected = {
+		10, 10, 10
+	};
+	EXPECT_EQ(result.size(), expected.size());
+	for (size_t i = 0; i < expected.size(); i++)
+	{
+		EXPECT_EQ(result[i], expected[i]);
+	}
+
+	test_layer  backprop_test;
+	backprop_test.init_base(shape(3));
+	backprop_test.set_output_shape(shape(3));
+	EXPECT_TRUE(backprop_test.output.setValues({
+		1, 1, 1
+		}));
+	dense.backprop(&backprop_test);
+	result = dense.get_native_derivative();
+	expected = {
+		3, 3, 3, 3, 3,
+		3, 3, 3, 3, 3
+	};
+	EXPECT_EQ(result.size(), expected.size());
+	for (size_t i = 0; i < expected.size(); i++)
+	{
+		EXPECT_EQ(result[i], expected[i]);
+	}
+}
+
+TEST(dense_layer, test_forward_backprop_without_bias_v2)
+{
+	shape input_sh(10, 1, 1, 2);
+	test_layer  test;
+	test.init_base(input_sh);
+	test.set_output_shape(input_sh);
+	EXPECT_TRUE(test.output.setValues({
+		1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1,
+		2, 2, 2, 2, 2,
+		2, 2, 2, 2, 2,
+		}));
+
+	LinearLayerGPU dense(3, false);
+	dense.init_base(input_sh);
+	std::vector<float> weights(10 * 3, 1.0f);
+	EXPECT_TRUE(dense.set_weights(weights));
+	dense.forward_pass(&test);
+	std::vector<float> result = dense.get_native_output();
+	std::vector<float> expected = {
+		10, 10, 10,
+		20, 20, 20,
+	};
+	EXPECT_EQ(result.size(), expected.size());
+	for (size_t i = 0; i < expected.size(); i++)
+	{
+		EXPECT_EQ(result[i], expected[i]);
+	}
+
+	test_layer  backprop_test;
+	backprop_test.init_base(shape(3, 1, 1, 2));
+	backprop_test.set_output_shape(shape(3, 1, 1, 2));
+	EXPECT_TRUE(backprop_test.output.setValues({
+		1, 1, 1,
+		1, 1, 1,
+		}));
+	dense.backprop(&backprop_test);
+	result = dense.get_native_derivative();
+	expected = {
+		3, 3, 3, 3, 3,
+		3, 3, 3, 3, 3,
+		3, 3, 3, 3, 3,
+		3, 3, 3, 3, 3
+	};
+	EXPECT_EQ(result.size(), expected.size());
+	for (size_t i = 0; i < expected.size(); i++)
+	{
+		EXPECT_EQ(result[i], expected[i]);
 	}
 }
