@@ -19,6 +19,7 @@ add_library(
     include/csv_parser.h
     include/loss_layer.h
     include/generic_functions.h
+    include/softmax.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -32,6 +33,8 @@ add_library(
     source/loss_layer.cu
     source/loss_layer.cpp
     source/generic_functions.cu
+    source/softmax.cu
+    source/softmax.cpp
 )
 
 target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

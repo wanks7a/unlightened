@@ -10,6 +10,10 @@ void activation_layer::init(const shape& input)
 	output_shape = input;
 	output.resize(output_shape.size());
 	derivative.resize(output_shape.size());
+	if (activ_func == activation_function::Softmax)
+	{
+		softmax.init(input);
+	}
 }
 
 const float* activation_layer::get_output()

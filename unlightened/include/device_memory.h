@@ -161,7 +161,7 @@ public:
 			std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
 			rng.seed(ss);
 			// initialize a uniform distribution between 0 and 1
-			std::uniform_real_distribution<T> unif(-1.0f, 1.0f);
+			std::uniform_real_distribution<T> unif(0.0000001f,0.01);
 
 			for (int i = 0; i < currentSize; i++)
 			{
