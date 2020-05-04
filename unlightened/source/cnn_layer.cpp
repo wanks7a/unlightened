@@ -71,10 +71,6 @@ void cnn_layer::backprop(Layer* layer)
 
 	derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
 		derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
-	
-
-	flip_filter(input_derivative.get(), input_shape, false);
-	flip_filter(input_derivative.get(), input_shape, true);
 
 	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
 	//auto old_weights = filters.get_weights().to_vector();

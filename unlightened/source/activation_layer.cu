@@ -25,7 +25,7 @@ struct sigmoid
     __host__ __device__
     inline float operator()(const float& input) const
     {
-        return 1.0f / (1.000001f + expf((-1.0f) * input));
+        return 1.0f / (1.0f + expf((-1.0f) * input));
     }
 
     __host__ __device__
@@ -52,7 +52,7 @@ struct relu
         if (activation_output > 0)
             return chain_rule_input;
         else
-            return 0.01f;
+            return 0.0f;
     }
 };
 
@@ -161,6 +161,7 @@ void softmax_activation(const float* input, shape* input_shape, float* output, c
 void activation_layer::softmax_output(const float* input, unsigned int th_per_block, unsigned int blocks, shape* output_shape)
 {
     activation<exponent> <<<blocks, th_per_block>>> (input, output_shape, softmax.exponents.get());
+    softmax.exponents_sum.memset(0);
     sum_all_values(input_shape, softmax.exponents.get(), softmax.exponents_sum.get());
     softmax_activation <<<blocks, th_per_block >>>(softmax.exponents.get(), output_shape, output.get(), softmax.exponents_sum.get());
 }

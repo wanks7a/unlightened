@@ -160,15 +160,27 @@ public:
 			uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 			std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
 			rng.seed(ss);
-			// initialize a uniform distribution between 0 and 1
-			std::uniform_real_distribution<T> unif(0.0000001f,0.01);
+
+			std::normal_distribution<T> distribution(0.0f, 1.0f);
 
 			for (int i = 0; i < currentSize; i++)
 			{
-				rand_vals.emplace_back(unif(rng));
+				rand_vals.emplace_back(distribution(rng));
 			}
+
 			setValues(rand_vals);
 		}
+	}
+
+	cuVector<T>& operator*=(const T& value)
+	{
+		auto vals = to_vector();
+		for (size_t i = 0; i < vals.size(); i++)
+		{
+			vals[i] = vals[i] * value;
+		}
+		setValues(vals);
+		return *this;
 	}
 
 	void memset(int val = 0)

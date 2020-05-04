@@ -3,6 +3,7 @@
 #include <vector>
 #include <shape.h>
 #include <random>
+#include <math.h>
 
 struct filter_options
 {
@@ -32,6 +33,13 @@ class filter
     unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
         return static_cast<unsigned int>((input_dim - filter_dim + 2 * padding) / stride + 1);
+    }
+
+    void perform_he_init()
+    {
+        weights.randomize();
+        float fan_in = static_cast<float>(input_shape.volume());
+        weights *= sqrtf(2.0f / fan_in);
     }
 
 public:
@@ -78,9 +86,8 @@ public:
         filter_shape.height = options.h;
         filter_shape.depth = options.channels;
         filter_shape.batches = 1;
-        bias.resize(options.num_of_filters);
-        bias.randomize();
-        weights.randomize();
+        bias.resize(options.num_of_filters, 0.0f);
+        perform_he_init();
         return true;
     }
 

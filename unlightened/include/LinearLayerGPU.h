@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <device_memory.h>
+#include <math.h>
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t input_size, const float* derivateWRtoOutput, shape output_shape, const float* weights, bool last_out_is_bias);
@@ -40,7 +41,9 @@ public:
 
         weightsGPU.setValues(weight);
         weightsGPU.randomize();
-
+        float fan_in = static_cast<float>(input_size);
+        weightsGPU *= sqrtf(2.0f / fan_in);
+        
         if(add_bias_to_output)
             size = size + 1;
 
