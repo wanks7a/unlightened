@@ -29,7 +29,39 @@ protected:
     //}
 };
 
-TEST(gpu_tests, backprop_filter_test)
+TEST(gpu_tests, backprop_filter_test_v1)
+{
+    shape input_shape(2,2);
+    shape output_shape(1,1); // 3 filters
+    cuVector<float> input;
+    EXPECT_TRUE(input.setValues({
+        1,10,
+        100,1000
+        }));
+    cuVector<float> weights;
+    EXPECT_TRUE(weights.setValues({
+        0.25f
+        }));
+
+    std::vector<float> expected = {
+        0.25f, 2.5f,
+        25.0f, 250.0f
+    };
+
+    shape weights_deriv(2,2);
+    cuVector<float> output;
+    output.resize(weights_deriv.size());
+    backprop_weights_3d(input.get(), input_shape, output.get(), weights_deriv, weights.get(), output_shape.width, output_shape.height, 1, output_shape.volume());
+    std::vector<float> result;
+    output.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t j = 0; j < result.size(); j++)
+    {
+        EXPECT_EQ(result[j], expected[j]);
+    }
+}
+
+TEST(gpu_tests, backprop_filter_test_v2)
 {
     shape input_shape(4, 4, 2, 2);
     shape output_shape(4, 4, 3, 2); // 3 filters
