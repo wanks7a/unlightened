@@ -291,14 +291,14 @@ void update_bias_kernel(const float* derivative, shape* derivative_shape, float*
     const unsigned int batches = derivative_shape->batches;
     const unsigned int offset = derivative_shape->area();
     const unsigned int batch_offset = derivative_shape->volume();
-    bias_shared[tr_index] = 0.0f;
+    bias_shared[threadIdx.x] = 0.0f;
 
     if (tr_index >= derivative_shape->area())
         return;
 
     for (int b = 0; b < batches; b++)
     {
-        bias_shared[tr_index] += derivative[b * batch_offset + blockIdx.y * offset + tr_index];
+        bias_shared[threadIdx.x] += derivative[b * batch_offset + blockIdx.y * offset + tr_index];
     }
     __syncthreads();
 
@@ -307,16 +307,16 @@ void update_bias_kernel(const float* derivative, shape* derivative_shape, float*
     while (loop > 1)
     {
         loop = loop / 2;
-        if (tr_index < loop)
+        if (threadIdx.x < loop)
         {
-            bias_shared[tr_index] += bias_shared[tr_index + loop];
+            bias_shared[threadIdx.x] += bias_shared[threadIdx.x + loop];
         }
         else
             return;
         __syncthreads();
     }
     
-    if (tr_index == 0)
+    if (threadIdx.x == 0)
     {
         bias_shared[0] = -(learning_rate * (bias_shared[0] / (derivative_shape->area()  * batches)));
         atomicAdd(&bias[blockIdx.y], bias_shared[0]);

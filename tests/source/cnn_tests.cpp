@@ -834,3 +834,27 @@ TEST(CNN_TESTS, bias_update_v3)
         EXPECT_EQ(result[i], expected[i]);
     }
 }
+
+TEST(CNN_TESTS, bias_update_v4)
+{
+    shape deriv_shape(200, 200, 1);
+    cuVector<float> derivative;
+    EXPECT_TRUE(derivative.resize(deriv_shape.size(), 1.0f));
+    cuVector<float> bias;
+    EXPECT_TRUE(bias.setValues({
+        0
+        }));
+    update_bias(derivative.get(), deriv_shape, bias.get(), 1.0f);
+
+    std::vector<float> expected = {
+        -1.0000001f
+    };
+
+    std::vector<float> result;
+    bias.getCopy(result);
+    EXPECT_EQ(result.size(), expected.size());
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        EXPECT_FLOAT_EQ(result[i], expected[i]);
+    }
+}
