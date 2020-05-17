@@ -51,6 +51,16 @@ public:
         }
     }
 
+    Layer* operator[](size_t index)
+    {
+        if (index < layers.size())
+        {
+            return layers[index];
+        }
+
+        return nullptr;
+    }
+
     ~NeuralNet()
     {
         for (auto& l : layers)
