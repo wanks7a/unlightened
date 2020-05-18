@@ -52,8 +52,8 @@ void cnn_layer::forward_pass(Layer* prevLayer)
 			filters.get_weights().get(),
 			convolution_forwardpass_descriptor,
 			convolution_forwardpass_algorithm,
-			cudnn_memory_needs.get(),
-			cudnn_memory_needs.size() * sizeof(float),
+			cudnn_memory_forward_pass.get(),
+			cudnn_memory_forward_pass.size() * sizeof(float),
 			&beta,
 			output_descriptor,
 			output.get()));	
@@ -106,8 +106,15 @@ void cnn_layer::backprop(Layer* layer)
 
 	if (!is_first_layer)
 	{
-		derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
-			derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
+		if (use_cudnn)
+		{
+			backprop_cudnn(derivative);
+		}
+		else
+		{
+			derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
+				derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
+		}
 	}
 
 	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
@@ -188,13 +195,31 @@ void cnn_layer::init_cudnn()
 		output_descriptor,
 		convolution_forwardpass_algorithm,
 		&workspace_bytes));
+
 	if ((workspace_bytes % sizeof(float)) != 0)
 	{
 		std::cout << "error requested memory from cudnn is not divisiable by 4" << std::endl;
 	}
 	else
 	{
-		cudnn_memory_needs.resize(workspace_bytes / sizeof(float));
+		cudnn_memory_forward_pass.resize(workspace_bytes / sizeof(float));
+	}
+	workspace_bytes = 0;
+	checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle, 
+		filter_descriptor, 
+		output_descriptor, 
+		convolution_forwardpass_descriptor,
+		input_descriptor, 
+		backprop_algo, 
+		&workspace_bytes));
+
+	if ((workspace_bytes % sizeof(float)) != 0)
+	{
+		std::cout << "error requested memory from cudnn is not divisiable by 4" << std::endl;
+	}
+	else
+	{
+		cudnn_memory_backprop.resize(workspace_bytes / sizeof(float));
 	}
 }
 
@@ -208,4 +233,20 @@ cnn_layer::~cnn_layer()
 		cudnnDestroyConvolutionDescriptor(convolution_forwardpass_descriptor);
 		cudnnDestroy(cudnn_handle);
 	}
+}
+
+void cnn_layer::backprop_cudnn(const float* derivative)
+{
+	float alpha = 1.0f, beta = 0.0f;
+
+	checkCUDNN(cudnnConvolutionBackwardData(cudnn_handle,
+		(void*)(&alpha),
+		filter_descriptor, filters.get_weights().get(),
+		output_descriptor, derivative,
+		convolution_forwardpass_descriptor,
+		backprop_algo,
+		cudnn_memory_backprop.get(), 
+		cudnn_memory_backprop.size() * sizeof(float),
+		(void*)(&beta),
+		input_descriptor, input_derivative.get()));
 }

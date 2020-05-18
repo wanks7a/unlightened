@@ -34,7 +34,9 @@ class cnn_layer : public Layer
     cudnnFilterDescriptor_t filter_descriptor;
     cudnnConvolutionDescriptor_t convolution_forwardpass_descriptor;
     cudnnConvolutionFwdAlgo_t convolution_forwardpass_algorithm;
-    cuVector<float> cudnn_memory_needs;
+    cudnnConvolutionBwdDataAlgo_t backprop_algo = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+    cuVector<float> cudnn_memory_forward_pass;
+    cuVector<float> cudnn_memory_backprop;
 public:
     cnn_layer(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
     void init(const shape& input) override;
@@ -67,5 +69,6 @@ public:
 
 private:
     void init_cudnn();
-    void cnn_layer::checkCUDNN(const cudnnStatus_t& status);
+    void checkCUDNN(const cudnnStatus_t& status);
+    void backprop_cudnn(const float* derivative);
 };
