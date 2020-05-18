@@ -3,7 +3,7 @@
 #include "device_launch_parameters.h"
 #include <GpuUtils.h>
 
-#define trPerBlock 256
+#define trPerBlock 512
 #define biasThreadPerBlock 1024
 
 __global__
@@ -47,9 +47,8 @@ void full_convoltion_3d_filter(const float* input,const shape* input_shape,
 
             }
         }       
-        conv_result += bias[depth];
     }
-
+    conv_result += bias[0];
     output[output_shape->volume() * blockIdx.y + trIndex] = conv_result;
 }
 
@@ -331,6 +330,31 @@ void update_bias(const float* derivative, shape derivative_shape, float* bias, f
     utils::device_struct<shape> device_input_shape(derivative_shape);
 
     update_bias_kernel << <blocks, biasThreadPerBlock >> > (derivative, device_input_shape.get(), bias, learning_rate);
+
+    utils::waitAndCheckForErrors();
+}
+
+__global__
+void add_bias_kernel(float* output, shape* output_shape, const float* bias)
+{
+    const unsigned int trIndex = blockDim.x * blockIdx.x + threadIdx.x;
+    const unsigned int volume = output_shape->volume();
+    const unsigned int bias_idx = trIndex / output_shape->area();
+    if (trIndex >= volume)
+        return;
+    for (size_t i = 0; i < output_shape->batches; i++)
+    {
+        output[volume * i + trIndex] += bias[bias_idx];
+    }
+}
+
+void add_bias_to_output(cuVector<float>& output, const shape& output_shape, cuVector<float>& bias)
+{
+    unsigned int num_blocks = ((output_shape.volume() + trPerBlock - 1) / trPerBlock);
+    dim3 blocks(num_blocks, output_shape.batches);
+    utils::device_struct<shape> device_input_shape(output_shape);
+
+    add_bias_kernel << <blocks, trPerBlock >> > (output.get(), device_input_shape.get(), bias.get());
 
     utils::waitAndCheckForErrors();
 }

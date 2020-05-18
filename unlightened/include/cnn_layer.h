@@ -1,6 +1,7 @@
 #pragma once
 #include <Layer.h>
 #include <conv_filter.h>
+#include <cudnn.h>
 
 void backprop_weights_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, unsigned int filter_row, unsigned int filter_col, unsigned int filter_offset, unsigned int weights_offset_batch);
 void conv_3d(const float* input, const shape& input_shape, float* output, const shape& output_shape, const float* weights, const float* bias, unsigned int filter_row, unsigned int filter_col, unsigned int offset);
@@ -13,6 +14,7 @@ void derivative_input_3d(const float* input, const shape& input_shape, float* ou
     unsigned int weights_offset_batch);
 void update_weights(const float* weights_error, shape weights_shape, unsigned int num_of_filters, float* weights, float learning_rate);
 void update_bias(const float* derivative, shape derivative_shape, float* bias, float learning_rate);
+void add_bias_to_output(cuVector<float>& output, const shape& output_shape, cuVector<float>& bias);
 
 class cnn_layer : public Layer
 {
@@ -25,6 +27,14 @@ class cnn_layer : public Layer
     cuVector<float> layer_input;
     const float* input = nullptr;
     bool is_first_layer;
+    bool use_cudnn = true;
+    cudnnHandle_t cudnn_handle;
+    cudnnTensorDescriptor_t input_descriptor;
+    cudnnTensorDescriptor_t output_descriptor;
+    cudnnFilterDescriptor_t filter_descriptor;
+    cudnnConvolutionDescriptor_t convolution_forwardpass_descriptor;
+    cudnnConvolutionFwdAlgo_t convolution_forwardpass_algorithm;
+    cuVector<float> cudnn_memory_needs;
 public:
     cnn_layer(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
     void init(const shape& input) override;
@@ -52,4 +62,10 @@ public:
     {
         return filters.get_bias();
     }
+
+    ~cnn_layer();
+
+private:
+    void init_cudnn();
+    void cnn_layer::checkCUDNN(const cudnnStatus_t& status);
 };

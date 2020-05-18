@@ -37,4 +37,12 @@ add_library(
     source/softmax.cpp
 )
 
-target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+find_path(CUDNN_INCLUDE cudnn.h)
+
+find_library(CUDNN_LIB cudnn)
+message("CUDNN Headers= " ${CUDNN_INCLUDE} )
+message("CUDNN LIB location= " ${CUDNN_LIB})
+
+target_compile_options(unlightened PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-gencode arch=compute_75,code=sm_75>)
+target_include_directories(unlightened PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" ${CUDNN_INCLUDE})
+target_link_libraries(unlightened ${CUDNN_LIB})

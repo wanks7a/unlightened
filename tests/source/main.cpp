@@ -173,7 +173,7 @@ TEST(gpu_tests, cnn_2filters5x5_1_1batch)
         0, 1, 1,
         }));
     
-    cnn_l.get_filters().get_bias().setValues({ 1 });
+    cnn_l.get_filters().get_bias().setValues({ 1, 1, 1 });
 
     cnn_l.forward_pass(&test);
 
@@ -247,15 +247,15 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_1batch)
     cnn_l.forward_pass(&test);
  
     std::vector<float> expected = { 
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
     };
 
     std::vector<float> result = cnn_l.get_native_output();
@@ -326,24 +326,24 @@ TEST(gpu_tests, cnn_2filters5x5_2depth_2batch)
     cnn_l.forward_pass(&test);
 
     std::vector<float> expected = {
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
-        -6, -6, -6,
-        0, -2, 0,
-        4, 6, 4,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
+        -7, -7, -7,
+        -1, -3, -1,
+        3, 5, 3,
     };
 
     std::vector<float> result = cnn_l.get_native_output();
@@ -1653,7 +1653,7 @@ TEST(gpu_tests, cnn_basic)
     auto options = layer.get_options();
     options.zeropadding = false;
     layer.set_options(options);
-    layer.init(input_shape);
+    layer.init_base(input_shape);
     EXPECT_EQ(layer.get_shape().depth, 5);
     EXPECT_EQ(layer.get_shape().height, 5);
     EXPECT_EQ(layer.get_shape().width, 5);
