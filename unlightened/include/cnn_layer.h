@@ -24,8 +24,9 @@ class cnn_layer : public Layer
     Layer* input_layer;
     cuVector<float> layer_input;
     const float* input = nullptr;
+    bool is_first_layer;
 public:
-    cnn_layer(size_t filter_dimension, size_t num_of_filters);
+    cnn_layer(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
     void init(const shape& input) override;
     void forward_pass(Layer* prevLayer) override;
     void backprop(Layer* layer) override;

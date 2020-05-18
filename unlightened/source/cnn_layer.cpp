@@ -1,6 +1,6 @@
 #include <cnn_layer.h>
 
-cnn_layer::cnn_layer(size_t filter_dimension, size_t num_of_filters) : options(filter_dimension, filter_dimension, num_of_filters), filters_size(num_of_filters), input_layer(nullptr)
+cnn_layer::cnn_layer(size_t filter_dimension, size_t num_of_filters, bool first_layer) : options(filter_dimension, filter_dimension, num_of_filters), filters_size(num_of_filters), input_layer(nullptr), is_first_layer(first_layer)
 {
 	device_layer = true;
 }
@@ -69,8 +69,11 @@ void cnn_layer::backprop(Layer* layer)
 	filter_shape = filters.get_filter_shape();
 	filter_shape.batches = options.num_of_filters;
 
-	derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
-		derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
+	if (!is_first_layer)
+	{
+		derivative_input_3d(weights_flipped.get(), filter_shape, input_derivative.get(), input_shape,
+			derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
+	}
 
 	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
 	//auto old_weights = filters.get_weights().to_vector();
