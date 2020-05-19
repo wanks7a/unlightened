@@ -15,7 +15,12 @@ message( ${MGL_LIB_STATIC} )
 
 find_package(JPEG REQUIRED)
 
-add_executable(main source/main.cpp)
+add_executable(main source/main.cpp
+		            include/viewer.h
+					source/viewer.cpp
+					include/loss_plot.h
+					source/loss_plot.cpp
+					)
 
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${MGL_PATH}")
 

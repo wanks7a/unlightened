@@ -68,5 +68,15 @@ public:
         return derivativeWRToInput.data();
     }
 
+    float get_total_loss() const
+    {
+        float result = 0;
+        for (size_t i = 0; i < size; i++)
+        {
+            result += ((observedValues[i] - predictedValue[i]) * (observedValues[i] - predictedValue[i])) / 2;
+        }
+        return result;
+    }
+
     ~OutputLayer() = default;
 };
