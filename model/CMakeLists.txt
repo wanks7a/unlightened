@@ -20,6 +20,8 @@ add_executable(main source/main.cpp
 					source/viewer.cpp
 					include/loss_plot.h
 					source/loss_plot.cpp
+					include/shape_plot.h
+					source/shape_plot.cpp
 					)
 
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${MGL_PATH}")

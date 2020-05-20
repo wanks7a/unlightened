@@ -52,6 +52,7 @@ class viewer
 public:
 	void loop();
 	void add_view(std::shared_ptr<view>& v);
+	void add_view(view* v);
 private:
 	view& get_view(int window_id);
 

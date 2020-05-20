@@ -180,3 +180,8 @@ void viewer::add_view(std::shared_ptr<view>& v)
 {
     views.emplace_back(v);
 }
+
+void viewer::add_view(view* v)
+{
+    views.emplace_back(std::shared_ptr<view>(v));
+}
