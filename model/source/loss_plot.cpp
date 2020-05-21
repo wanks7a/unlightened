@@ -7,6 +7,7 @@ void loss_plot::add_loss_test(float loss_value)
 	loss_test.emplace_back(loss_value);
     if (loss_value > max_val)
         max_val = loss_value;
+    new_data = true;
 }
 
 void loss_plot::add_loss_train(float loss_value)
@@ -15,10 +16,14 @@ void loss_plot::add_loss_train(float loss_value)
 	loss_train.emplace_back(loss_value);
     if (loss_value > max_val)
         max_val = loss_value;
+    new_data = true;
 }
 
 void loss_plot::draw()
 {
+    if (!new_data)
+        return;
+    new_data = false;
     mglGraph plot(0, options.w, options.h);
 
     mglData y_test(loss_test);
@@ -31,7 +36,8 @@ void loss_plot::draw()
     plot.Label('y', "axis 1", 0);
     plot.Plot(y_train, "b");
     plot.AddLegend("train", "b");
-    plot.Plot(y_test, "r");
+    if(!loss_test.empty())
+        plot.Plot(y_test, "r");
     plot.AddLegend("test", "r");
     plot.Legend();
     plot.Box();

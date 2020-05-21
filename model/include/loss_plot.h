@@ -11,6 +11,7 @@ class loss_plot : public view
 	std::vector<int> loss_examples;
 	float min_val = 0;
 	float max_val = 0;
+	bool new_data = false;
 public:
 	loss_plot();
 	void add_loss_train(float value);

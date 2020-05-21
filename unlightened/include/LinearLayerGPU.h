@@ -90,19 +90,25 @@ public:
         if (layer->is_device_layer())
         {
             calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get(), add_bias_to_output);
-            if(add_bias_to_output)
-                updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape, learing_rate);
-            else
-                updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape, learing_rate);
+            if (update_on_backprop)
+            {
+                if (add_bias_to_output)
+                    updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+                else
+                    updateWeightsAndBias(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape, learing_rate);
+            }
         }
         else
         {
             cuVector<float> derivativeWRToOutput = layer->get_device_derivative();
             calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get(), add_bias_to_output);
-            if (add_bias_to_output)
-                updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape, learing_rate);
-            else
-                updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape, learing_rate);
+            if (update_on_backprop)
+            {
+                if (add_bias_to_output)
+                    updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size - 1, output_shape, learing_rate);
+                else
+                    updateWeightsAndBias(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape, learing_rate);
+            }
         }
     }
 

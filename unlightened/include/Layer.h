@@ -9,6 +9,7 @@ protected:
     shape output_shape;
     shape input_shape;
     bool device_layer = false;
+    bool update_on_backprop = true;
 public:
     void init_base(const shape& input)
     {
@@ -22,12 +23,18 @@ public:
     virtual const float* derivative_wr_to_input() = 0;
 
     virtual ~Layer() = default;
+
     void set_learning_rate(float rate)
     {
         if (rate > 0)
         {
             learing_rate = rate;
         }
+    }
+
+    void set_update_weights(bool flag)
+    {
+        update_on_backprop = flag;
     }
 
     cuVector<float> get_device_output()
@@ -69,6 +76,14 @@ public:
         std::vector<float> result;
         if (device_layer)
             result = cuVector<float>::from_device_host(derivative_wr_to_input(), input_shape.size());
+        else
+        {
+            result.reserve(input_shape.size());
+            for (size_t i = 0; i < input_shape.size(); i++)
+            {
+                result.emplace_back(derivative_wr_to_input()[i]);
+            }
+        }
         return result;
     }
 

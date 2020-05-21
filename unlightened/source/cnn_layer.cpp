@@ -116,20 +116,22 @@ void cnn_layer::backprop(Layer* layer)
 				derivative, output_shape.width, output_shape.height, output_shape.width - filters.get_padding(), output_shape.volume());
 		}
 	}
-
-	update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
-	//auto old_weights = filters.get_weights().to_vector();
-	update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
-	//auto new_weights = filters.get_weights().to_vector();
-	//auto inp_deriv = layer->get_native_derivative();
-	//auto filter_weights_deriv = filters.get_weights_derivative().to_vector();
-	//auto input_deriv2 = input_derivative.to_vector();
-	//std::vector<float> differnce;
-	//for (size_t i = 0; i < old_weights.size(); i++)
-	//{
-	//	if((old_weights[i] - new_weights[i]) != 0)
-	//		differnce.emplace_back(old_weights[i] - new_weights[i]);
-	//}
+	if (update_on_backprop)
+	{
+		update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
+		//auto old_weights = filters.get_weights().to_vector();
+		update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
+		//auto new_weights = filters.get_weights().to_vector();
+		//auto inp_deriv = layer->get_native_derivative();
+		//auto filter_weights_deriv = filters.get_weights_derivative().to_vector();
+		//auto input_deriv2 = input_derivative.to_vector();
+		//std::vector<float> differnce;
+		//for (size_t i = 0; i < old_weights.size(); i++)
+		//{
+		//	if((old_weights[i] - new_weights[i]) != 0)
+		//		differnce.emplace_back(old_weights[i] - new_weights[i]);
+		//}
+	}
 }
 
 const float* cnn_layer::get_output()
