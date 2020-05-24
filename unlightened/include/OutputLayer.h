@@ -49,6 +49,11 @@ public:
         }
         return false;
     }
+    void set_derivative_manual(const std::vector<float>& deriv)
+    {
+        if (derivativeWRToInput.size() == deriv.size())
+            derivativeWRToInput = deriv;
+    }
     void print_predicted(size_t values = 0)
     {
         if (values > size || values == 0)
@@ -73,9 +78,9 @@ public:
         float result = 0;
         for (size_t i = 0; i < size; i++)
         {
-            result += ((observedValues[i] - predictedValue[i]) * (observedValues[i] - predictedValue[i])) / 2;
+            result += ((observedValues[i] - predictedValue[i]) * (observedValues[i] - predictedValue[i]));
         }
-        return result;
+        return result / size;
     }
 
     ~OutputLayer() = default;

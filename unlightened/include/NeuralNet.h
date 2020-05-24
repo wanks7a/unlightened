@@ -39,9 +39,10 @@ public:
             layers[i]->forward_pass(layers[i - 1].get());
         }
     }
-    void backprop()
+    void backprop(bool calc_loss = true)
     {
-        layers.back()->backprop(nullptr);
+        if(calc_loss)
+            layers.back()->backprop(nullptr);
 
         for (size_t i = layers.size() - 2; i > 0; i--)
         {

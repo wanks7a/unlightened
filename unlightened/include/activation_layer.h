@@ -10,6 +10,7 @@ public:
         ReLU,
         Sigmoid,
         Softmax,
+        LeakyReLU,
         Identity
     };
 private:

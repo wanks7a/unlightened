@@ -29,7 +29,10 @@ public:
     bool set_input(const std::vector<float>& data)
     {
         if (data.size() != input_shape.size())
+        {
+            std::cout << "The data size is not the same as the input shape size." << std::endl;
             return false;
+        }
         output = data;
         return true;
     }
