@@ -21,7 +21,10 @@ public:
     bool set_input(const float* data, size_t size)
     {
         if (size != input_shape.size())
+        {
+            std::cout << "The data size is not the same as the input shape size." << std::endl;
             return false;
+        }
         memcpy(output.data(), data, size * sizeof(float));
         return true;
     }

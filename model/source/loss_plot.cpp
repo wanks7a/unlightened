@@ -27,7 +27,7 @@ void loss_plot::draw()
 {
     if (!new_data)
         return;
-
+    new_data = false;
     mglGraph plot(0, options.w, options.h);
     plot.SetRanges(0.0, lines.begin()->second.points.size(), 0.0, max_val);
     bool will_draw = false;
