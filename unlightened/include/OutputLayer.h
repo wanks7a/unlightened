@@ -80,7 +80,7 @@ public:
         {
             result += ((observedValues[i] - predictedValue[i]) * (observedValues[i] - predictedValue[i]));
         }
-        return result / size;
+        return result;
     }
 
     ~OutputLayer() = default;

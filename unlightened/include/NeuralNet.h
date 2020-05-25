@@ -5,46 +5,57 @@
 
 class NeuralNet
 {
+    InputLayer input_layer;
+    OutputLayer output_layer;
     std::vector<std::shared_ptr<Layer>> layers;
 public:
 
-    NeuralNet(shape input_shape)
+    NeuralNet(shape input_shape) : input_layer(input_shape)
     {
-        addLayer(new InputLayer(input_shape));
     }
 
-    void addLayer(Layer* layer, bool update = true)
+    void addLayer(Layer* layer)
     {
         layers.push_back(std::shared_ptr<Layer>(layer));
-        if(update)
-            updateLastLayer();
+        updateLastLayer();
     }
 
-    void addLayer(std::shared_ptr<Layer>& layer, bool update = true)
+    void addLayer(std::shared_ptr<Layer>& layer)
     {
         layers.push_back(layer);
-        if(update)
-            updateLastLayer();
+        updateLastLayer();
     }
 
-    InputLayer& getInputLayer() const
+    InputLayer& getInputLayer() noexcept
     {
-        return static_cast<InputLayer&>(*((layers[0].get())));
+        return input_layer;
+    }
+
+    OutputLayer& loss_layer() noexcept
+    {
+        return output_layer;
     }
 
     void predict()
     {
+        layers[0]->forward_pass(&input_layer);
         for (size_t i = 1; i < layers.size(); i++)
         {
             layers[i]->forward_pass(layers[i - 1].get());
         }
+        output_layer.forward_pass(layers.back().get());
     }
+
     void backprop(bool calc_loss = true)
     {
-        if(calc_loss)
-            layers.back()->backprop(nullptr);
+        if (calc_loss)
+        {
+            output_layer.backprop(nullptr);
+        }
 
-        for (size_t i = layers.size() - 2; i > 0; i--)
+        layers.back()->backprop(&output_layer);
+
+        for (int i = layers.size() - 2; i >= 0; i--)
         {
             layers[i]->backprop(layers[i + 1].get());
         }
@@ -79,6 +90,11 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<Layer>& last()
+    {
+        return layers.back();
+    }
+
     ~NeuralNet()
     {
     }
@@ -90,6 +106,11 @@ private:
             Layer* last = layers.back().get();
             Layer* beforeLast = layers[layers.size() - 2].get();
             last->init_base(beforeLast->get_shape());
+            output_layer.init_base(last->get_shape());
+        }
+        else
+        {
+            layers.back().get()->init_base(input_layer.get_shape());
         }
     }
 };
