@@ -20,6 +20,7 @@ add_library(
     include/loss_layer.h
     include/generic_functions.h
     include/softmax.h
+    include/reshape_layer.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -35,6 +36,7 @@ add_library(
     source/generic_functions.cu
     source/softmax.cu
     source/softmax.cpp
+    source/reshape_layer.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)
