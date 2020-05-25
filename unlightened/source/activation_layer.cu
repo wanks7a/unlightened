@@ -77,6 +77,21 @@ struct leaky_relu
     }
 };
 
+struct tanh_activation
+{
+    __host__ __device__
+        inline float operator()(const float& input) const
+    {
+        return tanhf(input);
+    }
+
+    __host__ __device__
+        inline float operator()(const float& chain_rule_input, const float& activation_output) const
+    {
+        return (1 - activation_output * activation_output) * chain_rule_input;
+    }
+};
+
 
 struct exponent
 {
@@ -138,6 +153,7 @@ void activation_layer::forward_pass(Layer* prevLayer)
     case activation_function::ReLU: activation<relu> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get()); break;
     case activation_function::Softmax: softmax_output(input, threads_per_block, blocks, input_shape.get()); break;
     case activation_function::LeakyReLU: activation<leaky_relu> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get()); break;
+    case activation_function::tanh: activation<tanh_activation> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get()); break;
     }
     utils::waitAndCheckForErrors();
 }
@@ -163,6 +179,7 @@ void activation_layer::backprop(Layer* layer)
     case activation_function::ReLU: activation_derivative<relu> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get(), derivative.get()); break;
     case activation_function::Softmax: softmax_derivative(input, input_shape.get(), threads_per_block, blocks); break;
     case activation_function::LeakyReLU: activation_derivative<leaky_relu> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get(), derivative.get()); break;
+    case activation_function::tanh: activation_derivative<tanh_activation> << <blocks, threads_per_block >> > (input, input_shape.get(), output.get(), derivative.get()); break;
     }
     utils::waitAndCheckForErrors();
 }

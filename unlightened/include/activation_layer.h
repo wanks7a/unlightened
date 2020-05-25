@@ -11,6 +11,7 @@ public:
         Sigmoid,
         Softmax,
         LeakyReLU,
+        tanh,
         Identity
     };
 private:
