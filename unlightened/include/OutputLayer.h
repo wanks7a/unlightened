@@ -21,7 +21,6 @@ public:
         size = input.size();
         derivativeWRToInput.resize(size);
         observedValues.resize(size);
-        output_shape.width = size;
     }
 
     void forward_pass(Layer* prevLayer) override

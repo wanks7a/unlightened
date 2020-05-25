@@ -7,8 +7,8 @@ class gan
 	std::vector<float> fake_data_values;
 	std::shared_ptr<NeuralNet> dis;
 	std::shared_ptr<NeuralNet> gen;
-	float loss_dis;
-	float loss_gen;
+	double loss_dis;
+	double loss_gen;
 	void generate_real_data();
 	void generate_fake_data();
 public:
@@ -20,4 +20,13 @@ public:
 	void set_generator(std::shared_ptr<NeuralNet>& gen);
 	void predict(const std::vector<float>& discrminator_real_data, const std::vector<float> generator_noise);
 	void backprop();
+	float discriminator_loss() const 
+	{
+		return loss_dis;
+	}
+
+	float generator_loss() const
+	{
+		return loss_gen;
+	}
 };
