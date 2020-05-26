@@ -34,7 +34,7 @@ std::shared_ptr<NeuralNet>& gan::generator()
 	return gen;
 }
 
-void gan::predict(const std::vector<float>& discrminator_real_data, const std::vector<float> generator_noise)
+void gan::predict(const std::vector<float>& discrminator_real_data, const std::vector<float>& generator_noise)
 {
 	if (dis->getInputLayer().get_shape().size() != discrminator_real_data.size() ||
 		gen->getInputLayer().get_shape().size() != generator_noise.size())
