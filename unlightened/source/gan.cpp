@@ -50,10 +50,12 @@ void gan::predict(const std::vector<float>& discrminator_real_data, const std::v
 	gen->predict();
 	dis->loss_layer().setObservedValue(real_data_values);
 	loss_dis += dis->loss_layer().get_total_loss();
+	dis->loss_layer().print_predicted(2);
 	dis->backprop(); // backprop discriminator so we can forward pass again with fake data 
 	dis->getInputLayer().set_input(gen->loss_layer().get_output(), gen->loss_layer().get_shape().size());
 	dis->predict();
 	dis->loss_layer().setObservedValue(fake_data_values);
+	dis->loss_layer().print_predicted(2);
 	loss_dis += dis->loss_layer().get_total_loss();
 }
 

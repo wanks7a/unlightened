@@ -22,6 +22,8 @@ add_executable(main source/main.cpp
 					source/loss_plot.cpp
 					include/shape_plot.h
 					source/shape_plot.cpp
+					include/image_helper.h
+					source/image_helper.cpp
 					)
 
 target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${MGL_PATH}")

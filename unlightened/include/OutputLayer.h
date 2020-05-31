@@ -52,6 +52,8 @@ public:
     {
         if (derivativeWRToInput.size() == deriv.size())
             derivativeWRToInput = deriv;
+        else
+            std::cout << "Manual derivative size is wrong " << std::endl;
     }
     void print_predicted(size_t values = 0)
     {
