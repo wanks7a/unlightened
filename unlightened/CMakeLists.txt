@@ -23,6 +23,8 @@ add_library(
     include/reshape_layer.h
     include/serializer.h
     include/gan.h
+    include/conv_transpose.h
+    include/conv2d_cudnn.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -40,6 +42,8 @@ add_library(
     source/softmax.cpp
     source/reshape_layer.cpp
     source/gan.cpp
+    source/conv_transpose.cpp
+    source/conv2d_cudnn.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)
