@@ -35,4 +35,12 @@ struct shape
     {
         return width * height * depth;
     }
+
+    __device__
+    __host__
+    __forceinline__
+    bool operator==(const shape& sh)
+    {
+        return width == sh.width && height == sh.height && depth == sh.depth && batches == sh.batches;
+    }
 };

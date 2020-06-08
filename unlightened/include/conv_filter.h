@@ -13,6 +13,7 @@ struct filter_options
     unsigned char stride;
     bool zeropadding;
     size_t num_of_filters;
+    filter_options() = default;
     filter_options(size_t width, size_t height, size_t number_of_filters) :w(width), h(height), channels(1), stride(1), zeropadding(false), num_of_filters(number_of_filters)
     {
     }
