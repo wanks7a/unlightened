@@ -59,7 +59,7 @@ public:
 
     ~conv2d_cudnn();
 
-private:
+protected:
     void init_cudnn();
     void checkCUDNN(const cudnnStatus_t& status);
     void backprop_cudnn(const float* derivative);

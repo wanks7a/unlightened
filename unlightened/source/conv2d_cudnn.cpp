@@ -74,9 +74,6 @@ void conv2d_cudnn::forward_pass(Layer* prevLayer)
 
 void conv2d_cudnn::backprop(Layer* layer)
 {
-	size_t filter_step = output_shape.width * output_shape.height;
-	int i = 0;
-	cuVector<float> filter_output;
 	cuVector<float> layer_input;
 	const float* derivative = nullptr;
 
@@ -88,7 +85,6 @@ void conv2d_cudnn::backprop(Layer* layer)
 		derivative = layer_input.get();
 	}
 
-	shape filter_derivative_shape = filters.get_weights_derivative_shape();
 	backprop_weights_cudnn(derivative);
 
 	if (!is_first_layer)
@@ -99,7 +95,6 @@ void conv2d_cudnn::backprop(Layer* layer)
 	{
 		update_weights();
 		update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
-		//update_weights(filters.get_weights_derivative().get(), filters.get_weights_derivative_shape(), filters.size(), filters.get_weights().get(), learing_rate);
 	}
 }
 
