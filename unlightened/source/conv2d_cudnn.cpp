@@ -37,7 +37,7 @@ void conv2d_cudnn::forward_pass(Layer* prevLayer)
 		input = prevLayer->get_output();
 	else
 	{
-		layer_input = prevLayer->get_device_output();
+		prevLayer->get_device_output(layer_input);
 		input = layer_input.get();
 	}
 
