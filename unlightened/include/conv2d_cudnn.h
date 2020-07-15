@@ -6,6 +6,7 @@
 class conv2d_cudnn : public Layer
 {
 protected:
+    bool initialized = false;
     filter_options options;
     filter filters;
     size_t filters_size;
@@ -31,6 +32,7 @@ protected:
     cuVector<float> cudnn_memory_backprop_filter;
 public:
     conv2d_cudnn(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
+    conv2d_cudnn(const filter_options& opt, bool first_layer = false);
     void init(const shape& input) override;
     void forward_pass(Layer* prevLayer) override;
     void backprop(Layer* layer) override;
@@ -57,7 +59,7 @@ public:
         return filters.get_bias();
     }
 
-    ~conv2d_cudnn();
+    virtual ~conv2d_cudnn();
 
 protected:
     void init_cudnn();

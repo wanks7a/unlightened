@@ -3,7 +3,7 @@
 
 void conv2d_cudnn::checkCUDNN(const cudnnStatus_t& status)
 {
-	if (status != CUDNN_STATUS_SUCCESS)
+	if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
 	{
 		std::cerr << "Error on line " << __LINE__ << ": "
 			<< cudnnGetErrorString(status) << std::endl;
@@ -14,6 +14,13 @@ void conv2d_cudnn::checkCUDNN(const cudnnStatus_t& status)
 conv2d_cudnn::conv2d_cudnn(size_t filter_dimension, size_t num_of_filters, bool first_layer) : options(filter_dimension, filter_dimension, num_of_filters), filters_size(num_of_filters), input_layer(nullptr), is_first_layer(first_layer)
 {
 	device_layer = true;
+	checkCUDNN(cudnnCreate(&cudnn_handle));
+}
+
+conv2d_cudnn::conv2d_cudnn(const filter_options& opt, bool first_layer) : filters_size(opt.num_of_filters), input_layer(nullptr), is_first_layer(first_layer)
+{
+	device_layer = true;
+	options = opt;
 	checkCUDNN(cudnnCreate(&cudnn_handle));
 }
 
@@ -110,6 +117,7 @@ const float* conv2d_cudnn::derivative_wr_to_input()
 
 void conv2d_cudnn::init_cudnn()
 {
+	initialized = true;
 	checkCUDNN(cudnnCreateTensorDescriptor(&input_descriptor));
 	checkCUDNN(cudnnSetTensor4dDescriptor(input_descriptor,
 		/*format=*/CUDNN_TENSOR_NCHW, // row major
@@ -139,8 +147,8 @@ void conv2d_cudnn::init_cudnn()
 	checkCUDNN(cudnnSetConvolution2dDescriptor(convolution_forwardpass_descriptor,
 		/*pad_height=*/filters.get_padding(),
 		/*pad_width=*/filters.get_padding(),
-		/*vertical_stride=*/1,
-		/*horizontal_stride=*/1,
+		/*vertical_stride=*/options.stride,
+		/*horizontal_stride=*/options.stride,
 		/*dilation_height=*/1,
 		/*dilation_width=*/1,
 		/*mode=*/CUDNN_CROSS_CORRELATION, // check this
@@ -170,6 +178,7 @@ void conv2d_cudnn::init_cudnn()
 	{
 		cudnn_memory_forward_pass.resize(workspace_bytes / sizeof(float));
 	}
+
 	workspace_bytes = 0;
 	checkCUDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle,
 		filter_descriptor,
@@ -187,6 +196,7 @@ void conv2d_cudnn::init_cudnn()
 	{
 		cudnn_memory_backprop.resize(workspace_bytes / sizeof(float));
 	}
+
 	workspace_bytes = 0;
 	cudnnConvolutionBwdFilterPreference_t algo_pref = CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST;
 	checkCUDNN(cudnnGetConvolutionBackwardFilterAlgorithm(cudnn_handle,
@@ -243,12 +253,15 @@ void conv2d_cudnn::init_cudnn()
 
 conv2d_cudnn::~conv2d_cudnn()
 {
-	cudnnDestroyOpTensorDescriptor(add_op_descriptor);
-	cudnnDestroyTensorDescriptor(bias_tensor_descriptor);
-	cudnnDestroyTensorDescriptor(input_descriptor);
-	cudnnDestroyTensorDescriptor(output_descriptor);
-	cudnnDestroyFilterDescriptor(filter_descriptor);
-	cudnnDestroyConvolutionDescriptor(convolution_forwardpass_descriptor);
+	if (initialized)
+	{
+		cudnnDestroyOpTensorDescriptor(add_op_descriptor);
+		cudnnDestroyTensorDescriptor(bias_tensor_descriptor);
+		cudnnDestroyTensorDescriptor(input_descriptor);
+		cudnnDestroyTensorDescriptor(output_descriptor);
+		cudnnDestroyFilterDescriptor(filter_descriptor);
+		cudnnDestroyConvolutionDescriptor(convolution_forwardpass_descriptor);
+	}
 	cudnnDestroy(cudnn_handle);
 }
 
