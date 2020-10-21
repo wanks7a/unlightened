@@ -3,7 +3,7 @@
 #include <iostream>
 #include "Layer.h"
 
-class LinearLayer : public Layer
+class dense_layer : public Layer
 {
 private:
     std::vector<float> weight;
@@ -13,7 +13,7 @@ private:
     size_t size;
     size_t input_size;
 public:
-    LinearLayer(size_t neuron_size) : input(nullptr), input_size(0), size(neuron_size)
+    dense_layer(size_t neuron_size) : input(nullptr), input_size(0), size(neuron_size)
     {
     }
 
@@ -111,7 +111,7 @@ public:
         return this->derivativeWRtoInput.data();
     }
 
-    ~LinearLayer()
+    ~dense_layer()
     {
     }
 };

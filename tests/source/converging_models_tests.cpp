@@ -13,9 +13,9 @@
 TEST(model, xor_cpu)
 {
     NeuralNet test(shape(3));
-    test.addLayer(new LinearLayer(2));
+    test.addLayer(new dense_layer(2));
     test.addLayer(new SigmoidLayer());
-    test.addLayer(new LinearLayer(1));
+    test.addLayer(new dense_layer(1));
     test.addLayer(new SigmoidLayer());
     test.set_learning_rate(0.01f);
     for (int i = 0; i < 1000000; i++)
