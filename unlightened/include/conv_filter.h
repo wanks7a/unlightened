@@ -4,6 +4,7 @@
 #include <shape.h>
 #include <random>
 #include <math.h>
+#include <utility>
 
 struct filter_options
 {
@@ -27,13 +28,17 @@ class filter
     cuVector<float> weights;
     cuVector<float> weights_derivative;
     cuVector<float> bias;
-    size_t padding = 0;
     shape derivatives_shape;
     shape filter_shape;
 
-    unsigned int calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
+    size_t calc_output_dimension(size_t input_dim, size_t filter_dim, unsigned char stride, size_t padding)
     {
         return static_cast<unsigned int>((input_dim - filter_dim + 2 * padding) / stride + 1);
+    }
+
+    size_t calc_input_dimension(size_t output_dim, size_t filter_dim, unsigned char stride, size_t padding)
+    {
+        return static_cast<unsigned int>((output_dim - 1) * stride + filter_dim - 2 * padding);
     }
 
     void perform_he_init()
@@ -41,6 +46,26 @@ class filter
         weights.randomize();
         float fan_in = static_cast<float>(input_shape.volume());
         weights *= sqrtf(2.0f / fan_in);
+    }
+    
+    size_t paddingWidth() const
+    {
+        size_t pad = 0;
+        if (options.zeropadding)
+        {
+            pad = (options.w - 1) / 2;
+        }
+        return pad;
+    }
+
+    size_t paddingHeight() const
+    {
+        size_t pad = 0;
+        if (options.zeropadding)
+        {
+            pad = (options.h - 1) / 2;
+        }
+        return pad;
     }
 
 public:
@@ -57,13 +82,8 @@ public:
         if (input.depth != options.channels)
             options.channels = input.depth;
         input_shape = input;
-        padding = 0;
-        if (options.zeropadding)
-        {
-            padding = (options.w - 1) / 2;
-        }
-        output_shape.width = calc_output_dimension(input_shape.width, options.w, options.stride, padding);
-        output_shape.height = calc_output_dimension(input_shape.height, options.h, options.stride, padding);
+        output_shape.width = calc_output_dimension(input_shape.width, options.w, options.stride, paddingWidth());
+        output_shape.height = calc_output_dimension(input_shape.height, options.h, options.stride, paddingHeight());
         output_shape.depth = options.num_of_filters;
         output_shape.batches = input_shape.batches;
 
@@ -90,6 +110,14 @@ public:
         bias.resize(options.num_of_filters, 0.0f);
         perform_he_init();
         return true;
+    }
+
+    std::pair<size_t, size_t> calc_input_dim(shape out_shape)
+    {
+        std::pair<size_t, size_t> result;
+        result.first = calc_input_dimension(out_shape.width, options.w, options.stride, paddingWidth());
+        result.second = calc_input_dimension(out_shape.width, options.w, options.stride, paddingHeight());
+        return result;
     }
 
     cuVector<float>& get_weights()
@@ -134,7 +162,7 @@ public:
     
     size_t get_padding() const
     {
-        return padding;
+        return paddingWidth();
     }
 
     shape get_weights_derivative_shape() const
