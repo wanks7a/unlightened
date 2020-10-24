@@ -50,9 +50,9 @@ void startTrain(shape_plot* plot, loss_plot* l_plot)
     net.addLayer(new cnn_layer(3, 64));
     net.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
     net.addLayer(new max_pool(2));
-    net.addLayer(new LinearLayerGPU(128));
+    net.addLayer(new dense_gpu(128));
     net.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    net.addLayer(new LinearLayerGPU(10, false));
+    net.addLayer(new dense_gpu(10));
     net.addLayer(new activation_layer(activation_layer::activation_function::Softmax));
     OutputLayer* loss = new OutputLayer();
     net.addLayer(loss);
@@ -143,13 +143,13 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
     discriminator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
     discriminator->addLayer(new cnn_layer(3, 64));
     discriminator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    discriminator->addLayer(new LinearLayerGPU(128));
+    discriminator->addLayer(new dense_gpu(128));
     discriminator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    discriminator->addLayer(new LinearLayerGPU(2, false));
+    discriminator->addLayer(new dense_gpu(2));
     discriminator->addLayer(new activation_layer(activation_layer::activation_function::Softmax));
 
     NeuralNet* generator = new NeuralNet(gen_shape);
-    generator->addLayer(new LinearLayerGPU(28*28, false));
+    generator->addLayer(new dense_gpu(28*28));
     generator->addLayer(new reshape_layer(shape(28,28,1,batch_size)));
     //cnn_layer* cnn_3_64 = new cnn_layer(3, 64);
     //filter_options opt = cnn_3_64->get_options();

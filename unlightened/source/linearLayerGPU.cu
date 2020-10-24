@@ -6,10 +6,10 @@
 
 #define trPerBlock 1024
 
-template <typename T, bool BIAS_NOT_INCLUDED>
-__global__ void k_linearLayerForwardPass(T* output,const T* weights, const T* input, size_t inputSize, size_t outputSize)
+template <typename T>
+__global__ void k_dense_forward(T* output, const T* weights, const T* input, size_t inputSize, const T* bias, size_t outputSize)
 {
-    const unsigned int batch_offset_output = BIAS_NOT_INCLUDED ? blockIdx.y * (outputSize + 1) : blockIdx.y * outputSize;
+    const unsigned int batch_offset_output =  blockIdx.y * outputSize;
     const unsigned int batch_offset_input = blockIdx.y * inputSize;
     const auto i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i < outputSize)
@@ -20,19 +20,16 @@ __global__ void k_linearLayerForwardPass(T* output,const T* weights, const T* in
             //result = __fmaf_rn(input[j], weights[i * inputSize + j], result); // very fast multiply add = a*b + c
             result += input[batch_offset_input + j] * weights[i * inputSize + j];
         }
-        output[batch_offset_output + i] = result;
+        output[batch_offset_output + i] = result + bias[i];
     }
 }
 
-void linearLayerForwardPassGPU(float* output,const float* weights, const float* input, const shape& input_shape, const shape& output_shape, bool bias_subtracted)
+void linearLayerForwardPassGPU(float* output,const float* weights, const float* input, const shape& input_shape, const float* bias, const shape& output_shape)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(output_shape.width, static_cast<size_t>(trPerBlock)));
     auto num_of_blocks = utils::getBlockSize(threadsPerBlock, output_shape.width);
     dim3 blocks(num_of_blocks, output_shape.batches);
-    if(bias_subtracted)
-        k_linearLayerForwardPass<float, true> << <blocks, threadsPerBlock >> > (output, weights, input, input_shape.width, output_shape.width);
-    else
-        k_linearLayerForwardPass<float, false> << <blocks, threadsPerBlock >> > (output, weights, input, input_shape.width, output_shape.width);
+    k_dense_forward<float> << <blocks, threadsPerBlock >> > (output, weights, input, input_shape.width, bias, output_shape.width);
     utils::waitAndCheckForErrors();
 }
 
@@ -50,14 +47,13 @@ __global__ void k_calcDerivativeWRtoInput(T* derivativeWRtoInput, size_t inputSi
     }
 }
 
-void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights, bool last_out_is_bias)
+void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, inputSize);
     std::vector<cudaStream_t> streams;
     size_t outputSize = output_shape.volume();
-    if(last_out_is_bias)
-        outputSize -= 1;
+
     streams.resize(output_shape.batches);
     for (size_t i = 0; i <  streams.size(); i++)
     {
@@ -72,7 +68,7 @@ void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const
 }
 
 template <typename T>
-__global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize, float learning_rate, size_t batches, size_t out_offset)
+__global__ void k_updateWeights(T* weights, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize, float learning_rate, size_t batches, size_t out_offset)
 {
     size_t weightIndex = blockIdx.x * blockDim.x + threadIdx.x;
     size_t derivOutIdx = weightIndex / inputSize;
@@ -88,12 +84,37 @@ __global__ void k_updateWeightsAndBias(T* weights, const T* derivativeWRtoOutput
     }
 }
 
-void updateWeightsAndBias(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape, float learning_rate)
+void updateWeights(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape, float learning_rate)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize * inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize * inputSize);
 
-    k_updateWeightsAndBias << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
+    k_updateWeights << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
     
+    utils::waitAndCheckForErrors();
+}
+
+template <typename T>
+__global__ void k_updateBias(T* bias, const T* derivative_wr_to_out, size_t output_size, float learning_rate, size_t batches, size_t out_offset)
+{
+    size_t biasIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    if (biasIndex < output_size)
+    {
+        float error = 0.0f;
+        for (int i = 0; i < batches; i++)
+        {
+            error += derivative_wr_to_out[biasIndex + i * out_offset];
+        }
+        bias[biasIndex] = bias[biasIndex] - learning_rate * error / batches;
+    }
+}
+
+void updateBias(float* bias, const float* derivative_wr_to_out, size_t output_size, shape output_shape, float learning_rate)
+{
+    auto threadsPerBlock = static_cast<unsigned int>(std::min(output_size, static_cast<size_t>(trPerBlock)));
+    auto blocks = utils::getBlockSize(threadsPerBlock, output_size);
+
+    k_updateBias << <blocks, threadsPerBlock >> > (bias, derivative_wr_to_out, output_size, learning_rate, output_shape.batches, output_shape.volume());
+
     utils::waitAndCheckForErrors();
 }
