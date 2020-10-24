@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
 #include <iostream>
-#include "Layer.h"
+#include <serializable_interface.h>
 
-class dense_layer : public Layer
+class dense_layer : public serializable_layer<dense_layer>
 {
 private:
     std::vector<float> weight;
@@ -13,6 +13,10 @@ private:
     size_t size;
     size_t input_size;
 public:
+    dense_layer() : input(nullptr), input_size(0), size(0)
+    {
+    }
+
     dense_layer(size_t neuron_size) : input(nullptr), input_size(0), size(neuron_size)
     {
     }
@@ -35,7 +39,17 @@ public:
 
     void forward_pass(Layer* prevLayer) override
     {
-        input = prevLayer->get_output();
+        std::vector<float> temp;
+        if (prevLayer->is_device_layer())
+        {
+            temp = prevLayer->get_native_output();
+            input = temp.data();
+        }
+        else
+        {
+            input = prevLayer->get_output();
+        }
+
         forwardPassCalcNeurons(0, size - 1, prevLayer);
         
         if (output[size - 1] != 1.0f)
@@ -109,6 +123,19 @@ public:
     const float* derivative_wr_to_input() override
     {
         return this->derivativeWRtoInput.data();
+    }
+
+    template <typename Serializer>
+    void serialize_members(Serializer& s) const
+    {
+        s << weight << size << input_size;
+    }
+
+    template <typename Serializer>
+    void deserialize_members(Serializer& s)
+    {
+        s >> weight >> size >> input_size;
+        output.resize(size);
     }
 
     ~dense_layer()

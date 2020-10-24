@@ -21,10 +21,13 @@ add_library(
     include/generic_functions.h
     include/softmax.h
     include/reshape_layer.h
-    include/serializer.h
+    include/binary_serialization.h
     include/gan.h
     include/conv_transpose.h
     include/conv2d_cudnn.h
+    include/generic_stream.h
+    include/serializable_interface.h
+    include/serializer_interface.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -44,6 +47,7 @@ add_library(
     source/gan.cpp
     source/conv_transpose.cpp
     source/conv2d_cudnn.cpp
+    source/binary_serialization.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)

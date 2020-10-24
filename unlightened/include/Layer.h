@@ -1,6 +1,7 @@
 #pragma once
 #include <shape.h>
 #include <device_memory.h>
+#include <binary_serialization.h>
 
 class Layer
 {
@@ -21,6 +22,17 @@ public:
     virtual void backprop(Layer* layer) = 0;
     virtual const float* get_output() = 0;
     virtual const float* derivative_wr_to_input() = 0;
+    
+    virtual void serialize(binary_serialization& s) const 
+    {
+        s << learing_rate << output_shape << input_shape << device_layer << update_on_backprop;
+    };
+
+    virtual bool deserialize(binary_serialization& s)
+    {
+        s >> learing_rate >> output_shape >> input_shape >> device_layer >> update_on_backprop;
+        return true;
+    };
 
     virtual ~Layer() = default;
 

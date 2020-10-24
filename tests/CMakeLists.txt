@@ -7,7 +7,8 @@ add_executable(tests include/tests_objects.h
 		             source/cnn_tests.cpp
 					 source/converging_models_tests.cpp
 					 source/dense_layer_tests.cpp
-					 source/generic_functions_tests.cpp)
+					 source/generic_functions_tests.cpp
+					 source/serialization_tests.cpp)
 
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(tests GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main unlightened)
