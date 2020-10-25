@@ -2,7 +2,7 @@
 #include <LinearLayerGPU.h>
 #include <tests_objects.h>
 
-TEST(dense_layer, derivative_to_input_v1)
+TEST(dense_layer_tests, derivative_to_input_v1)
 {
 	size_t inputSize = 2;
 	shape output_shape(2);
@@ -27,7 +27,7 @@ TEST(dense_layer, derivative_to_input_v1)
 	}
 }
 
-TEST(dense_layer, derivative_to_input_v2)
+TEST(dense_layer_tests, derivative_to_input_v2)
 {
 	size_t inputSize = 2;
 	shape output_shape(2,1,1,2);
@@ -52,7 +52,7 @@ TEST(dense_layer, derivative_to_input_v2)
 	}
 }
 
-TEST(dense_layer, derivative_to_input_v3)
+TEST(dense_layer_tests, derivative_to_input_v3)
 {
 	size_t inputSize = 2;
 	shape output_shape(2, 1, 1, 3);
@@ -77,7 +77,7 @@ TEST(dense_layer, derivative_to_input_v3)
 	}
 }
 
-TEST(dense_layer, weights_update_v1)
+TEST(dense_layer_tests, weights_update_v1)
 {
 	cuVector<float> weights;
 	EXPECT_TRUE(weights.setValues({
@@ -111,7 +111,7 @@ TEST(dense_layer, weights_update_v1)
 	}
 }
 
-TEST(dense_layer, weights_update_v2)
+TEST(dense_layer_tests, weights_update_v2)
 {
 	cuVector<float> weights;
 	EXPECT_TRUE(weights.setValues({
@@ -144,7 +144,7 @@ TEST(dense_layer, weights_update_v2)
 }
 
 
-TEST(dense_layer, weights_update_v3)
+TEST(dense_layer_tests, weights_update_v3)
 {
 	cuVector<float> weights;
 	EXPECT_TRUE(weights.setValues({
@@ -178,7 +178,7 @@ TEST(dense_layer, weights_update_v3)
 	}
 }
 
-TEST(dense_layer, bias_update_v1)
+TEST(dense_layer_tests, bias_update_v1)
 {
 	cuVector<float> bias;
 	bias.resize(2048, 1.0f);
@@ -202,7 +202,7 @@ TEST(dense_layer, bias_update_v1)
 	}
 }
 
-TEST(dense_layer, bias_update_v1_batched)
+TEST(dense_layer_tests, bias_update_v1_batched)
 {
 	shape out(2048, 1, 1, 2);
 	cuVector<float> bias;
@@ -229,7 +229,7 @@ TEST(dense_layer, bias_update_v1_batched)
 	}
 }
 
-TEST(dense_layer, test_forward_backprop_without_bias_v1)
+TEST(dense_layer_tests, test_forward_backprop_without_bias_v1)
 {
 	shape input_sh(10);
 	test_layer  test;
@@ -274,7 +274,7 @@ TEST(dense_layer, test_forward_backprop_without_bias_v1)
 	}
 }
 
-TEST(dense_layer, test_forward_backprop_without_bias_v2)
+TEST(dense_layer_tests, test_forward_backprop_without_bias_v2)
 {
 	shape input_sh(10, 1, 1, 2);
 	test_layer  test;
@@ -325,7 +325,7 @@ TEST(dense_layer, test_forward_backprop_without_bias_v2)
 	}
 }
 
-TEST(dense_layer, forward_pass_dense_1024)
+TEST(dense_layer_tests, forward_pass_dense_1024)
 {
 	std::vector<float> input;
 	input.resize(1024 * 1024, 1.0f);
@@ -350,7 +350,7 @@ TEST(dense_layer, forward_pass_dense_1024)
 	}
 }
 
-TEST(dense_layer, dense_layer1024_batches2_v1)
+TEST(dense_layer_tests, dense_layer_tests1024_batches2_v1)
 {
 	shape input_shape(1024, 1, 1, 2);
 	cuVector<float> input;
@@ -373,7 +373,7 @@ TEST(dense_layer, dense_layer1024_batches2_v1)
 	}
 }
 
-TEST(dense_layer, dense_layer1024_batches2_v2)
+TEST(dense_layer_tests, dense_layer_tests1024_batches2_v2)
 {
 	shape input_shape(1024, 1, 1, 2);
 	cuVector<float> input;
