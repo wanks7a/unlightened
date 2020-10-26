@@ -405,3 +405,52 @@ TEST(dense_layer_tests, dense_layer_tests1024_batches2_v2)
 			EXPECT_EQ(2049, result[i]);
 	}
 }
+
+TEST(dense_layer_tests, dense_layer_generic_v1)
+{
+	size_t input_size_dense = 10;
+	size_t input_size_test_l = 4;
+	test_layer test_l;
+	test_l.set_output_shape(shape(input_size_test_l, 1, 1, 10));
+	std::vector<float> data;
+	for (size_t i = 0; i < test_l.get_shape().size(); i++)
+	{
+		data.emplace_back(i + 1.0f);
+	}
+
+	std::vector<float> weights;
+	for (size_t i = 0; i <  input_size_dense; i++)
+	{
+		for (size_t j = 0; j < input_size_test_l; j++)
+		{
+			weights.emplace_back(i + 1.0f);
+		}
+	}
+
+	test_l.output.setValues(data);
+
+	dense_gpu d(10);
+	d.init_base(test_l.get_shape());
+	EXPECT_TRUE(d.set_weights(weights));
+	d.forward_pass(&test_l);
+	auto result = d.get_native_output();
+	std::vector<float> expected;
+	for (size_t i = 0; i < 10; i++)
+	{
+		for (size_t k = 0; k < 10; k++)
+		{
+			float result = 0.0f;
+			for (size_t j = 0; j < 4; j++)
+			{
+				result += data[i*4 + j];
+			}
+			result *= weights[k * 4];
+			expected.push_back(result);
+		}
+	}
+	EXPECT_TRUE(expected.size(), result.size());
+	for (size_t i = 0; i < expected.size(); i++)
+	{
+		EXPECT_TRUE(expected[i], result[i]);
+	}
+}
