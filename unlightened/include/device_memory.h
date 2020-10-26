@@ -51,7 +51,7 @@ public:
 		}
 	}
 
-	std::vector<T> to_vector()
+	std::vector<T> to_vector() const
 	{
 		return from_device_host(this->ptr, currentSize);
 	}

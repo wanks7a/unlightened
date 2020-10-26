@@ -448,9 +448,9 @@ TEST(dense_layer_tests, dense_layer_generic_v1)
 			expected.push_back(result);
 		}
 	}
-	EXPECT_TRUE(expected.size(), result.size());
+	EXPECT_EQ(expected.size(), result.size());
 	for (size_t i = 0; i < expected.size(); i++)
 	{
-		EXPECT_TRUE(expected[i], result[i]);
+		EXPECT_EQ(expected[i], result[i]);
 	}
 }

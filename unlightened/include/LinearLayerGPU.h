@@ -4,16 +4,17 @@
 #include <memory>
 #include <device_memory.h>
 #include <math.h>
+#include <serializable_interface.h>
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const float* bias, const shape& output_shape);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights);
 void updateWeights(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape, float learning_rate);
 void updateBias(float* bias, const float* derivative_wr_to_out, size_t output_size, shape output_shape, float learning_rate);
 
-class dense_gpu : public Layer
+class dense_gpu : public serializable_layer<dense_gpu>
 {
 private:
-    std::vector<float> weight;
+    std::vector<float> weights;
     cuVector<float> weightsGPU;
     cuVector<float> biasGPU;
     cuVector<float> outputGPU;
@@ -22,10 +23,13 @@ private:
     const float* inputPtr;
     size_t size;
     size_t input_size;
-    size_t input_size_with_bias;
 public:
 
-    dense_gpu(size_t neuron_size) : size(neuron_size)
+    dense_gpu() : size(0), inputPtr(nullptr), input_size(0)
+    {
+    }
+
+    dense_gpu(size_t neuron_size) : size(neuron_size), inputPtr(nullptr), input_size(0)
     {
         device_layer = true;
     }
@@ -33,11 +37,11 @@ public:
     void init(const shape& input) override
     {
         input_size = input.volume();
-        weight.resize(input_size * size);
+        weights.resize(input_size * size);
         derivativeWRtoInputGPU.resize(input.size(), 0.0f);
         biasGPU.resize(size, 0.0f);
         outputGPU.resize(size * input.batches, 0.0f);
-        weightsGPU.setValues(weight);
+        weightsGPU.setValues(weights);
         weightsGPU.randomize();
         float fan_in = static_cast<float>(input_size);
         weightsGPU *= sqrtf(2.0f / fan_in);
@@ -48,10 +52,10 @@ public:
 
     bool set_weights(const std::vector<float>& w)
     {
-        if (weight.size() == w.size())
+        if (weights.size() == w.size())
         {
-            weight = w;
-            return weightsGPU.setValues(weight);
+            weights = w;
+            return weightsGPU.setValues(weights);
         }
         return false;
     }
@@ -79,7 +83,6 @@ public:
 
     void backprop(Layer* layer) override
     {
-        auto v = layer->get_native_derivative();
         shape temp_out_shape = output_shape;
         if (layer->is_device_layer())
         {
@@ -109,6 +112,20 @@ public:
     const float* derivative_wr_to_input()
     {
         return derivativeWRtoInputGPU.get();
+    }
+
+    template <typename Serializer>
+    void serialize_members(Serializer& s) const
+    {
+        s << size << input_size << weightsGPU << biasGPU;
+    }
+
+    template <typename Serializer>
+    void deserialize_members(Serializer& s)
+    {
+        s >> size >> input_size >> weightsGPU >> biasGPU;
+        outputGPU.resize(size * input_shape.batches, 0.0f);
+        derivativeWRtoInputGPU.resize(input_shape.size(), 0.0f);
     }
 
     ~dense_gpu()

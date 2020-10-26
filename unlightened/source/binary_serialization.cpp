@@ -1,22 +1,44 @@
 #include <binary_serialization.h>
 #include <Layer.h>
 #include <LinearLayer.h>
+#include <LinearLayerGPU.h>
+#include <activation_layer.h>
+#include <max_pool.h>
+
+template <typename T>
+void binary_serialization::serialize()
+{
+	*this << static_cast<uint32_t>(is_layer<T>::id);
+}
+
+template <typename T>
+bool binary_serialization::deserialize()
+{
+	uint32_t layer_id;
+	*this >> layer_id;
+	return layer_id == static_cast<uint32_t>(is_layer<T>::id);
+}
+
+template <typename T>
+struct binary_serialization::is_layer
+{
+};
+
+#define LAYER_MAP(NAME, ID)     template <> \
+								struct binary_serialization::is_layer<NAME> \
+								{ static constexpr int id = ID; }; \
+								template void binary_serialization::serialize<NAME>(); \
+								template bool binary_serialization::deserialize<NAME>();
+
+LAYER_MAP(dense_layer,			binary_serialization::TYPE_ID::DENSE);
+LAYER_MAP(dense_gpu,			binary_serialization::TYPE_ID::DENSE_GPU);
+LAYER_MAP(activation_layer,		binary_serialization::TYPE_ID::ACTIVATION);
 
 binary_serialization::binary_serialization(std::shared_ptr<generic_stream> s) : stream(s)
 {
 	register_def_constructor<dense_layer>(TYPE_ID::DENSE);
-}
-
-void binary_serialization::serialize(const dense_layer& l)
-{
-	*this << static_cast<uint32_t>(TYPE_ID::DENSE);
-}
-
-bool binary_serialization::deserialize(dense_layer& l)
-{
-	uint32_t layer_id;
-	*this >> layer_id;
-	return layer_id == TYPE_ID::DENSE;
+	register_def_constructor<dense_gpu>(TYPE_ID::DENSE_GPU);
+	register_def_constructor<activation_layer>(TYPE_ID::ACTIVATION);
 }
 
 void binary_serialization::serialize(const Layer& obj)

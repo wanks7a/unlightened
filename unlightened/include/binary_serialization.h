@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <generic_stream.h>
 #include <cstdint>
+#include <device_memory.h>
 
 class Layer;
-class dense_layer;
 
 class binary_serialization 
 {
@@ -15,11 +15,17 @@ class binary_serialization
 
 	enum TYPE_ID
 	{
+		RESERVED = 0,
 		DENSE = 1,
 		DENSE_GPU = 2,
 		CONV_2D = 3,
-		CONV_2D_GPU = 4
+		CONV_2D_GPU = 4,
+		ACTIVATION = 5,
+		MAX_POOL = 6
 	};
+
+	template <typename T>
+	struct is_layer;
 
 	template <typename T>
 	Layer* construct() { return new T(); }
@@ -33,8 +39,12 @@ public:
 	binary_serialization(std::shared_ptr<generic_stream> s);
 	void serialize(const Layer& obj);
 	std::shared_ptr<Layer> deserialize_layer();
-	void serialize(const dense_layer& l);
-	bool binary_serialization::deserialize(dense_layer& l);
+
+	template <typename T>
+	void serialize();
+
+	template <typename T>
+	bool deserialize();
 
 	template <typename T, typename = std::enable_if<std::is_trivially_copyable<T>::value>::type>
 	binary_serialization& operator<<(const T& value)
@@ -86,6 +96,20 @@ public:
 		*this >> size;
 		values.resize(size);
 		stream->read((char*)values.data(), size * sizeof(float));
+		return *this;
+	}
+
+	binary_serialization& operator<<(const cuVector<float>& v)
+	{
+		*this << v.to_vector();
+		return *this;
+	}
+
+	binary_serialization& operator>>(cuVector<float>& v)
+	{
+		std::vector<float> values;
+		*this >> values;
+		v.setValues(values);
 		return *this;
 	}
 };

@@ -1,5 +1,11 @@
 #include <activation_layer.h>
 
+activation_layer::activation_layer() : activ_func(activation_function::Sigmoid)
+{
+	device_layer = true;
+}
+
+
 activation_layer::activation_layer(activation_function function) : activ_func(function)
 {
 	device_layer = true;

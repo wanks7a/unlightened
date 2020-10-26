@@ -7,7 +7,7 @@ class serializable_layer : public Layer
 public:
 	void serialize(binary_serialization& s) const final
 	{
-		s.serialize(static_cast<const T&>(*this));
+		s.serialize<T>();
 		Layer::serialize(s);
 		const T& ref = static_cast<const T&>(*this);
 		ref.serialize_members(s);
@@ -15,7 +15,7 @@ public:
 
 	bool deserialize(binary_serialization& s) final
 	{
-		if (s.deserialize(static_cast<T&>(*this)))
+		if (s.deserialize<T>())
 		{
 			Layer::deserialize(s);
 			T& ref = static_cast<T&>(*this);

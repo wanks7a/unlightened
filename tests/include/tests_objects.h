@@ -24,5 +24,6 @@ struct test_layer : public Layer
     void set_output_shape(const shape& sh)
     {
         output_shape = sh;
+        input_shape = sh;
     }
 };
