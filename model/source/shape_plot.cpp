@@ -90,3 +90,7 @@ void shape_plot::set_shape_data(std::vector<float>&& input, const shape& sh)
 	this->sh = sh;
     new_data = true;
 }
+
+shape_plot::shape_plot(int w, int h, std::string name) : view(w, h, name)
+{
+}

@@ -9,6 +9,7 @@ class shape_plot : public view
 	std::mutex m;
 	bool new_data = false;
 public:
+	shape_plot(int w, int h, std::string name);
 	void draw() override;
 	void set_shape_data(std::vector<float>&& data, const shape& sh);
 };

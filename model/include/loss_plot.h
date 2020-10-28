@@ -16,7 +16,7 @@ class loss_plot : public view
 	float max_val = 0.0f;
 	std::unordered_map<std::string, plot_values> lines;
 public:
-	loss_plot();
+	loss_plot(int w, int h, std::string name);
 	void add_point(float point, const std::string& name, const std::string color);
 	void add_points(const std::vector<float>& points, const std::string& name, const std::string color);
 	void draw() override;

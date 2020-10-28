@@ -33,12 +33,14 @@ struct binary_serialization::is_layer
 LAYER_MAP(dense_layer,			binary_serialization::TYPE_ID::DENSE);
 LAYER_MAP(dense_gpu,			binary_serialization::TYPE_ID::DENSE_GPU);
 LAYER_MAP(activation_layer,		binary_serialization::TYPE_ID::ACTIVATION);
+LAYER_MAP(max_pool,				binary_serialization::TYPE_ID::MAX_POOL)
 
 binary_serialization::binary_serialization(std::shared_ptr<generic_stream> s) : stream(s)
 {
 	register_def_constructor<dense_layer>(TYPE_ID::DENSE);
 	register_def_constructor<dense_gpu>(TYPE_ID::DENSE_GPU);
 	register_def_constructor<activation_layer>(TYPE_ID::ACTIVATION);
+	register_def_constructor<max_pool>(TYPE_ID::MAX_POOL);
 }
 
 void binary_serialization::serialize(const Layer& obj)

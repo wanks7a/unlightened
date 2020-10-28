@@ -1,5 +1,10 @@
 #include <max_pool.h>
 
+max_pool::max_pool() : filter_size(0)
+{
+	device_layer = true;
+}
+
 max_pool::max_pool(int f_size)
 {
 	device_layer = true;

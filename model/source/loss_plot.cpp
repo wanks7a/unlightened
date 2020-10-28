@@ -57,6 +57,6 @@ void loss_plot::draw()
     SDL_FreeSurface(surf);
 }
 
-loss_plot::loss_plot()
+loss_plot::loss_plot(int w, int h, std::string name) : view(w, h, name)
 {
 }
