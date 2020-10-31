@@ -1,9 +1,9 @@
 #pragma once
-#include <Layer.h>
 #include <conv_filter.h>
 #include <cudnn.h>
+#include <serializable_interface.h>
 
-class conv2d_cudnn : public Layer
+class conv2d_cudnn : public serializable_layer<conv2d_cudnn>
 {
 protected:
     bool initialized = false;
@@ -17,20 +17,21 @@ protected:
     const float* input = nullptr;
     bool is_first_layer;
     cudnnHandle_t cudnn_handle;
-    cudnnTensorDescriptor_t input_descriptor;
-    cudnnTensorDescriptor_t output_descriptor;
-    cudnnFilterDescriptor_t filter_descriptor;
-    cudnnConvolutionDescriptor_t convolution_forwardpass_descriptor;
+    cudnnTensorDescriptor_t input_descriptor = nullptr;
+    cudnnTensorDescriptor_t output_descriptor = nullptr;
+    cudnnFilterDescriptor_t filter_descriptor = nullptr;
+    cudnnConvolutionDescriptor_t convolution_forwardpass_descriptor = nullptr;
     cudnnConvolutionFwdAlgo_t convolution_forwardpass_algorithm;
     cudnnConvolutionBwdDataAlgo_t backprop_algo = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
     cudnnConvolutionBwdFilterAlgo_t filter_backprop_algo;
-    cudnnOpTensorDescriptor_t add_op_descriptor;
-    cudnnTensorDescriptor_t bias_tensor_descriptor;
-    cudnnTensorDescriptor_t weights_tensor_descriptor;
+    cudnnOpTensorDescriptor_t add_op_descriptor = nullptr;
+    cudnnTensorDescriptor_t bias_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t weights_tensor_descriptor = nullptr;
     cuVector<float> cudnn_memory_forward_pass;
     cuVector<float> cudnn_memory_backprop;
     cuVector<float> cudnn_memory_backprop_filter;
 public:
+    conv2d_cudnn();
     conv2d_cudnn(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
     conv2d_cudnn(const filter_options& opt, bool first_layer = false);
     void init(const shape& input) override;
@@ -57,6 +58,21 @@ public:
     cuVector<float>& get_bias_vector()
     {
         return filters.get_bias();
+    }
+
+    template <typename Serializer>
+    void serialize_members(Serializer& s) const
+    {
+        s << is_first_layer << filters.get_options() << filters.get_weights() << filters.get_bias();
+    }
+
+    template <typename Serializer>
+    void deserialize_members(Serializer& s)
+    {
+        s >> is_first_layer >> options;
+        filters_size = options.num_of_filters;
+        init(input_shape);
+        s >> filters.get_weights() >> filters.get_bias();
     }
 
     virtual ~conv2d_cudnn();

@@ -13,7 +13,7 @@ void reshape_layer::init(const shape& input)
 	}
 	if (input.batches != output_shape.batches)
 	{
-		std::cout << "Reshape: input batch size is not the same as output batch size!" << std::endl;
+		output_shape.batches = input_shape.batches;
 	}
 }
 

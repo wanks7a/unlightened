@@ -1,9 +1,9 @@
 #pragma once
-#include "Layer.h"
 #include <vector>
 #include <iostream>
+#include <serializable_interface.h>
 
-class OutputLayer : public Layer
+class OutputLayer : public serializable_layer<OutputLayer>
 {   
     std::vector<float> predictedValue;
     std::vector<float> derivativeWRToInput;
@@ -59,7 +59,7 @@ public:
     {
         if (values > size || values == 0)
             values = size;
-        std::cout << "Values :" << std::endl;
+        //std::cout << "Values :" << std::endl;
         for (int i = 0; i < values; i++)
         {
             printf("Value [%d] = %.2f      Actual = %.2f \n", i, predictedValue[i], observedValues[i]);
@@ -82,6 +82,17 @@ public:
             result += ((observedValues[i] - predictedValue[i]) * (observedValues[i] - predictedValue[i]));
         }
         return result;
+    }
+
+    template <typename Serializer>
+    void serialize_members(Serializer& s) const
+    {
+    }
+
+    template <typename Serializer>
+    void deserialize_members(Serializer& s)
+    {
+        init(input_shape);
     }
 
     ~OutputLayer() = default;

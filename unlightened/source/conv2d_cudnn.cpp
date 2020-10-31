@@ -11,6 +11,12 @@ void conv2d_cudnn::checkCUDNN(const cudnnStatus_t& status)
 	}
 }
 
+conv2d_cudnn::conv2d_cudnn() : is_first_layer(false)
+{
+	device_layer = true;
+	checkCUDNN(cudnnCreate(&cudnn_handle));
+}
+
 conv2d_cudnn::conv2d_cudnn(size_t filter_dimension, size_t num_of_filters, bool first_layer) : options(filter_dimension, filter_dimension, num_of_filters), filters_size(num_of_filters), input_layer(nullptr), is_first_layer(first_layer)
 {
 	device_layer = true;

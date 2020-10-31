@@ -7,6 +7,7 @@
 #include <device_memory.h>
 
 class Layer;
+class NeuralNet;
 
 class binary_serialization 
 {
@@ -21,7 +22,10 @@ class binary_serialization
 		CONV_2D = 3,
 		CONV_2D_GPU = 4,
 		ACTIVATION = 5,
-		MAX_POOL = 6
+		MAX_POOL = 6,
+		INPUT = 7,
+		LOSS = 8,
+		RESHAPE = 9,
 	};
 
 	template <typename T>
@@ -39,6 +43,10 @@ public:
 	binary_serialization(std::shared_ptr<generic_stream> s);
 	void serialize(const Layer& obj);
 	std::shared_ptr<Layer> deserialize_layer();
+	bool deserialize(Layer& l);
+
+	std::shared_ptr<NeuralNet> deserialize_model();
+	void deserialize_model(NeuralNet& l);
 
 	template <typename T>
 	void serialize();

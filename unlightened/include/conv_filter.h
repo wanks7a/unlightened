@@ -189,4 +189,14 @@ public:
     {
         return bias;
     }
+
+    const cuVector<float>& get_weights() const
+    {
+        return weights;
+    }
+
+    const cuVector<float>& get_bias() const
+    {
+        return bias;
+    }
 };

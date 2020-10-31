@@ -95,6 +95,51 @@ public:
         return layers.back();
     }
 
+    template <typename Serializer>
+    void serialize(Serializer& s) const
+    {
+        s << layers.size();
+        for (size_t i = 0; i < layers.size(); i++)
+        {
+            s.serialize(*layers[i]);
+        }
+        s.serialize(input_layer);
+        s.serialize(output_layer);
+    }
+
+    template <typename Serializer>
+    bool load(Serializer& s)
+    {
+        size_t size;
+        s >> size;
+        if (!layers.empty())
+            layers.clear();
+        for (size_t i = 0; i < size; i++)
+        {
+            layers.push_back(s.deserialize_layer());
+        }
+        s.deserialize(input_layer);
+        s.deserialize(output_layer);
+        return true;
+    }
+
+    template <typename Serializer>
+    bool reload(Serializer& s)
+    {
+        size_t size;
+        s >> size;
+        if (layers.size() != size)
+            return false;
+        for (size_t i = 0; i < size; i++)
+        {
+            if (s.deserialize(*layers[i]))
+                return false;
+        }
+        s.deserialize(input_layer);
+        s.deserialize(output_layer);
+        return true;
+    }
+
     ~NeuralNet()
     {
     }

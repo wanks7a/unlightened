@@ -1,12 +1,13 @@
 #pragma once
-#include "Layer.h"
 #include <vector>
 #include <iostream>
+#include <serializable_interface.h>
 
-class InputLayer : public Layer
+class InputLayer : public serializable_layer<InputLayer>
 {
     std::vector<float> output;
 public:
+    InputLayer() = default;
     InputLayer(shape shape)
     {
         input_shape = shape;
@@ -57,4 +58,15 @@ public:
     {
         return output.data();
     };
+
+    template <typename Serializer>
+    void serialize_members(Serializer& s) const
+    {
+    }
+
+    template <typename Serializer>
+    void deserialize_members(Serializer& s)
+    {
+        output.resize(output_shape.size());
+    }
 };

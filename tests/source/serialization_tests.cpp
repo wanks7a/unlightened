@@ -7,6 +7,9 @@
 #include <LinearLayerGPU.h>
 #include <activation_layer.h>
 #include <max_pool.h>
+#include <conv2d_cudnn.h>
+#include <NeuralNet.h>
+#include <reshape_layer.h>
 
 struct test_stream : public generic_stream
 {
@@ -220,4 +223,132 @@ TEST(serialization_tests, max_pool_serialization)
 	{
 		EXPECT_EQ(real_values_backprop[i], expected_values_backprop[i]);
 	}
+}
+
+TEST(serialization_tests, conv2d_gpu_serialization)
+{
+	test_layer input_l;
+	input_l.set_output_shape(shape(4, 4));
+	input_l.output.setValues({
+		1,2,3,4,
+		1,2,3,4,
+		1,2,3,4,
+		1,2,3,4,
+		});
+
+	test_layer backprop_l;
+	backprop_l.set_output_shape(shape(3, 3, 10));
+	std::vector<float> vals;
+	vals.resize(3 * 3 * 10, 1.0f);
+	backprop_l.output.setValues(vals);
+
+	binary_serialization ser(std::make_shared<test_stream>());
+	std::shared_ptr<Layer> test_layer(new conv2d_cudnn(2, 10));
+	test_layer->init_base(input_l.get_shape());
+
+	// serialize before backprop 
+	ser.serialize(*test_layer);
+	auto expected_layer = ser.deserialize_layer();
+
+	// forward pass calc
+	test_layer->forward_pass(&input_l);
+	auto real_values_forward = test_layer->get_native_output();
+
+	// backprop calc
+	test_layer->backprop(&backprop_l);
+	auto real_values_backprop = test_layer->get_native_derivative();
+
+	// test results
+	expected_layer->forward_pass(&input_l);
+	auto expected_values_forward = expected_layer->get_native_output();
+
+	expected_layer->backprop(&backprop_l);
+	auto expected_values_backprop = expected_layer->get_native_derivative();
+
+	EXPECT_EQ(real_values_forward.size(), expected_values_forward.size());
+	for (size_t i = 0; i < real_values_forward.size(); i++)
+	{
+		EXPECT_EQ(real_values_forward[i], expected_values_forward[i]);
+	}
+
+	EXPECT_EQ(real_values_backprop.size(), expected_values_backprop.size());
+	for (size_t i = 0; i < real_values_backprop.size(); i++)
+	{
+		EXPECT_EQ(real_values_backprop[i], expected_values_backprop[i]);
+	}
+}
+
+TEST(serialization_tests, neural_net_serialization_test)
+{
+	binary_serialization ser(std::make_shared<test_stream>());
+
+	NeuralNet n(shape(10,10));
+	n.addLayer(new conv2d_cudnn(2, 3, false));
+	n.addLayer(new activation_layer(activation_layer::activation_function::Softmax));
+	n.addLayer(new dense_gpu(10));
+	n.addLayer(new max_pool(2));
+	
+	n.serialize(ser);
+	auto saved_model = ser.deserialize_model();
+
+	// test results
+	std::vector<float> input;
+	for (size_t i = 0; i < 10 * 10; i++)
+	{
+		input.push_back(i);
+	}
+
+	n.getInputLayer().set_input(input);
+	n.predict();
+	auto expected_results = n.loss_layer().get_native_output();
+
+	saved_model->getInputLayer().set_input(input);
+	saved_model->predict();
+	auto results = saved_model->loss_layer().get_native_output();
+
+	// forward pass check
+	EXPECT_EQ(expected_results.size(), results.size());
+	for (size_t i = 0; i < expected_results.size(); i++)
+	{
+		EXPECT_EQ(expected_results[i], results[i]);
+	}
+	
+	input.clear();
+	for (size_t i = 0; i < n.loss_layer().get_shape().size(); i++)
+	{
+		input.push_back(i);
+	}
+
+	n.loss_layer().setObservedValue(input);
+	n.backprop();
+	expected_results = n[0]->get_native_derivative();
+
+	saved_model->loss_layer().setObservedValue(input);
+	saved_model->backprop();
+	results = (*saved_model)[0]->get_native_derivative();
+
+	// backprop check
+	EXPECT_EQ(expected_results.size(), results.size());
+	for (size_t i = 0; i < expected_results.size(); i++)
+	{
+		if (std::isnan(expected_results[i]) && std::isnan(results[i]))
+		{
+		}
+		else
+			EXPECT_EQ(expected_results[i], results[i]);
+	}
+}
+
+
+TEST(serialization_tests, reshape_layer_test_serialization)
+{
+	binary_serialization ser(std::make_shared<test_stream>());
+	std::shared_ptr<Layer> test_layer(new reshape_layer(shape(20,20)));
+	test_layer->init_base(shape(20 * 20));
+	ser.serialize(*test_layer);
+	auto layer = ser.deserialize_layer();
+	EXPECT_EQ(test_layer->get_shape().width, layer->get_shape().width);
+	EXPECT_EQ(test_layer->get_shape().height, layer->get_shape().height);
+	EXPECT_EQ(test_layer->get_shape().depth, layer->get_shape().depth);
+	EXPECT_EQ(test_layer->get_shape().batches, layer->get_shape().batches);
 }
