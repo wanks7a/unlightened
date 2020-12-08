@@ -26,6 +26,8 @@ class binary_serialization
 		INPUT = 7,
 		LOSS = 8,
 		RESHAPE = 9,
+		DECONV_2D = 10,
+		DECONV_2D_GPU = 11
 	};
 
 	template <typename T>

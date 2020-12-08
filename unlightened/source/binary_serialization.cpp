@@ -7,6 +7,7 @@
 #include <conv2d_cudnn.h>
 #include <NeuralNet.h>
 #include <reshape_layer.h>
+#include <conv_transpose.h>
 
 template <typename T>
 void binary_serialization::serialize()
@@ -41,6 +42,7 @@ LAYER_MAP(conv2d_cudnn,			binary_serialization::TYPE_ID::CONV_2D_GPU);
 LAYER_MAP(InputLayer,			binary_serialization::TYPE_ID::INPUT);
 LAYER_MAP(OutputLayer,          binary_serialization::TYPE_ID::LOSS);
 LAYER_MAP(reshape_layer,        binary_serialization::TYPE_ID::RESHAPE);
+LAYER_MAP(conv2d_transposed,    binary_serialization::TYPE_ID::DECONV_2D_GPU);
 
 
 

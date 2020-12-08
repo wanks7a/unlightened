@@ -28,6 +28,7 @@ add_library(
     include/generic_stream.h
     include/serializable_interface.h
     include/serializer_interface.h
+    include/cudnn_helpers.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
