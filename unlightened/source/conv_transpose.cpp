@@ -250,6 +250,4 @@ void conv2d_transposed::update_weights()
 		&beta,
 		weight_desc.descriptor,
 		filter_data.get_weights().get());
-	auto res = filter_data.get_weights_derivative().to_vector();
-	auto res2 = filter_data.get_weights().to_vector();
 }

@@ -68,7 +68,6 @@ public:
         shape input_shape;
         input_shape.width = prevLayer->get_shape().volume(); // represent the value as 1d array
         input_shape.batches = prevLayer->get_shape().batches;
-        auto v = prevLayer->get_native_output();
         if (!prevLayer->is_device_layer())
         {
             inputVectorGPU = prevLayer->get_device_output();
