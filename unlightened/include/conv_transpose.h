@@ -35,6 +35,7 @@ private:
     const float* input_from_prev_layer = nullptr;
     cuVector<float> layer_input;
 public:
+    conv2d_transposed();
     conv2d_transposed(size_t number_filters, size_t filter_size, size_t stride, padding pad);
     void init(const shape& input) override;
     void forward_pass(Layer* prevLayer) override;
@@ -46,13 +47,19 @@ public:
     template <typename Serializer>
     void serialize_members(Serializer& s) const
     {
-        
+        s << static_cast<char>(pad_type) << filter_data.get_options() << filter_data.get_weights() << filter_data.get_bias();
     }
 
     template <typename Serializer>
     void deserialize_members(Serializer& s)
     {
-
+        char pad_temp;
+        filter_options opt;
+        s >> pad_temp >> opt;
+        pad_type = static_cast<padding>(pad_temp);
+        filter_data.set_options(opt);
+        init(input_shape);
+        s >> filter_data.get_weights() >> filter_data.get_bias();
     }
 
     filter& get_filter()

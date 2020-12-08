@@ -56,6 +56,7 @@ binary_serialization::binary_serialization(std::shared_ptr<generic_stream> s) : 
 	register_def_constructor<InputLayer>(TYPE_ID::INPUT);
 	register_def_constructor<OutputLayer>(TYPE_ID::LOSS);
 	register_def_constructor<reshape_layer>(TYPE_ID::RESHAPE);
+	register_def_constructor<conv2d_transposed>(TYPE_ID::DECONV_2D_GPU);
 }
 
 void binary_serialization::serialize(const Layer& obj)

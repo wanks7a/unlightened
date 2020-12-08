@@ -1,4 +1,5 @@
 #pragma once
+#include <gtest/gtest.h>
 #include <Layer.h>
 
 struct test_layer : public Layer
@@ -27,3 +28,13 @@ struct test_layer : public Layer
         input_shape = sh;
     }
 };
+
+template <typename T>
+void compare_vectors(const std::vector<T>& v1, const std::vector<T>& v2)
+{
+    EXPECT_EQ(v1.size(), v2.size());
+    for (size_t i = 0; i < v1.size(); i++)
+    {
+        EXPECT_EQ(v1[i], v2[i]);
+    }
+}

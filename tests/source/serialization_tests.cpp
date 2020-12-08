@@ -10,6 +10,7 @@
 #include <conv2d_cudnn.h>
 #include <NeuralNet.h>
 #include <reshape_layer.h>
+#include <conv_transpose.h>
 
 struct test_stream : public generic_stream
 {
@@ -351,4 +352,60 @@ TEST(serialization_tests, reshape_layer_test_serialization)
 	EXPECT_EQ(test_layer->get_shape().height, layer->get_shape().height);
 	EXPECT_EQ(test_layer->get_shape().depth, layer->get_shape().depth);
 	EXPECT_EQ(test_layer->get_shape().batches, layer->get_shape().batches);
+}
+
+TEST(serialization_tests, conv2d_transposed_serialization)
+{
+	test_layer input_l;
+	input_l.set_output_shape(shape(4, 4));
+	input_l.output.setValues({
+		1,2,3,4,
+		1,2,3,4,
+		1,2,3,4,
+		1,2,3,4,
+		});
+	test_layer backprop_l;
+	
+	binary_serialization ser(std::make_shared<test_stream>());
+	std::shared_ptr<Layer> test_layer(new conv2d_transposed(4, 5, 2, conv2d_transposed::padding::VALID));
+	test_layer->init_base(input_l.get_shape());
+
+	backprop_l.set_output_shape(test_layer->get_shape());
+	std::vector<float> values;
+	for (size_t i = 0; i < test_layer->get_shape().size(); i++)
+	{
+		values.push_back(i);
+	}
+	backprop_l.output.setValues(values);
+
+	// serialize before backprop 
+	ser.serialize(*test_layer);
+	auto expected_layer = ser.deserialize_layer();
+
+	// forward pass calc
+	test_layer->forward_pass(&input_l);
+	auto real_values_forward = test_layer->get_native_output();
+
+	// backprop calc
+	test_layer->backprop(&backprop_l);
+	auto real_values_backprop = test_layer->get_native_derivative();
+
+	// test results
+	expected_layer->forward_pass(&input_l);
+	auto expected_values_forward = expected_layer->get_native_output();
+
+	expected_layer->backprop(&backprop_l);
+	auto expected_values_backprop = expected_layer->get_native_derivative();
+
+	EXPECT_EQ(real_values_forward.size(), expected_values_forward.size());
+	for (size_t i = 0; i < real_values_forward.size(); i++)
+	{
+		EXPECT_EQ(real_values_forward[i], expected_values_forward[i]);
+	}
+
+	EXPECT_EQ(real_values_backprop.size(), expected_values_backprop.size());
+	for (size_t i = 0; i < real_values_backprop.size(); i++)
+	{
+		EXPECT_EQ(real_values_backprop[i], expected_values_backprop[i]);
+	}
 }
