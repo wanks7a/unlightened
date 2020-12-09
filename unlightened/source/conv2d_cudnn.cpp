@@ -106,8 +106,16 @@ void conv2d_cudnn::backprop(Layer* layer)
 	}
 	if (update_on_backprop)
 	{
-		update_weights();
-		update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
+		float alpha = -learing_rate / (output_shape.area() * output_shape.batches), beta = 1.0f;
+		update_weights(); 
+		checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
+			&alpha,
+			output_descriptor,
+			derivative,
+			&beta,
+			bias_tensor_descriptor,
+			filters.get_bias().get()
+		));
 	}
 }
 

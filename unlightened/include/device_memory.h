@@ -86,6 +86,11 @@ public:
 		return result;
 	}
 
+	cuVector<T> to_device() const
+	{
+		return from_device_to_device(*this);
+	}
+
 	bool setValues(const T* values, size_t count)
 	{
 		if (currentSize != count || ptr == nullptr)
