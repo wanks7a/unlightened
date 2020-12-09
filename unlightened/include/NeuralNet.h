@@ -132,7 +132,7 @@ public:
             return false;
         for (size_t i = 0; i < size; i++)
         {
-            if (s.deserialize(*layers[i]))
+            if (!s.deserialize(*layers[i]))
                 return false;
         }
         s.deserialize(input_layer);
