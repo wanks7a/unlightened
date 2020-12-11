@@ -144,7 +144,7 @@ void conv2d_transposed::backprop(Layer* layer)
 	const float alpha = 1.0f, alpha2 = 1.0f, beta = 0.0f;
 
 	// convolution 
-	backprop_weights_cudnn(input_from_prev_layer, deriv_ptr);
+	backprop_weights_cudnn(deriv_ptr, input_from_prev_layer);
 
 	//if (!is_first_layer)
 	//{
@@ -224,9 +224,9 @@ void conv2d_transposed::backprop_weights_cudnn(const float* derivative, const fl
 		handle.handle,
 		&alpha,
 		out_desc.descriptor,
-		input,
-		input_desc.descriptor,
 		derivative,
+		input_desc.descriptor,
+		input,
 		conv2d_desc.descriptor,
 		filter_backprop_algo,
 		shared_mem.get(),
