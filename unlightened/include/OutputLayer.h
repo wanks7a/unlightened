@@ -40,10 +40,7 @@ public:
     {
         if (observedVal.size() == observedValues.size())
         {
-            for (size_t i = 0; i < observedVal.size(); i++)
-            {
-                observedValues[i] = observedVal[i];
-            }
+            observedValues = observedVal;
             return true;
         }
         return false;

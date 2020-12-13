@@ -83,14 +83,16 @@ bool binary_serialization::deserialize(Layer& l)
 	return l.deserialize(*this);
 }
 
-std::shared_ptr<NeuralNet> binary_serialization::deserialize_model()
+std::shared_ptr<model> binary_serialization::deserialize_model()
 {
-	std::shared_ptr<NeuralNet> result(new NeuralNet(shape(0, 0)));
+	std::shared_ptr<model> result(new model(shape(0, 0)));
 	result->load(*this);
 	return result;
 }
 
-void binary_serialization::deserialize_model(NeuralNet& l)
+bool binary_serialization::deserialize_model(model& l)
 {
-	l.reload(*this);
+	if(stream->is_open())
+		return l.reload(*this);
+	return false;
 }

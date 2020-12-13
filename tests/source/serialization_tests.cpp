@@ -50,6 +50,11 @@ struct test_stream : public generic_stream
 
 		return result;
 	}
+
+	bool is_open() const override
+	{
+		return true;
+	}
 };
 
 TEST(serialization_tests, dense_layer_serialization)
@@ -283,7 +288,7 @@ TEST(serialization_tests, neural_net_serialization_test)
 {
 	binary_serialization ser(std::make_shared<test_stream>());
 
-	NeuralNet n(shape(10,10));
+	model n(shape(10,10));
 	n.addLayer(new conv2d_cudnn(2, 3, false));
 	n.addLayer(new activation_layer(activation_layer::activation_function::Softmax));
 	n.addLayer(new dense_gpu(10));

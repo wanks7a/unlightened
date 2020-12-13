@@ -22,6 +22,14 @@ protected:
 	SDL_Renderer* renderer = nullptr;
 	int window_id = 0;
 	view_options options;
+	
+	template <typename T>
+	T map_val(T val, T min_val, T max_val, T range_min, T range_max)
+	{
+		T slope = (range_max - range_min) / (max_val - min_val);
+		return range_min + slope * (val - min_val);
+	}
+
 public:
 	view(int w = 1024, int h = 768, const std::string& name = "View");
 	void borderless(bool flag);

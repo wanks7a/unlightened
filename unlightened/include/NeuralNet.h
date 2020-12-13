@@ -3,14 +3,14 @@
 #include <vector>
 #include <memory>
 
-class NeuralNet
+class model
 {
     InputLayer input_layer;
     OutputLayer output_layer;
     std::vector<std::shared_ptr<Layer>> layers;
 public:
 
-    NeuralNet(shape input_shape) : input_layer(input_shape)
+    model(shape input_shape) : input_layer(input_shape)
     {
     }
 
@@ -140,7 +140,7 @@ public:
         return true;
     }
 
-    ~NeuralNet()
+    ~model()
     {
     }
 private:

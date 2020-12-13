@@ -1,35 +1,35 @@
 #include <gan.h>
 
-void gan::set_discriminator(NeuralNet* discriminator)
+void gan::set_discriminator(model* discriminator)
 {
-	dis = std::shared_ptr<NeuralNet>(discriminator);
+	dis = std::shared_ptr<model>(discriminator);
 	generate_real_data();
 	generate_fake_data();
 }
 
-void gan::set_discriminator(std::shared_ptr<NeuralNet>& disc)
+void gan::set_discriminator(std::shared_ptr<model>& disc)
 {
 	dis = disc;
 	generate_real_data();
 	generate_fake_data();
 }
 
-void gan::set_generator(NeuralNet* generator)
+void gan::set_generator(model* generator)
 {
-	gen = std::shared_ptr<NeuralNet>(generator);
+	gen = std::shared_ptr<model>(generator);
 };
 
-void gan::set_generator(std::shared_ptr<NeuralNet>& generator)
+void gan::set_generator(std::shared_ptr<model>& generator)
 {
 	gen = generator;
 };
 
-std::shared_ptr<NeuralNet>& gan::discriminator()
+std::shared_ptr<model>& gan::discriminator()
 {
 	return dis;
 }
 
-std::shared_ptr<NeuralNet>& gan::generator()
+std::shared_ptr<model>& gan::generator()
 {
 	return gen;
 }
@@ -50,12 +50,12 @@ void gan::predict(const std::vector<float>& discrminator_real_data, const std::v
 	gen->predict();
 	dis->loss_layer().setObservedValue(real_data_values);
 	loss_dis += dis->loss_layer().get_total_loss();
-	dis->loss_layer().print_predicted(2);
+	//dis->loss_layer().print_predicted(2);
 	dis->backprop(); // backprop discriminator so we can forward pass again with fake data 
 	dis->getInputLayer().set_input(gen->loss_layer().get_output(), gen->loss_layer().get_shape().size());
 	dis->predict();
 	dis->loss_layer().setObservedValue(fake_data_values);
-	dis->loss_layer().print_predicted(2);
+	//dis->loss_layer().print_predicted(2);
 	loss_dis += dis->loss_layer().get_total_loss();
 }
 
@@ -76,7 +76,7 @@ void gan::generate_real_data()
 	for (size_t i = 0; i < dis->getInputLayer().get_shape().batches; i++)
 	{
 		real_data_values.emplace_back(1.0f);
-		real_data_values.emplace_back(0.0f);
+		//real_data_values.emplace_back(0.0f);
 	}
 }
 
@@ -85,6 +85,6 @@ void gan::generate_fake_data()
 	for (size_t i = 0; i < dis->getInputLayer().get_shape().batches; i++)
 	{
 		fake_data_values.emplace_back(0.0f);
-		fake_data_values.emplace_back(1.0f);
+		//fake_data_values.emplace_back(1.0f);
 	}
 }

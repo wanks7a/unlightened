@@ -7,7 +7,7 @@
 #include <device_memory.h>
 
 class Layer;
-class NeuralNet;
+class model;
 
 class binary_serialization 
 {
@@ -47,8 +47,8 @@ public:
 	std::shared_ptr<Layer> deserialize_layer();
 	bool deserialize(Layer& l);
 
-	std::shared_ptr<NeuralNet> deserialize_model();
-	void deserialize_model(NeuralNet& l);
+	std::shared_ptr<model> deserialize_model();
+	bool deserialize_model(model& l);
 
 	template <typename T>
 	void serialize();

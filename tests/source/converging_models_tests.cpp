@@ -12,7 +12,7 @@
 
 TEST(model, xor_cpu)
 {
-    NeuralNet test(shape(3));
+    model test(shape(3));
     test.addLayer(new dense_layer(2));
     test.addLayer(new SigmoidLayer());
     test.addLayer(new dense_layer(1));
@@ -57,7 +57,7 @@ TEST(model, xor_cpu)
 
 TEST(model, test_xor_gpu)
 {
-    NeuralNet test(shape(2));
+    model test(shape(2));
     test.addLayer(new dense_gpu(10));
     test.addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
     test.addLayer(new dense_gpu(1));
@@ -98,7 +98,7 @@ TEST(model, test_xor_gpu)
 
 TEST(model, cnn_converge)
 {
-    NeuralNet test(shape(2,2,1,2));
+    model test(shape(2,2,1,2));
     auto cnn = new cnn_layer(2, 1);
     test.addLayer(new cnn_layer(2, 1));
     test.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
