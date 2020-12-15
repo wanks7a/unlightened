@@ -59,12 +59,12 @@ void  max_pool::backprop(Layer* layer)
 	}
 }
 
-const float* max_pool::get_output()
+const float* max_pool::get_output() const
 {
 	return output.get();
 }
 
-const float* max_pool::derivative_wr_to_input()
+const float* max_pool::derivative_wr_to_input() const
 {
 	return derivative.get();
 }

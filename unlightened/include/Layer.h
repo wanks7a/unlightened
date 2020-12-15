@@ -20,8 +20,9 @@ public:
     virtual void init(const shape& input) = 0;
     virtual void forward_pass(Layer* prevLayer) = 0;
     virtual void backprop(Layer* layer) = 0;
-    virtual const float* get_output() = 0;
-    virtual const float* derivative_wr_to_input() = 0;
+    virtual const float* get_output() const = 0;
+    virtual const float* derivative_wr_to_input() const = 0;
+
     
     virtual void serialize(binary_serialization& s) const 
     {

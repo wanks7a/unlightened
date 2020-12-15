@@ -104,11 +104,11 @@ public:
         }
     }
 
-    const float* get_output()
+    const float* get_output() const override
     {
         return outputGPU.get();
     };
-    const float* derivative_wr_to_input()
+    const float* derivative_wr_to_input() const override
     {
         return derivativeWRtoInputGPU.get();
     }

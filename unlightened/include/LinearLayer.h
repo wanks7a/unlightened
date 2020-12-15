@@ -115,12 +115,12 @@ public:
         }
     }
 
-    const float* get_output() override
+    const float* get_output() const override
     {
         return output.data();
     }
 
-    const float* derivative_wr_to_input() override
+    const float* derivative_wr_to_input() const override
     {
         return this->derivativeWRtoInput.data();
     }

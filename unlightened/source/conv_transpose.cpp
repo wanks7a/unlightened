@@ -169,12 +169,12 @@ void conv2d_transposed::backprop(Layer* layer)
 	}
 }
 
-const float* conv2d_transposed::get_output()
+const float* conv2d_transposed::get_output() const
 {
 	return output.get();
 }
 
-const float* conv2d_transposed::derivative_wr_to_input()
+const float* conv2d_transposed::derivative_wr_to_input() const
 {
 	return deriv_output.get();
 }

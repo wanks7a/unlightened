@@ -45,12 +45,12 @@ class SigmoidLayerGPU : public Layer
         derivativeWRtoInputGPU.getCopy(derivativeWRtoInput);
     }
 
-    const float* get_output() override
+    const float* get_output() const override
     {
         return outputGPU.get();
     }
 
-    const float* derivative_wr_to_input() override
+    const float* derivative_wr_to_input() const override
     {
         return derivativeWRtoInputGPU.get();
     }

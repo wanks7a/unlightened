@@ -134,12 +134,12 @@ void cnn_layer::backprop(Layer* layer)
 	}
 }
 
-const float* cnn_layer::get_output()
+const float* cnn_layer::get_output() const
 {
 	return output.get();
 }
 
-const float* cnn_layer::derivative_wr_to_input()
+const float* cnn_layer::derivative_wr_to_input() const
 {
 	return input_derivative.get();
 }

@@ -29,12 +29,12 @@ void reshape_layer::backprop(Layer* layer)
 	derivative = layer->derivative_wr_to_input();
 }
 
-const float* reshape_layer::get_output()
+const float* reshape_layer::get_output() const
 {
 	return output;
 }
 
-const float* reshape_layer::derivative_wr_to_input()
+const float* reshape_layer::derivative_wr_to_input() const
 {
 	return derivative;
 }

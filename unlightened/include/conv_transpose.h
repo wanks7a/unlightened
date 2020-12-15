@@ -40,8 +40,8 @@ public:
     void init(const shape& input) override;
     void forward_pass(Layer* prevLayer) override;
     void backprop(Layer* layer) override;
-    const float* get_output() override;
-    const float* derivative_wr_to_input() override;
+    const float* get_output() const override;
+    const float* derivative_wr_to_input() const override;
     size_t calc_output_dim(size_t input) const;
 
     template <typename Serializer>

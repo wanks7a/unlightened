@@ -119,12 +119,12 @@ void conv2d_cudnn::backprop(Layer* layer)
 	}
 }
 
-const float* conv2d_cudnn::get_output()
+const float* conv2d_cudnn::get_output() const
 {
 	return output.get();
 }
 
-const float* conv2d_cudnn::derivative_wr_to_input()
+const float* conv2d_cudnn::derivative_wr_to_input() const
 {
 	return input_derivative.get();
 }

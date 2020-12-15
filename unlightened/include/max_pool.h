@@ -20,8 +20,8 @@ public:
     virtual void init(const shape& input) override;
     virtual void forward_pass(Layer* prevLayer) override;
     virtual void backprop(Layer* layer) override;
-    virtual const float* get_output() override;
-    virtual const float* derivative_wr_to_input() override;
+    virtual const float* get_output() const override;
+    virtual const float* derivative_wr_to_input() const override;
 
     template <typename Serializer>
     void serialize_members(Serializer& s) const

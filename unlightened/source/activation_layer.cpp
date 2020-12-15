@@ -22,12 +22,12 @@ void activation_layer::init(const shape& input)
 	}
 }
 
-const float* activation_layer::get_output()
+const float* activation_layer::get_output() const
 {
 	return output.get();
 }
 
-const float* activation_layer::derivative_wr_to_input()
+const float* activation_layer::derivative_wr_to_input() const
 {
-	return derivative.get();
+	return derivative.get(); 
 }

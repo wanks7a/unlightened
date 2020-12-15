@@ -62,11 +62,11 @@ public:
             printf("Value [%d] = %.2f      Actual = %.2f \n", i, predictedValue[i], observedValues[i]);
         }
     }
-    const float* get_output() override
+    const float* get_output() const override
     {
         return predictedValue.data();
     }
-    const float* derivative_wr_to_input() override
+    const float* derivative_wr_to_input() const override
     {
         return derivativeWRToInput.data();
     }
