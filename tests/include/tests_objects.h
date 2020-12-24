@@ -43,12 +43,12 @@ struct test_layer : public Layer
 
     weights_properties get_bias() const override
     {
-        return weights_prop;
+        return weights_properties();
     };
 
     weights_properties get_bias_deriv() const override
     {
-        return weights_prop;
+        return weights_properties();
     };
 
 };

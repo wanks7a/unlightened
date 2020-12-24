@@ -4,7 +4,7 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 {
 	float minus_beta = 1.0f - beta;
 	float zero = 0;
-	cudnnOpTensor(handle.handle,
+	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
 		&beta,
 		weights_desc.descriptor,
@@ -14,10 +14,10 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 		deriv,
 		&zero,
 		weights_desc.descriptor,
-		momentum_derivatives.data());
+		momentum_derivatives.data()));
 	float one = 1.0f;
-	learning_rate = -learning_rate;
-	cudnnOpTensor(handle.handle,
+	learning_rate = -learning_rate / sh.batches;
+	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
 		&one,
 		weights_desc.descriptor,
@@ -27,7 +27,37 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 		momentum_derivatives.data(),
 		&zero,
 		weights_desc.descriptor,
-		weights);
+		weights));
+}
+
+void momentum_optimizer::update_bias(float* bias, const float* deriv, float learning_rate)
+{
+	float minus_beta = 1.0f - beta;
+	float zero = 0;
+	CUDA_CHECK(cudnnOpTensor(handle.handle,
+		add_tensor.descriptor,
+		&beta,
+		bias_desc.descriptor,
+		momentum_derivatives_bias.data(),
+		&minus_beta,
+		bias_desc.descriptor,
+		deriv,
+		&zero,
+		bias_desc.descriptor,
+		momentum_derivatives_bias.data()));
+	float one = 1.0f;
+	learning_rate = -learning_rate / sh.batches;
+	CUDA_CHECK(cudnnOpTensor(handle.handle,
+		add_tensor.descriptor,
+		&one,
+		bias_desc.descriptor,
+		bias,
+		&learning_rate,
+		bias_desc.descriptor,
+		momentum_derivatives_bias.data(),
+		&zero,
+		bias_desc.descriptor,
+		bias));
 }
 
 
@@ -37,4 +67,8 @@ void momentum_optimizer::init(Layer* layer)
 	momentum_derivatives.reserve(weight_props.size);
 	weights_desc.create(weight_props.size, 1, 1, 1);
 	add_tensor.create();
+	auto bias_props = layer->get_bias();
+	momentum_derivatives_bias.reserve(bias_props.size);
+	bias_desc.create(bias_props.size, 1, 1, 1);
+	sh = layer->get_shape();
 }

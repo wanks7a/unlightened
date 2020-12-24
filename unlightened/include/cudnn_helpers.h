@@ -1,6 +1,16 @@
 #pragma once
 #include <cudnn.h>
+#include <iostream>
 
+#define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort = true)
+{
+	if (code != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
+	{
+		std::cout << "CUDA Error: " << cudnnGetErrorString(code) << " " << file << " " << line;
+		if (abort) exit(code);
+	}
+}
 
 struct cudnn_descriptor4d
 {
@@ -141,7 +151,7 @@ struct cudnn_add_tensor
 		status = cudnnSetOpTensorDescriptor(descriptor,
 			CUDNN_OP_TENSOR_ADD,
 			CUDNN_DATA_FLOAT,
-			CUDNN_PROPAGATE_NAN);
+			CUDNN_NOT_PROPAGATE_NAN);
 
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}

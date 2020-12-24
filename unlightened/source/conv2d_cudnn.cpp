@@ -99,23 +99,20 @@ void conv2d_cudnn::backprop(Layer* layer)
 	}
 
 	backprop_weights_cudnn(derivative);
+	// compute bias gradient
+	float alpha = 1.0f, beta = 0.0f;
+	checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
+		&alpha,
+		output_descriptor,
+		derivative,
+		&beta,
+		bias_tensor_descriptor,
+		filters.get_bias_derivative().get()
+	));
 
 	if (!is_first_layer)
 	{
 		backprop_cudnn(derivative);
-	}
-	if (update_on_backprop)
-	{
-		float alpha = -learing_rate / (output_shape.area() * output_shape.batches), beta = 1.0f;
-		update_weights(); 
-		checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
-			&alpha,
-			output_descriptor,
-			derivative,
-			&beta,
-			bias_tensor_descriptor,
-			filters.get_bias().get()
-		));
 	}
 }
 
@@ -331,3 +328,35 @@ void conv2d_cudnn::update_weights()
 		weights_tensor_descriptor,
 		filters.get_weights().get()));
 }
+
+weights_properties conv2d_cudnn::get_weights() const 
+{
+	weights_properties props;
+	props.size = filters.get_weights().size();
+	props.ptr = filters.get_weights().get();
+	return props;
+};
+
+weights_properties conv2d_cudnn::get_weights_deriv() const
+{
+	weights_properties props;
+	props.size = filters.get_weights_derivative().size();
+	props.ptr = filters.get_weights_derivative().get();
+	return props;
+};
+
+weights_properties conv2d_cudnn::get_bias() const
+{
+	weights_properties props;
+	props.size = filters.get_bias().size();
+	props.ptr = filters.get_bias().get();
+	return props;
+};
+
+weights_properties conv2d_cudnn::get_bias_deriv() const
+{
+	weights_properties props;
+	props.size = filters.get_weights_derivative().size();
+	props.ptr = filters.get_weights_derivative().get();
+	return props;
+};

@@ -75,6 +75,14 @@ public:
         s >> filters.get_weights() >> filters.get_bias();
     }
 
+    weights_properties get_weights() const override;
+
+    weights_properties get_weights_deriv() const override;
+
+    weights_properties get_bias() const override;
+
+    weights_properties get_bias_deriv() const override;
+
     virtual ~conv2d_cudnn();
 
 protected:

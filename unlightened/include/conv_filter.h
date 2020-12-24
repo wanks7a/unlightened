@@ -28,6 +28,7 @@ class filter
     cuVector<float> weights;
     cuVector<float> weights_derivative;
     cuVector<float> bias;
+    cuVector<float> bias_deriv;
     shape derivatives_shape;
     shape filter_shape;
 
@@ -108,6 +109,7 @@ public:
         filter_shape.depth = options.channels;
         filter_shape.batches = 1;
         bias.resize(options.num_of_filters, 0.0f);
+        bias_deriv.resize(bias.size());
         perform_he_init();
         return true;
     }
@@ -195,8 +197,18 @@ public:
         return weights;
     }
 
+    const cuVector<float>& get_weights_derivative() const
+    {
+        return weights_derivative;
+    }
+
     const cuVector<float>& get_bias() const
     {
         return bias;
+    }
+
+    const cuVector<float>& get_bias_derivative() const
+    {
+        return bias_deriv;
     }
 };

@@ -8,8 +8,8 @@
 
 void linearLayerForwardPassGPU(float* output, const float* weights, const float* input, const shape& input_shape, const float* bias, const shape& output_shape);
 void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const float* derivateWRtoOutput, shape output_shape, const float* weights);
-void updateWeights(float* weights, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape, float learning_rate);
-void updateBias(float* bias, const float* derivative_wr_to_out, size_t output_size, shape output_shape, float learning_rate);
+void calcWeightsDeriv(const float* weights, float* weights_deriv, const float* derivativeWRtoOutput, const float* input, size_t input_size, size_t outputSize, shape out_shape);
+void calcBiasDeriv(const float* bias, float* bias_deriv, const float* derivative_wr_to_out, size_t output_size, shape output_shape);
 
 class dense_gpu : public serializable_layer<dense_gpu>
 {
@@ -20,6 +20,8 @@ private:
     cuVector<float> outputGPU;
     cuVector<float> derivativeWRtoInputGPU;
     cuVector<float> inputVectorGPU;
+    cuVector<float> weights_deriv;
+    cuVector<float> bias_deriv;
     const float* inputPtr;
     size_t size;
     size_t input_size;
@@ -45,6 +47,8 @@ public:
         weightsGPU.randomize();
         float fan_in = static_cast<float>(input_size);
         weightsGPU *= sqrtf(2.0f / fan_in);
+        weights_deriv.resize(weightsGPU.size(), 0.0f);
+        bias_deriv.resize(biasGPU.size(), 0.0f);
      
         output_shape.width = size;
         output_shape.batches = input_shape.batches;
@@ -88,8 +92,8 @@ public:
             calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, layer->derivative_wr_to_input(), temp_out_shape, weightsGPU.get());
             if (update_on_backprop)
             {
-                updateWeights(weightsGPU.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape, learing_rate);
-                updateBias(biasGPU.get(), layer->derivative_wr_to_input(), size, output_shape, learing_rate);
+                calcWeightsDeriv(weightsGPU.get(), weights_deriv.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape);
+                calcBiasDeriv(biasGPU.get(), bias_deriv.get(), layer->derivative_wr_to_input(), size, output_shape);
             }
         }
         else
@@ -98,8 +102,8 @@ public:
             calcDerivativeWRtoInput(derivativeWRtoInputGPU.get(), input_size, derivativeWRToOutput.get(), temp_out_shape, weightsGPU.get());
             if (update_on_backprop)
             {
-                updateWeights(weightsGPU.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape, learing_rate);
-                updateBias(biasGPU.get(), derivativeWRToOutput.get(), size, output_shape, learing_rate);
+                calcWeightsDeriv(weightsGPU.get(), weights_deriv.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape);
+                calcBiasDeriv(biasGPU.get(), bias_deriv.get(), derivativeWRToOutput.get(), size, output_shape);
             }
         }
     }
@@ -125,7 +129,41 @@ public:
         s >> size >> input_size >> weightsGPU >> biasGPU;
         outputGPU.resize(size * input_shape.batches, 0.0f);
         derivativeWRtoInputGPU.resize(input_shape.size(), 0.0f);
+        weights_deriv.resize(weightsGPU.size(), 0.0f);
+        bias_deriv.resize(biasGPU.size(), 0.0f);
     }
+
+    weights_properties get_weights() const override
+    {
+        weights_properties props;
+        props.size = weightsGPU.size();
+        props.ptr = weightsGPU.get();
+        return props;
+    };
+
+    weights_properties get_weights_deriv() const override
+    {
+        weights_properties props;
+        props.size = weights_deriv.size();
+        props.ptr = weights_deriv.get();
+        return props;
+    };
+
+    weights_properties get_bias() const override
+    {
+        weights_properties props;
+        props.size = biasGPU.size();
+        props.ptr = biasGPU.get();
+        return props;
+    };
+
+    weights_properties get_bias_deriv() const override
+    {
+        weights_properties props;
+        props.size = bias_deriv.size();
+        props.ptr = bias_deriv.get();
+        return props;
+    };
 
     ~dense_gpu()
     {

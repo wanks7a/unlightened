@@ -27,7 +27,7 @@ class cnn_layer : public Layer
     cuVector<float> layer_input;
     const float* input = nullptr;
     bool is_first_layer;
-    bool use_cudnn = true;
+    bool use_cudnn = false;
     cudnnHandle_t cudnn_handle;
     cudnnTensorDescriptor_t input_descriptor;
     cudnnTensorDescriptor_t output_descriptor;

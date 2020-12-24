@@ -902,15 +902,6 @@ TEST(CNN_TESTS, cudnn_full_cnn_backprop_v1)
         0, 0, 2,
     };
 
-    std::vector<float> expected_weights = {
-        -1, -1, 0,
-        0, 0, 0,
-        0, -1, -1,
-        -1, 0, 0,
-        0, -2, 0,
-        0,  0, -1
-    };
-
     std::vector<float> result = cnn_l.get_native_output();
 
     EXPECT_EQ(result.size(), expected.size());
@@ -938,13 +929,6 @@ TEST(CNN_TESTS, cudnn_full_cnn_backprop_v1)
     for (size_t i = 0; i < result.size(); i++)
     {
         EXPECT_EQ(result[i], expected[i]);
-    }
-
-    cnn_l.get_filters().get_weights().getCopy(result);
-    EXPECT_EQ(result.size(), expected_weights.size());
-    for (size_t i = 0; i < result.size(); i++)
-    {
-        EXPECT_EQ(result[i], expected_weights[i]);
     }
 }
 
@@ -1042,32 +1026,6 @@ TEST(CNN_TESTS, cudnn_full_cnn_backprop_v2)
     {
         EXPECT_EQ(result[i], expected[i]);
     }
-
-
-    // testing the weights update here
-    expected = {
-        -1, -1, 0,
-        0, 0, 0,
-        0, -1, -1,
-        0, -1, -1,
-        0, 0, 0,
-        -1, -1, 0,
-        -1, 0, 0,
-        0, -2, 0,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, 0,
-        -1, 0, 0
-    };
-
-    cnn_l.get_filters().get_weights().getCopy(result);
-
-    EXPECT_EQ(result.size(), expected.size());
-    for (size_t i = 0; i < result.size(); i++)
-    {
-        EXPECT_EQ(result[i], expected[i]);
-    }
-
 }
 
 TEST(CNN_TESTS, cudnn_full_cnn_backprop_v2_batched)
@@ -1177,35 +1135,6 @@ TEST(CNN_TESTS, cudnn_full_cnn_backprop_v2_batched)
         0, 4, 0,
         1, 0, 3, // second filter
     };
-
-    EXPECT_EQ(result.size(), expected.size());
-    for (size_t i = 0; i < result.size(); i++)
-    {
-        EXPECT_EQ(result[i], expected[i]);
-    }
-
-    // testing the weights update here
-    expected = {
-        1, 2, 1,
-        2, 2, 2,
-        1, 2, 1,
-        1, 2, 1,
-        2, 2, 2,
-        1, 2, 1,
-        3, 0, 1,
-        0, 4, 0,
-        1, 0, 3,
-        3, 0, 1,
-        0, 4, 0,
-        1, 0, 3
-    };
-
-    for (size_t i = 0; i < expected.size(); i++)
-    {
-        expected[i] = weights_values[i] - expected[i] / 2.0f;
-    }
-
-    cnn_l.get_filters().get_weights().getCopy(result);
 
     EXPECT_EQ(result.size(), expected.size());
     for (size_t i = 0; i < result.size(); i++)

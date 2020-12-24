@@ -77,14 +77,16 @@ TEST(dense_layer_tests, derivative_to_input_v3)
 	}
 }
 
-TEST(dense_layer_tests, weights_update_v1)
+TEST(dense_layer_tests, weights_deriv_v1)
 {
 	cuVector<float> weights;
+	cuVector<float> weights_deriv;
 	EXPECT_TRUE(weights.setValues({
 		1,2,
 		3,4,
 		5,6
 		}));
+	weights_deriv.resize(weights.size());
 	cuVector<float> derivativeWRtoOutput;
 	EXPECT_TRUE(derivativeWRtoOutput.setValues({
 		10, 20, 30
@@ -96,7 +98,7 @@ TEST(dense_layer_tests, weights_update_v1)
 	size_t inputSize = 2;
 	size_t outputSize = 3;
 	shape output_shape(3);
-	updateWeights(weights.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape, 1.0f);
+	calcWeightsDeriv(weights.get(), weights_deriv.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape);
 	std::vector<float> result = weights.to_vector();
 	std::vector<float> expected =
 	{
@@ -111,13 +113,15 @@ TEST(dense_layer_tests, weights_update_v1)
 	}
 }
 
-TEST(dense_layer_tests, weights_update_v2)
+TEST(dense_layer_tests, weights_deriv_v2)
 {
 	cuVector<float> weights;
+	cuVector<float> weights_deriv;
 	EXPECT_TRUE(weights.setValues({
 		1,2,
 		3,4
 		}));
+	weights_deriv.resize(weights.size());
 	cuVector<float> derivativeWRtoOutput;
 	EXPECT_TRUE(derivativeWRtoOutput.setValues({
 		10, 20
@@ -129,7 +133,7 @@ TEST(dense_layer_tests, weights_update_v2)
 	size_t inputSize = 2;
 	size_t outputSize = 2;
 	shape output_shape(2);
-	updateWeights(weights.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape, 1.0f);
+	calcWeightsDeriv(weights.get(), weights_deriv.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape);
 	std::vector<float> result = weights.to_vector();
 	std::vector<float> expected =
 	{
@@ -144,13 +148,15 @@ TEST(dense_layer_tests, weights_update_v2)
 }
 
 
-TEST(dense_layer_tests, weights_update_v3)
+TEST(dense_layer_tests, weights_deriv_v3)
 {
 	cuVector<float> weights;
+	cuVector<float> weights_deriv;
 	EXPECT_TRUE(weights.setValues({
 		1,2,
 		3,4
 		}));
+	weights_deriv.resize(weights.size());
 	cuVector<float> derivativeWRtoOutput;
 	EXPECT_TRUE(derivativeWRtoOutput.setValues({
 		10, 20, 
@@ -164,7 +170,7 @@ TEST(dense_layer_tests, weights_update_v3)
 	size_t inputSize = 2;
 	size_t outputSize = 2;
 	shape output_shape(2, 1, 1, 2);
-	updateWeights(weights.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape, 1.0f);
+	calcWeightsDeriv(weights.get(), weights_deriv.get(), derivativeWRtoOutput.get(), input.get(), inputSize, outputSize, output_shape);
 	std::vector<float> result = weights.to_vector();
 	std::vector<float> expected =
 	{
@@ -181,7 +187,9 @@ TEST(dense_layer_tests, weights_update_v3)
 TEST(dense_layer_tests, bias_update_v1)
 {
 	cuVector<float> bias;
+	cuVector<float> bias_deriv;
 	bias.resize(2048, 1.0f);
+	bias_deriv.resize(bias.size());
 	std::vector<float> deriv_temp;
 	deriv_temp.resize(2048);
 	for (size_t i = 0; i < 1024; i++)
@@ -192,13 +200,13 @@ TEST(dense_layer_tests, bias_update_v1)
 	cuVector<float> derivative;
 	derivative.setValues(deriv_temp);
 
-	updateBias(bias.get(), derivative.get(), 2048, shape(2048), 1.0f);
-	auto result = bias.to_vector();
+	calcBiasDeriv(bias.get(), bias_deriv.get(), derivative.get(), 2048, shape(2048));
+	auto result = bias_deriv.to_vector();
 	EXPECT_EQ(result.size(), 2048);
 	for (size_t i = 0; i < 1024; i++)
 	{
-		EXPECT_EQ(result[i], -9);
-		EXPECT_EQ(result[i + 1024], -19);
+		EXPECT_EQ(result[i], 10.0f);
+		EXPECT_EQ(result[i + 1024], 20.0f);
 	}
 }
 
@@ -206,7 +214,9 @@ TEST(dense_layer_tests, bias_update_v1_batched)
 {
 	shape out(2048, 1, 1, 2);
 	cuVector<float> bias;
+	cuVector<float> bias_deriv;
 	bias.resize(2048, 1.0f);
+	bias_deriv.resize(bias.size());
 	std::vector<float> deriv_temp;
 	deriv_temp.resize(2048 * 2);
 	for (size_t i = 0; i < 1024; i++)
@@ -219,13 +229,13 @@ TEST(dense_layer_tests, bias_update_v1_batched)
 	cuVector<float> derivative;
 	derivative.setValues(deriv_temp);
 
-	updateBias(bias.get(), derivative.get(), 2048, out, 1.0f);
-	auto result = bias.to_vector();
+	calcBiasDeriv(bias.get(), bias_deriv.get(), derivative.get(), 2048, out);
+	auto result = bias_deriv.to_vector();
 	EXPECT_EQ(result.size(), 2048);
 	for (size_t i = 0; i < 1024; i++)
 	{
-		EXPECT_EQ(result[i], -9.0f);
-		EXPECT_EQ(result[i + 1024], -14.0f);
+		EXPECT_EQ(result[i], 20.0f);
+		EXPECT_EQ(result[i + 1024], 30.0f);
 	}
 }
 

@@ -11,6 +11,7 @@
 #include <NeuralNet.h>
 #include <reshape_layer.h>
 #include <conv_transpose.h>
+#include <optimizer_momentum.h>
 
 struct test_stream : public generic_stream
 {
@@ -293,10 +294,10 @@ TEST(serialization_tests, neural_net_serialization_test)
 	n.addLayer(new activation_layer(activation_layer::activation_function::Softmax));
 	n.addLayer(new dense_gpu(10));
 	n.addLayer(new max_pool(2));
-	
+	n.set_optimizer<momentum_optimizer>();
 	n.serialize(ser);
 	auto saved_model = ser.deserialize_model();
-
+	saved_model->set_optimizer<momentum_optimizer>();
 	// test results
 	std::vector<float> input;
 	for (size_t i = 0; i < 10 * 10; i++)

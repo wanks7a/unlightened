@@ -2,12 +2,15 @@
 #include "AllLayers.h"
 #include <vector>
 #include <memory>
+#include <optimizer.h>
 
 class model
 {
     InputLayer input_layer;
     OutputLayer output_layer;
     std::vector<std::shared_ptr<Layer>> layers;
+    std::vector<std::shared_ptr<optimizer>> optimizers;
+
 public:
 
     model(shape input_shape) : input_layer(input_shape)
@@ -54,10 +57,12 @@ public:
         }
 
         layers.back()->backprop(&output_layer);
+        optimizers.back()->update(layers.back().get());
 
         for (int i = layers.size() - 2; i >= 0; i--)
         {
             layers[i]->backprop(layers[i + 1].get());
+            optimizers[i]->update(layers[i].get());
         }
     }
 
@@ -138,6 +143,18 @@ public:
         s.deserialize(input_layer);
         s.deserialize(output_layer);
         return true;
+    }
+
+    template <typename T, typename ...Args>
+    void set_optimizer(Args&& ... args)
+    {
+        optimizers.clear();
+        for (size_t i = 0; i < layers.size(); i++)
+        {
+            std::shared_ptr<optimizer> o(new T(std::forward<Args>(args)...));
+            o->init(layers[i].get());
+            optimizers.emplace_back(o);
+        }
     }
 
     ~model()

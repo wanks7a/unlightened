@@ -17,7 +17,6 @@ protected:
     shape input_shape;
     bool device_layer = false;
     bool update_on_backprop = true;
-    weights_properties weights_prop;
 public:
     void init_base(const shape& input)
     {
@@ -32,26 +31,24 @@ public:
 
     virtual weights_properties get_weights() const
     { 
-        return weights_prop;
+        return weights_properties();
     };
 
     virtual weights_properties get_weights_deriv() const
     { 
-        return weights_prop;
+        return weights_properties();
     };
 
     virtual weights_properties get_bias() const
     {
-        return weights_prop;
+        return weights_properties();
     };
 
     virtual weights_properties get_bias_deriv() const
     {
-        return weights_prop;
+        return weights_properties();
     };
 
-
-    
     virtual void serialize(binary_serialization& s) const 
     {
         s << learing_rate << output_shape << input_shape << device_layer << update_on_backprop;

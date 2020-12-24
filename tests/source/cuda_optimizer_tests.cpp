@@ -15,11 +15,11 @@ TEST(momentum_cuda_tests, test1)
 	t.d_props.ptr = d_props.data();
 	momentum_optimizer opt(0.0f);
 	opt.init(&t);
-	opt.update_weights(&t);
+	opt.update(&t);
 	auto res = w_props.to_vector();
 	std::vector<float> expected = { -9, -9 , -9, -9, -9 };
 	compare_vectors(res, expected);
-	opt.update_weights(&t);
+	opt.update(&t);
 	res = w_props.to_vector();
 	expected = { -19, -19 , -19, -19, -19 };
 	compare_vectors(res, expected);

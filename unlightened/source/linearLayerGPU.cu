@@ -68,7 +68,7 @@ void calcDerivativeWRtoInput(float* derivativeWRtoInput, size_t inputSize, const
 }
 
 template <typename T>
-__global__ void k_updateWeights(T* weights, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize, float learning_rate, size_t batches, size_t out_offset)
+__global__ void k_updateWeights(const T* weights, T* weights_deriv, const T* derivativeWRtoOutput,const T* input, size_t inputSize, size_t outputSize, size_t batches, size_t out_offset)
 {
     size_t weightIndex = blockIdx.x * blockDim.x + threadIdx.x;
     size_t derivOutIdx = weightIndex / inputSize;
@@ -80,22 +80,22 @@ __global__ void k_updateWeights(T* weights, const T* derivativeWRtoOutput,const 
         {
             error += input[inpIdx + i * inputSize] * derivativeWRtoOutput[derivOutIdx + i * out_offset];
         }
-        weights[weightIndex] = weights[weightIndex] - learning_rate * error / batches;
+        weights_deriv[weightIndex] = error;
     }
 }
 
-void updateWeights(float* weights, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape, float learning_rate)
+void calcWeightsDeriv(const float* weights, float* weights_deriv, const float* derivativeWRtoOutput, const float* input, size_t inputSize, size_t outputSize, shape output_shape)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(outputSize * inputSize, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, outputSize * inputSize);
 
-    k_updateWeights << <blocks, threadsPerBlock >> > (weights, derivativeWRtoOutput, input, inputSize, outputSize, learning_rate, output_shape.batches, output_shape.volume());
+    k_updateWeights << <blocks, threadsPerBlock >> > (weights, weights_deriv, derivativeWRtoOutput, input, inputSize, outputSize, output_shape.batches, output_shape.volume());
     
     utils::waitAndCheckForErrors();
 }
 
 template <typename T>
-__global__ void k_updateBias(T* bias, const T* derivative_wr_to_out, size_t output_size, float learning_rate, size_t batches, size_t out_offset)
+__global__ void k_updateBias(const T* bias, T* bias_deriv, const T* derivative_wr_to_out, size_t output_size, size_t batches, size_t out_offset)
 {
     size_t biasIndex = blockIdx.x * blockDim.x + threadIdx.x;
     if (biasIndex < output_size)
@@ -105,16 +105,16 @@ __global__ void k_updateBias(T* bias, const T* derivative_wr_to_out, size_t outp
         {
             error += derivative_wr_to_out[biasIndex + i * out_offset];
         }
-        bias[biasIndex] = bias[biasIndex] - learning_rate * error / batches;
+        bias_deriv[biasIndex] = error;
     }
 }
 
-void updateBias(float* bias, const float* derivative_wr_to_out, size_t output_size, shape output_shape, float learning_rate)
+void calcBiasDeriv(const float* bias, float* bias_deriv, const float* derivative_wr_to_out, size_t output_size, shape output_shape)
 {
     auto threadsPerBlock = static_cast<unsigned int>(std::min(output_size, static_cast<size_t>(trPerBlock)));
     auto blocks = utils::getBlockSize(threadsPerBlock, output_size);
 
-    k_updateBias << <blocks, threadsPerBlock >> > (bias, derivative_wr_to_out, output_size, learning_rate, output_shape.batches, output_shape.volume());
+    k_updateBias << <blocks, threadsPerBlock >> > (bias, bias_deriv, derivative_wr_to_out, output_size, output_shape.batches, output_shape.volume());
 
     utils::waitAndCheckForErrors();
 }
