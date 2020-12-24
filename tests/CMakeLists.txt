@@ -9,7 +9,9 @@ add_executable(tests include/tests_objects.h
 					 source/dense_layer_tests.cpp
 					 source/generic_functions_tests.cpp
 					 source/serialization_tests.cpp
-					 source/conv2d_transposed_tests.cpp)
+					 source/conv2d_transposed_tests.cpp
+					 source/cuda_device_tests.cpp
+					 source/cuda_optimizer_tests.cpp)
 
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(tests GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main unlightened)

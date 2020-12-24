@@ -3,6 +3,12 @@
 #include <device_memory.h>
 #include <binary_serialization.h>
 
+struct weights_properties
+{
+    size_t size = 0;
+    float* ptr = nullptr;
+};
+
 class Layer
 {
 protected:
@@ -11,6 +17,7 @@ protected:
     shape input_shape;
     bool device_layer = false;
     bool update_on_backprop = true;
+    weights_properties weights_prop;
 public:
     void init_base(const shape& input)
     {
@@ -22,6 +29,27 @@ public:
     virtual void backprop(Layer* layer) = 0;
     virtual const float* get_output() const = 0;
     virtual const float* derivative_wr_to_input() const = 0;
+
+    virtual weights_properties get_weights() const
+    { 
+        return weights_prop;
+    };
+
+    virtual weights_properties get_weights_deriv() const
+    { 
+        return weights_prop;
+    };
+
+    virtual weights_properties get_bias() const
+    {
+        return weights_prop;
+    };
+
+    virtual weights_properties get_bias_deriv() const
+    {
+        return weights_prop;
+    };
+
 
     
     virtual void serialize(binary_serialization& s) const 
@@ -43,6 +71,11 @@ public:
         {
             learing_rate = rate;
         }
+    }
+
+    float get_learning_rate() const
+    {
+        return learing_rate;
     }
 
     void set_update_weights(bool flag)
@@ -112,3 +145,4 @@ public:
 
     size_t output_size() const { return output_shape.size(); }
 };
+

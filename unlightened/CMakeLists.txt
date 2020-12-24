@@ -29,6 +29,11 @@ add_library(
     include/serializable_interface.h
     include/serializer_interface.h
     include/cudnn_helpers.h
+    include/batch_runner.h
+    include/optimizer.h
+    include/device_vector.h
+    include/cuda_device.h
+    include/optimizer_momentum.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -49,6 +54,9 @@ add_library(
     source/conv_transpose.cpp
     source/conv2d_cudnn.cpp
     source/binary_serialization.cpp
+    source/batch_runner.cpp
+    source/optimizer.cpp
+    source/optimizer_momentum.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)

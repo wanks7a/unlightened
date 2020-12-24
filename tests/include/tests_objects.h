@@ -9,6 +9,9 @@ struct test_layer : public Layer
         device_layer = true;
     }
 
+    weights_properties w_props;
+    weights_properties d_props;
+
     cuVector<float> output;
     void init(const shape& input) override {};
     void forward_pass(Layer* prevLayer) override {};
@@ -27,6 +30,27 @@ struct test_layer : public Layer
         output_shape = sh;
         input_shape = sh;
     }
+
+    weights_properties get_weights() const override
+    {
+        return w_props;
+    };
+
+    weights_properties get_weights_deriv() const override
+    {
+        return d_props;
+    };
+
+    weights_properties get_bias() const override
+    {
+        return weights_prop;
+    };
+
+    weights_properties get_bias_deriv() const override
+    {
+        return weights_prop;
+    };
+
 };
 
 template <typename T>
