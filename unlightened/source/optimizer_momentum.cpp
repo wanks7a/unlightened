@@ -4,6 +4,9 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 {
 	float minus_beta = 1.0f - beta;
 	float zero = 0;
+	device_vector<cuda_device, float> w;
+	w.set_data(weights, weights_desc.sh.size());
+	auto w1 = w.to_vector();
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
 		&beta,
@@ -15,6 +18,9 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 		&zero,
 		weights_desc.descriptor,
 		momentum_derivatives.data()));
+	device_vector<cuda_device, float> m;
+	m.set_data(momentum_derivatives.data(), weights_desc.sh.size());
+	auto m1 = m.to_vector();
 	float one = 1.0f;
 	learning_rate = -learning_rate / sh.batches;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,

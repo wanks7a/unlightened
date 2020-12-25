@@ -11,6 +11,8 @@ struct test_layer : public Layer
 
     weights_properties w_props;
     weights_properties d_props;
+    weights_properties bias_props;
+    weights_properties bias_deriv_props;
 
     cuVector<float> output;
     void init(const shape& input) override {};
@@ -43,12 +45,12 @@ struct test_layer : public Layer
 
     weights_properties get_bias() const override
     {
-        return weights_properties();
+        return bias_props;
     };
 
     weights_properties get_bias_deriv() const override
     {
-        return weights_properties();
+        return bias_deriv_props;
     };
 
 };

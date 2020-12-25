@@ -1,6 +1,7 @@
 #pragma once
 #include <cudnn.h>
 #include <iostream>
+#include <shape.h>
 
 #define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort = true)
@@ -14,6 +15,7 @@ inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort
 
 struct cudnn_descriptor4d
 {
+	shape sh;
 	cudnnTensorDescriptor_t descriptor;
 	cudnn_descriptor4d(): descriptor(nullptr){}
 	cudnn_descriptor4d(const cudnn_descriptor4d& d) = delete;
@@ -26,6 +28,10 @@ struct cudnn_descriptor4d
 
 	bool create(int width, int height, int depth, int batches)
 	{
+		sh.width = width;
+		sh.height = height;
+		sh.depth = depth;
+		sh.batches = batches;
 		cudnnStatus_t status = cudnnCreateTensorDescriptor(&descriptor);
 		if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
 			return false;
