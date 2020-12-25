@@ -164,7 +164,7 @@ void conv2d_transposed::backprop(Layer* layer)
 	//}
 	if (update_on_backprop)
 	{
-		update_weights();
+		//update_weights();
 		//update_bias(derivative, output_shape, filters.get_bias().get(), learing_rate);
 	}
 }
@@ -255,4 +255,20 @@ void conv2d_transposed::update_weights()
 		&beta,
 		weight_desc.descriptor,
 		filter_data.get_weights().get());
+}
+
+weights_properties conv2d_transposed::get_weights() const
+{
+	weights_properties props;
+	props.size = filter_data.get_weights().size();
+	props.ptr = filter_data.get_weights().get();
+	return props;
+}
+
+weights_properties conv2d_transposed::get_weights_deriv() const
+{
+	weights_properties props;
+	props.size = filter_data.get_weights_derivative().size();
+	props.ptr = filter_data.get_weights_derivative().get();
+	return props;
 }

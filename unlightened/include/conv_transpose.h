@@ -66,6 +66,11 @@ public:
     {
         return filter_data;
     }
+
+    weights_properties get_weights() const override;
+
+    weights_properties get_weights_deriv() const override;
+
 private:
     void init_tensors();
     bool cudnn_status_check(cudnnStatus_t status) const;

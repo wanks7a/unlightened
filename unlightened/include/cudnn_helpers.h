@@ -157,7 +157,7 @@ struct cudnn_add_tensor
 		status = cudnnSetOpTensorDescriptor(descriptor,
 			CUDNN_OP_TENSOR_ADD,
 			CUDNN_DATA_FLOAT,
-			CUDNN_NOT_PROPAGATE_NAN);
+			CUDNN_PROPAGATE_NAN);
 
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
