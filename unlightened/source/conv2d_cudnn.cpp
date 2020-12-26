@@ -356,7 +356,7 @@ weights_properties conv2d_cudnn::get_bias() const
 weights_properties conv2d_cudnn::get_bias_deriv() const
 {
 	weights_properties props;
-	props.size = filters.get_weights_derivative().size();
-	props.ptr = filters.get_weights_derivative().get();
+	props.size = filters.get_bias_derivative().size();
+	props.ptr = filters.get_bias_derivative().get();
 	return props;
 };

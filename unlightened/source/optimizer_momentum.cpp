@@ -3,10 +3,7 @@
 void momentum_optimizer::update_weights(float* weights, const float* deriv, float learning_rate)
 {
 	float minus_beta = 1.0f - beta;
-	float zero = 0;
-	device_vector<cuda_device, float> w;
-	w.set_data(weights, weights_desc.sh.size());
-	auto w1 = w.to_vector();
+	float zero = 0.0f;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
 		&beta,
@@ -18,11 +15,8 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 		&zero,
 		weights_desc.descriptor,
 		momentum_derivatives.data()));
-	device_vector<cuda_device, float> m;
-	m.set_data(momentum_derivatives.data(), weights_desc.sh.size());
-	auto m1 = m.to_vector();
 	float one = 1.0f;
-	learning_rate = -learning_rate / sh.batches;
+	learning_rate = -(learning_rate / sh.batches);
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
 		&one,
@@ -70,11 +64,16 @@ void momentum_optimizer::update_bias(float* bias, const float* deriv, float lear
 void momentum_optimizer::init(Layer* layer)
 {
 	auto weight_props = layer->get_weights();
+	sh = layer->get_shape();
+	if (weight_props.size == 0)
+		return;
 	momentum_derivatives.reserve(weight_props.size);
-	weights_desc.create(weight_props.size, 1, 1, 1);
+	if (!weights_desc.create(weight_props.size, 1, 1, 1))
+		std::exit(1);
 	add_tensor.create();
 	auto bias_props = layer->get_bias();
+	if (bias_props.size == 0)
+		return;
 	momentum_derivatives_bias.reserve(bias_props.size);
 	bias_desc.create(bias_props.size, 1, 1, 1);
-	sh = layer->get_shape();
 }

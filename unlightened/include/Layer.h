@@ -80,6 +80,11 @@ public:
         update_on_backprop = flag;
     }
 
+    bool is_frozen() const
+    {
+        return update_on_backprop;
+    }
+
     cuVector<float> get_device_output()
     {
         cuVector<float> result;

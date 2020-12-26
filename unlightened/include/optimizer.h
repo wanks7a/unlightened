@@ -68,6 +68,8 @@ class optimizer_device : public optimizer
 public:
 	void update(Layer* layer) override
 	{
+		if (!layer->is_frozen())
+			return;
 		auto weights_props = layer->get_weights();
 		auto weights_deriv = layer->get_weights_deriv();
 		update_weights_internal(weights_props, weights_deriv, layer->get_learning_rate(), layer->is_device_layer());
