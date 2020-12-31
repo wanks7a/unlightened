@@ -25,13 +25,14 @@ private:
     const float* inputPtr;
     size_t size;
     size_t input_size;
+    bool bias_update;
 public:
 
-    dense_gpu() : size(0), inputPtr(nullptr), input_size(0)
+    dense_gpu() : size(0), inputPtr(nullptr), input_size(0), bias_update(true)
     {
     }
 
-    dense_gpu(size_t neuron_size) : size(neuron_size), inputPtr(nullptr), input_size(0)
+    dense_gpu(size_t neuron_size, bool use_bias = true) : size(neuron_size), inputPtr(nullptr), input_size(0), bias_update(use_bias)
     {
         in_device_memory = true;
     }
@@ -93,7 +94,8 @@ public:
             if (update_on_backprop)
             {
                 calcWeightsDeriv(weightsGPU.get(), weights_deriv.get(), layer->derivative_wr_to_input(), inputPtr, input_size, size, output_shape);
-                calcBiasDeriv(biasGPU.get(), bias_deriv.get(), layer->derivative_wr_to_input(), size, output_shape);
+                if(bias_update)
+                    calcBiasDeriv(biasGPU.get(), bias_deriv.get(), layer->derivative_wr_to_input(), size, output_shape);
             }
         }
         else
@@ -103,7 +105,8 @@ public:
             if (update_on_backprop)
             {
                 calcWeightsDeriv(weightsGPU.get(), weights_deriv.get(), derivativeWRToOutput.get(), inputPtr, input_size, size, output_shape);
-                calcBiasDeriv(biasGPU.get(), bias_deriv.get(), derivativeWRToOutput.get(), size, output_shape);
+                if(bias_update)
+                    calcBiasDeriv(biasGPU.get(), bias_deriv.get(), derivativeWRToOutput.get(), size, output_shape);
             }
         }
     }

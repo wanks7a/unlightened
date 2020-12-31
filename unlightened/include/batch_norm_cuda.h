@@ -21,7 +21,7 @@ class batch_norm_cuda : public batch_norm<cuda_device>
     device_vector<cuda_device, float> input_derivative;
     device_vector<cuda_device, float> scale_data_derivative;
     device_vector<cuda_device, float> bias_data_derivative;
-    double bn_eps = 0.0001;
+    double bn_eps = 0.0000001;
     size_t factor = 0;
     double momentum = 0.0;
 public:
