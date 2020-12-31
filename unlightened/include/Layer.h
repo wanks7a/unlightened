@@ -2,6 +2,7 @@
 #include <shape.h>
 #include <device_memory.h>
 #include <binary_serialization.h>
+#include <device_vector.h>
 
 struct weights_properties
 {
@@ -12,10 +13,10 @@ struct weights_properties
 class Layer
 {
 protected:
-    float learing_rate = 0.1f;
+    float learing_rate = 0.001f;
     shape output_shape;
     shape input_shape;
-    bool device_layer = false;
+    bool in_device_memory = false;
     bool update_on_backprop = true;
 public:
     void init_base(const shape& input)
@@ -51,14 +52,22 @@ public:
 
     virtual void serialize(binary_serialization& s) const 
     {
-        s << learing_rate << output_shape << input_shape << device_layer << update_on_backprop;
+        s << learing_rate << output_shape << input_shape << in_device_memory << update_on_backprop;
     };
 
     virtual bool deserialize(binary_serialization& s)
     {
-        s >> learing_rate >> output_shape >> input_shape >> device_layer >> update_on_backprop;
+        s >> learing_rate >> output_shape >> input_shape >> in_device_memory >> update_on_backprop;
         return true;
     };
+
+    virtual void pre_epoch(size_t epoch)
+    {
+    }
+
+    virtual void post_epoch(size_t epoch)
+    {
+    }
 
     virtual ~Layer() = default;
 
@@ -88,20 +97,20 @@ public:
     cuVector<float> get_device_output()
     {
         cuVector<float> result;
-        if(!device_layer)
+        if(!in_device_memory)
             result.setValues(get_output(), output_shape.size());
         return result;
     }
 
     void get_device_output(cuVector<float>& v)
     {
-        if (!device_layer)
+        if (!in_device_memory)
             v.setValues(get_output(), output_shape.size());
     }
 
     std::vector<float> get_native_output()
     {
-        if (device_layer)
+        if (in_device_memory)
             return cuVector<float>::from_device_host(get_output(), output_shape.size());
         else
         {
@@ -114,7 +123,7 @@ public:
     cuVector<float> get_device_derivative()
     {
         cuVector<float> result;
-        if (!device_layer)
+        if (!in_device_memory)
             result.setValues(derivative_wr_to_input(), input_shape.size());
         return result;
     }
@@ -122,7 +131,7 @@ public:
     std::vector<float> get_native_derivative()
     {
         std::vector<float> result;
-        if (device_layer)
+        if (in_device_memory)
             result = cuVector<float>::from_device_host(derivative_wr_to_input(), input_shape.size());
         else
         {
@@ -137,7 +146,7 @@ public:
 
     bool is_device_layer() const
     {
-        return device_layer;
+        return in_device_memory;
     }
 
     shape get_shape() const

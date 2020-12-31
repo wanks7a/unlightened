@@ -3,12 +3,12 @@
 
 conv2d_transposed::conv2d_transposed() : pad_type(padding::SAME)
 {
-	device_layer = true;
+	in_device_memory = true;
 }
 
 conv2d_transposed::conv2d_transposed(size_t number_filters, size_t filter_size, size_t stride, padding pad) : pad_type(pad)
 {
-	device_layer = true;
+	in_device_memory = true;
 	filter_options options;
 	options.w = filter_size;
 	options.h = filter_size;

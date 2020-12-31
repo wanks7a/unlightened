@@ -2,13 +2,13 @@
 
 activation_layer::activation_layer() : activ_func(activation_function::Sigmoid)
 {
-	device_layer = true;
+	in_device_memory = true;
 }
 
 
 activation_layer::activation_layer(activation_function function) : activ_func(function)
 {
-	device_layer = true;
+	in_device_memory = true;
 }
 
 void activation_layer::init(const shape& input)

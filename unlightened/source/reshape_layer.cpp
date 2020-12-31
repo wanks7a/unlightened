@@ -19,13 +19,13 @@ void reshape_layer::init(const shape& input)
 
 void reshape_layer::forward_pass(Layer* prevLayer)
 {
-	device_layer = prevLayer->is_device_layer();
+	in_device_memory = prevLayer->is_device_layer();
 	output = prevLayer->get_output();
 }
 
 void reshape_layer::backprop(Layer* layer)
 {
-	device_layer = layer->is_device_layer();
+	in_device_memory = layer->is_device_layer();
 	derivative = layer->derivative_wr_to_input();
 }
 

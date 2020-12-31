@@ -18,7 +18,7 @@ class SigmoidLayerGPU : public Layer
 
     void init(const shape& input) override
     {
-        device_layer = true;
+        in_device_memory = true;
         input_size = input.size();
         size = input_size;
         output.resize(size);

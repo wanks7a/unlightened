@@ -12,7 +12,7 @@ void cnn_layer::checkCUDNN(const cudnnStatus_t& status)
 
 cnn_layer::cnn_layer(size_t filter_dimension, size_t num_of_filters, bool first_layer) : options(filter_dimension, filter_dimension, num_of_filters), filters_size(num_of_filters), input_layer(nullptr), is_first_layer(first_layer)
 {
-	device_layer = true;
+	in_device_memory = true;
 	if(use_cudnn)
 		checkCUDNN(cudnnCreate(&cudnn_handle));
 }

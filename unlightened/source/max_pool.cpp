@@ -2,12 +2,12 @@
 
 max_pool::max_pool() : filter_size(0)
 {
-	device_layer = true;
+	in_device_memory = true;
 }
 
 max_pool::max_pool(int f_size)
 {
-	device_layer = true;
+	in_device_memory = true;
 	filter_size = f_size;
 }
 

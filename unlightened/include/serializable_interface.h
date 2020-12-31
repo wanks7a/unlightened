@@ -25,7 +25,7 @@ public:
 		return false;
 	}
 
-private:
-	serializable_layer() = default;
-	friend T;
+//private:
+//	serializable_layer() = default;
+//	friend T;
 };

@@ -8,6 +8,7 @@
 #include <NeuralNet.h>
 #include <reshape_layer.h>
 #include <conv_transpose.h>
+#include <batch_norm_cuda.h>
 
 template <typename T>
 void binary_serialization::serialize()
@@ -43,6 +44,7 @@ LAYER_MAP(InputLayer,			binary_serialization::TYPE_ID::INPUT);
 LAYER_MAP(OutputLayer,          binary_serialization::TYPE_ID::LOSS);
 LAYER_MAP(reshape_layer,        binary_serialization::TYPE_ID::RESHAPE);
 LAYER_MAP(conv2d_transposed,    binary_serialization::TYPE_ID::DECONV_2D_GPU);
+LAYER_MAP(batch_norm<cuda_device>,      binary_serialization::TYPE_ID::BATCH_NORM);
 
 
 

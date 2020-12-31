@@ -6,7 +6,7 @@ struct test_layer : public Layer
 {
     test_layer()
     {
-        device_layer = true;
+        in_device_memory = true;
     }
 
     weights_properties w_props;

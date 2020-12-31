@@ -4,15 +4,6 @@ class device_vector
 {
 	DType* mem;
 	size_t data_size;
-private:
-
-	void clear()
-	{
-		if (mem != nullptr)
-		{
-			Device::free(mem);
-		}
-	}
 
 public:
 	device_vector() : mem(nullptr), data_size(0)
@@ -36,6 +27,13 @@ public:
 			mem = req_mem;
 			data_size = req_size;
 		}
+	}
+
+	void resize(size_t req_size, const DType& val)
+	{
+		std::vector<DType> values;
+		values.resize(req_size, val);
+		set_data(values);
 	}
 
 	void set_data(const DType* d, size_t size)
@@ -71,7 +69,7 @@ public:
 		return mem;
 	}
 
-	const DType* data() const
+	DType* data() const
 	{
 		return mem;
 	}
@@ -79,6 +77,15 @@ public:
 	size_t size() const
 	{
 		return data_size;
+	}
+
+	void clear()
+	{
+		if (mem != nullptr)
+		{
+			Device::free(mem);
+			data_size = 0;
+		}
 	}
 
 	~device_vector()

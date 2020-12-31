@@ -43,6 +43,7 @@ struct cudnn_descriptor4d
 			/*channels=*/depth,
 			/*image_height=*/height,
 			/*image_width=*/width);
+		CUDA_CHECK(status);
 
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
@@ -158,7 +159,7 @@ struct cudnn_add_tensor
 			CUDNN_OP_TENSOR_ADD,
 			CUDNN_DATA_FLOAT,
 			CUDNN_PROPAGATE_NAN);
-
+		CUDA_CHECK(status);
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
 

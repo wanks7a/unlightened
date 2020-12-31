@@ -27,7 +27,8 @@ class binary_serialization
 		LOSS = 8,
 		RESHAPE = 9,
 		DECONV_2D = 10,
-		DECONV_2D_GPU = 11
+		DECONV_2D_GPU = 11,
+		BATCH_NORM = 12
 	};
 
 	template <typename T>

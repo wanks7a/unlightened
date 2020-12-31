@@ -33,7 +33,7 @@ public:
 
     dense_gpu(size_t neuron_size) : size(neuron_size), inputPtr(nullptr), input_size(0)
     {
-        device_layer = true;
+        in_device_memory = true;
     }
 
     void init(const shape& input) override

@@ -34,6 +34,9 @@ add_library(
     include/device_vector.h
     include/cuda_device.h
     include/optimizer_momentum.h
+    include/device_layer.h
+    include/batch_norm.h
+    include/batch_norm_cuda.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -57,6 +60,8 @@ add_library(
     source/batch_runner.cpp
     source/optimizer.cpp
     source/optimizer_momentum.cpp
+    source/batch_norm.cpp
+    source/batch_norm_cuda.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)

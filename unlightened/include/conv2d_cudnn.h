@@ -90,5 +90,6 @@ protected:
     void checkCUDNN(const cudnnStatus_t& status);
     void backprop_cudnn(const float* derivative);
     void backprop_weights_cudnn(const float* derivative);
+public:
     void update_weights();
 };
