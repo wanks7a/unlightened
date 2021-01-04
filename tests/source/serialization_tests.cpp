@@ -326,11 +326,11 @@ TEST(serialization_tests, neural_net_serialization_test)
 		input.push_back(i);
 	}
 
-	n.loss_layer().setObservedValue(input);
+	n.loss_layer().set_observed(input);
 	n.backprop();
 	expected_results = n[0]->get_native_derivative();
 
-	saved_model->loss_layer().setObservedValue(input);
+	saved_model->loss_layer().set_observed(input);
 	saved_model->backprop();
 	results = (*saved_model)[0]->get_native_derivative();
 

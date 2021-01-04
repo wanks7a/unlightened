@@ -48,23 +48,23 @@ void gan::predict(const std::vector<float>& discrminator_real_data, const std::v
 	gen->getInputLayer().set_input(generator_noise);
 	dis->predict();
 	gen->predict();
-	dis->loss_layer().setObservedValue(real_data_values);
-	loss_dis += dis->loss_layer().get_total_loss() / dis->loss_layer().get_shape().batches;
+	dis->loss_layer().set_observed(real_data_values);
+	loss_dis += dis->loss_layer().get_mean_loss() / dis->loss_layer().get_shape().batches;
 	//dis->loss_layer().print_predicted(2);
 	dis->backprop(); // backprop discriminator so we can forward pass again with fake data 
 	dis->getInputLayer().set_input(gen->loss_layer().get_output(), gen->loss_layer().get_shape().size());
 	dis->predict();
-	dis->loss_layer().setObservedValue(fake_data_values);
+	dis->loss_layer().set_observed(fake_data_values);
 	//dis->loss_layer().print_predicted(2);
-	loss_dis += dis->loss_layer().get_total_loss() / dis->loss_layer().get_shape().batches;
+	loss_dis += dis->loss_layer().get_mean_loss() / dis->loss_layer().get_shape().batches;
 }
 
 void gan::backprop()
 {
 	dis->backprop(); // backprop with fake results so descriminator can detect them
 	dis->set_update_weights(false); // forbid weights update so we dont lie the discriminator. This is done just to calculate the loss for the gan.
-	dis->loss_layer().setObservedValue(real_data_values);
-	loss_gen += dis->loss_layer().get_total_loss() / dis->loss_layer().get_shape().batches;
+	dis->loss_layer().set_observed(real_data_values);
+	loss_gen += dis->loss_layer().get_mean_loss() / dis->loss_layer().get_shape().batches;
 	dis->backprop();
 	gen->loss_layer().set_derivative_manual((*dis)[0]->get_native_derivative());
 	gen->backprop(false);

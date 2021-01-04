@@ -10,7 +10,6 @@ add_library(
     include/LinearLayer.h
     include/LinearLayerGPU.h
     include/NeuralNet.h
-    include/OutputLayer.h
     include/shape.h
     include/SigmoidLayer.h
     include/SigmoidLayerGPU.h
@@ -37,6 +36,7 @@ add_library(
     include/device_layer.h
     include/batch_norm.h
     include/batch_norm_cuda.h
+    include/read_write_stream.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -62,6 +62,7 @@ add_library(
     source/optimizer_momentum.cpp
     source/batch_norm.cpp
     source/batch_norm_cuda.cpp
+    source/read_write_stream.cpp
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)

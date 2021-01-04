@@ -28,6 +28,7 @@ struct cudnn_descriptor4d
 
 	bool create(int width, int height, int depth, int batches)
 	{
+		clear();
 		sh.width = width;
 		sh.height = height;
 		sh.depth = depth;
@@ -48,12 +49,18 @@ struct cudnn_descriptor4d
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
 
-
 	~cudnn_descriptor4d()
+	{
+		clear();
+	}
+
+private:
+	void clear()
 	{
 		if (descriptor != nullptr)
 		{
 			cudnnDestroyTensorDescriptor(descriptor);
+			descriptor = nullptr;
 		}
 	}
 };
@@ -72,6 +79,7 @@ struct cudnn_filter_descriptor
 
 	bool create(int width, int height, int channels, int num_of_filters)
 	{
+		clear();
 		cudnnStatus_t status = cudnnCreateFilterDescriptor(&descriptor);
 		if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
 			return false;
@@ -89,9 +97,15 @@ struct cudnn_filter_descriptor
 
 	~cudnn_filter_descriptor()
 	{
+		clear();
+	}
+private:
+	void clear()
+	{
 		if (descriptor != nullptr)
 		{
 			cudnnDestroyFilterDescriptor(descriptor);
+			descriptor = nullptr;
 		}
 	}
 }; 
@@ -110,6 +124,7 @@ struct cudnn_conv2d_descriptor
 
 	bool create(int padding_w, int padding_h, int stride)
 	{
+		clear();
 		cudnnStatus_t status = cudnnCreateConvolutionDescriptor(&descriptor);
 		if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
 			return false;
@@ -129,9 +144,15 @@ struct cudnn_conv2d_descriptor
 
 	~cudnn_conv2d_descriptor()
 	{
+		clear();
+	}
+private:
+	void clear()
+	{
 		if (descriptor != nullptr)
 		{
 			cudnnDestroyConvolutionDescriptor(descriptor);
+			descriptor = nullptr;
 		}
 	}
 };	// create add op tensor 
@@ -151,6 +172,7 @@ struct cudnn_add_tensor
 
 	bool create()
 	{
+		clear();
 		cudnnStatus_t status = cudnnCreateOpTensorDescriptor(&descriptor);
 		if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
 			return false;
@@ -165,9 +187,15 @@ struct cudnn_add_tensor
 
 	~cudnn_add_tensor()
 	{
+		clear();
+	}
+private:
+	void clear()
+	{
 		if (descriptor != nullptr)
 		{
 			cudnnDestroyOpTensorDescriptor(descriptor);
+			descriptor = nullptr;
 		}
 	}
 };

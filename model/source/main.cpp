@@ -21,6 +21,8 @@
 #include <fstream>
 #include <map>
 #include <image_helper.h>
+#include <optimizer_momentum.h>
+#include <batch_norm_cuda.h>
 
 class std_stream : public generic_stream
 {
@@ -92,7 +94,7 @@ public:
 
 void startTrain(shape_plot* plot, loss_plot* l_plot)
 {
-    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_test.csv");
+    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_train.csv");
 
     for (size_t i = 0; i < mnist.rows.size(); i++)
     {
@@ -115,11 +117,12 @@ void startTrain(shape_plot* plot, loss_plot* l_plot)
         {8.0f, {0, 0, 0, 0, 0, 0, 0, 0, 1, 0} },
         {9.0f, {0, 0, 0, 0, 0, 0, 0, 0, 0, 1} },
     };
-    const size_t batch_size = 128;
+    const size_t batch_size = 256;
     shape mnist_shape(28, 28, 1, batch_size);
     model net(mnist_shape);
     net.addLayer(new conv2d_cudnn(3, 32));
     net.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
+    net.addLayer(new max_pool(2));
     net.addLayer(new conv2d_cudnn(3, 64));
     net.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
     net.addLayer(new max_pool(2));
@@ -127,8 +130,8 @@ void startTrain(shape_plot* plot, loss_plot* l_plot)
     net.addLayer(new activation_layer(activation_layer::activation_function::ReLU));
     net.addLayer(new dense_gpu(10));
     net.addLayer(new activation_layer(activation_layer::activation_function::Softmax));
-    OutputLayer* loss = new OutputLayer();
-    net.addLayer(loss);
+    net.set_optimizer<momentum_optimizer>(0.9f);
+    net.loss_layer().set_loss_func(LOSS::binary_cross_entropy);
     float l_rate = 0.1f;
     net.set_learning_rate(l_rate);
 
@@ -148,12 +151,12 @@ void startTrain(shape_plot* plot, loss_plot* l_plot)
             net.getInputLayer().set_input(one_batch);
 
             net.predict();
-            loss->setObservedValue(one_batch_results);
+            net.loss_layer().set_observed(one_batch_results);
             net.backprop();
-            loss->print_predicted(10);
+            net.loss_layer().print_predicted(1);
             auto l = net[4]->get_native_output();
             auto shape = net[4]->get_shape();
-            l_plot->add_point(loss->get_total_loss(), "loss" , "r");
+            l_plot->add_point(net.loss_layer().get_mean_loss(), "loss" , "r");
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << " batch  = " << k << " sample = " << i / batch_size << std::endl;
         }
@@ -162,10 +165,10 @@ void startTrain(shape_plot* plot, loss_plot* l_plot)
 
 void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
 {
-    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_test.csv");
+    csv<float> mnist("C:\\Users\\wanks7a\\Desktop\\mnist_train.csv");
     std::vector<float> fake_data;
     const size_t batch_size = 256;
-    shape gen_shape(7*7, 1, 1, batch_size);
+    shape gen_shape(100, 1, 1, batch_size);
 
     std::thread t([&]() {
         size_t currentSize = mnist.rows.size() * gen_shape.area();
@@ -176,7 +179,7 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
         std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
         rng.seed(ss);
 
-        std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+        std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
         for (int i = 0; i < currentSize; i++)
         {
@@ -188,7 +191,7 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
     {
         for (size_t j = 1; j < mnist.rows[i].elements.size(); j++)
         {
-            mnist.rows[i].elements[j] = mnist.rows[i].elements[j] / 255;
+            mnist.rows[i].elements[j] = (mnist.rows[i].elements[j] - 127.5) / 127.5;
         }
     }
 
@@ -216,13 +219,12 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
     opt.num_of_filters = 64;
     opt.stride = 2;
     discriminator->addLayer(new conv2d_cudnn(opt));
-    discriminator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
+    discriminator->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
     opt.num_of_filters = 128;
     discriminator->addLayer(new conv2d_cudnn(opt));
-    discriminator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
+    discriminator->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
     discriminator->addLayer(new dense_gpu(1));
     discriminator->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
- 
     model* generator = new model(gen_shape);
     //generator->addLayer(new dense_gpu(30 * 30));
     //generator->addLayer(new reshape_layer(shape(30, 30)));
@@ -231,16 +233,18 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
     //generator->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
     //generator->addLayer(new conv2d_cudnn(2, 1));
     //generator->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
+    generator->addLayer(new dense_gpu(7*7, false));
     generator->addLayer(new reshape_layer(shape(7, 7)));
-    generator->addLayer(new conv2d_transposed(128,5,1, conv2d_transposed::padding::SAME));
+    generator->addLayer(new batch_norm_cuda());
     generator->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
-    generator->addLayer(new conv2d_transposed(64, 5, 2, conv2d_transposed::padding::SAME));
+    generator->addLayer(new conv2d_transposed(128,5,1, conv2d_transposed::padding::SAME));
+    generator->addLayer(new batch_norm_cuda());
+    generator->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
+    generator->addLayer(new conv2d_transposed(128, 5, 2, conv2d_transposed::padding::SAME));
+    generator->addLayer(new batch_norm_cuda());
     generator->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
     generator->addLayer(new conv2d_transposed(1, 5, 2, conv2d_transposed::padding::SAME));
     generator->addLayer(new activation_layer(activation_layer::activation_function::tanh));
-
-    generator->set_learning_rate(0.1f);
-    discriminator->set_learning_rate(0.01f);
     auto s1 = std::make_shared<std_stream>("disc.b");
     auto s2 = std::make_shared<std_stream>("gen.b");
       
@@ -250,6 +254,10 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
     s2->read();
     dis_ser.deserialize_model(*discriminator);
     gen_ser.deserialize_model(*generator);
+    generator->set_learning_rate(0.1f);
+    discriminator->set_learning_rate(0.1f);
+    discriminator->set_optimizer<momentum_optimizer>(0.1f);
+    generator->set_optimizer<momentum_optimizer>(0.1f);
 
 
     gan g;
@@ -273,17 +281,18 @@ void gan_test(shape_plot* sh_plot, loss_plot* l_plot)
             }
             memcpy(gen_noise.data(), &fake_data[i * gen_shape.area()], gen_shape.size() * sizeof(float));
             g.predict(one_batch, gen_noise);
-            std::vector<float> image = (*generator)[6]->get_native_output();
+            std::vector<float> image = (*generator)[11]->get_native_output();
             image.resize(28 * 28);
-            sh_plot->set_scale(4.0f);
+            sh_plot->set_scale(8.0f);
             sh_plot->draw_grayscale(std::move(image), 28, 28, -1.0f, 1.0f);
             g.backprop();
-            total_loss_disc += g.discriminator_loss() / batch_size;
-            total_loss_generator += g.generator_loss() / batch_size;
+            total_loss_disc += g.discriminator_loss();
+            total_loss_generator += g.generator_loss();
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << " batch  = " << k << " sample = " << i / batch_size << std::endl;
         }
-        if (k % 50 == 0)
+        generator->pre_epoch(k);
+        if (k % 50 == 0/* && k > 0*/)
         {
             discriminator->serialize(dis_ser);
             generator->serialize(gen_ser);
@@ -389,8 +398,9 @@ void cat_gan2(shape_plot* sh_plot, loss_plot* l_plot)
     encoder->addLayer(new conv2d_transposed(64, 2, 2, conv2d_transposed::padding::SAME));
     opt.num_of_filters = 3;
     encoder->addLayer(new conv2d_cudnn(opt));
-    encoder->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
+    encoder->addLayer(new activation_layer(activation_layer::activation_function::tanh));
     encoder->set_learning_rate(0.01f);
+    encoder->set_optimizer<momentum_optimizer>(0.9f);
     //std::thread tr(loader, 0);
     //tr.join();
     whole_data();
@@ -407,8 +417,12 @@ void cat_gan2(shape_plot* sh_plot, loss_plot* l_plot)
             whole_loader(b);
             encoder->getInputLayer().set_input(batch_data);
             encoder->predict();
-            encoder->loss_layer().setObservedValue(batch_data);
+            encoder->loss_layer().set_observed(batch_data);
             encoder->backprop();
+            std::vector<float> image = (*encoder)[19]->get_native_output();
+            image.resize(256 * 256 * 3);
+            sh_plot->set_scale(4.0f);
+            sh_plot->draw_rgb_channels(std::move(image), 32, 32, -1.0f, 1.0f);
             //tr.join();
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << " batch  = " << b / batch_size << " sample = " << b << std::endl;
@@ -416,16 +430,17 @@ void cat_gan2(shape_plot* sh_plot, loss_plot* l_plot)
     }
 }
 
-void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
+void cifar(shape_plot* sh_plot, loss_plot* l_plot)
 {
     std::vector<std_stream> cifar10;
     std::map<int, std::string> paths =
     {
         { 1, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_1.bin" },
-        { 2, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_2.bin" },
-        { 3, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_3.bin" },
-        { 4, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_4.bin" },
-        { 5, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_5.bin" }
+        //{ 2, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_2.bin" },
+        //{ 3, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_3.bin" },
+        //{ 4, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_4.bin" },
+        //{ 5, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\data_batch_5.bin" },
+        //{ 6, "C:\\Users\\wanks7a\\Downloads\\cifar-10-binary.tar\\cifar-10-binary\\cifar-10-batches-bin\\test_batch.bin" },
     };
     
     for (auto it = paths.begin(); it != paths.end(); it++)
@@ -455,7 +470,7 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
         {   
             if (cifar_pixels != 3072)
             {
-                data.push_back(static_cast<unsigned char>(cifar10[i].data[j]) / 255.0f);
+                data.push_back((static_cast<unsigned char>(cifar10[i].data[j]) - 127.5f) / 127.5f);
                 cifar_pixels++;
             }
             else
@@ -463,10 +478,9 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
         }
 
         memcpy(whole_data_v.data() + (i * 10000) * input_shape.volume(), data.data(), data.size() * sizeof(float));
-        
     }
 
-    auto whole_loader = [&](size_t index, std::vector<float>& d, shape inp_shape, std::vector<float>& whole_D) {
+    auto whole_loader = [&](size_t index, std::vector<float>& d, shape inp_shape, const std::vector<float>& whole_D) {
         for (size_t i = index; i < index + batch_size; i++)
         {
             memcpy(d.data() + (i - index) * inp_shape.volume(), whole_D.data() + (i % examples) * inp_shape.volume(), inp_shape.volume() * sizeof(float));
@@ -481,58 +495,48 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
     opt.zeropadding = true;
     opt.num_of_filters = 64;
     opt.stride = 1;
+    // encoder
     encoder->addLayer(new conv2d_cudnn(opt));
-    encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    encoder->addLayer(new max_pool(2));
+    encoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
+    opt.num_of_filters = 128;
+    opt.stride = 3;
+    encoder->addLayer(new conv2d_cudnn(opt));
+    encoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
     opt.num_of_filters = 128;
     encoder->addLayer(new conv2d_cudnn(opt));
-    encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    encoder->addLayer(new max_pool(2));
-    opt.num_of_filters = 64;
+    encoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
+    opt.num_of_filters = 256;
     encoder->addLayer(new conv2d_cudnn(opt));
-    encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    encoder->addLayer(new max_pool(2));
-    opt.num_of_filters = 32;
-    encoder->addLayer(new conv2d_cudnn(opt));
-    encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
+    encoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
     encoder->addLayer(new dense_gpu(1));
     encoder->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
-    //encoder->addLayer(new conv2d_transposed(16, 2, 2, conv2d_transposed::padding::SAME));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::tanh));
-    //opt.num_of_filters = 32;
-    //encoder->addLayer(new conv2d_cudnn(opt));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    //encoder->addLayer(new conv2d_transposed(32, 2, 2, conv2d_transposed::padding::SAME));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::tanh));
-    //opt.num_of_filters = 64;
-    //encoder->addLayer(new conv2d_cudnn(opt));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    //encoder->addLayer(new conv2d_transposed(64, 2, 2, conv2d_transposed::padding::SAME));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::tanh));
-    //opt.num_of_filters = 3;
-    //encoder->addLayer(new conv2d_cudnn(opt));
-    //encoder->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
-    encoder->set_learning_rate(0.01f);
-    //std::thread tr(loader, 0);
-    //tr.join();
-    shape decoder_inpu_shape(4, 4, 3, batch_size);
+
+    // decoder
+    shape decoder_inpu_shape(100, 1, 1, batch_size);
     model* decoder = new model(decoder_inpu_shape);
-    decoder->addLayer(new conv2d_transposed(64, 2, 2, conv2d_transposed::padding::SAME));
+    decoder->addLayer(new dense_gpu(4 * 4 * 5, false));
+    decoder->addLayer(new reshape_layer(shape(4, 4, 5)));
+    decoder->addLayer(new batch_norm_cuda());
     decoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
-    opt.num_of_filters = 64;
-    decoder->addLayer(new conv2d_cudnn(opt));
-    decoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    decoder->addLayer(new conv2d_transposed(128, 2, 2, conv2d_transposed::padding::SAME));
+
+    decoder->addLayer(new conv2d_transposed(512, 4, 2, conv2d_transposed::padding::SAME));
+    decoder->addLayer(new batch_norm_cuda());
     decoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
-    opt.num_of_filters = 128;
-    decoder->addLayer(new conv2d_cudnn(opt));
-    decoder->addLayer(new activation_layer(activation_layer::activation_function::ReLU));
-    decoder->addLayer(new conv2d_transposed(64, 2, 2, conv2d_transposed::padding::SAME));
+
+    decoder->addLayer(new conv2d_transposed(256, 4, 2, conv2d_transposed::padding::SAME));
+    decoder->addLayer(new batch_norm_cuda());
     decoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
+
+    decoder->addLayer(new conv2d_transposed(128, 4, 2, conv2d_transposed::padding::SAME));
+    decoder->addLayer(new batch_norm_cuda());
+    decoder->addLayer(new activation_layer(activation_layer::activation_function::LeakyReLU));
+
     opt.num_of_filters = 3;
+    opt.w = 3;
+    opt.h = 3;
+    opt.stride = 1;
     decoder->addLayer(new conv2d_cudnn(opt));
-    decoder->addLayer(new activation_layer(activation_layer::activation_function::Sigmoid));
-    decoder->set_learning_rate(0.5f);
+    decoder->addLayer(new activation_layer(activation_layer::activation_function::tanh));
     gan cifar;
     cifar.set_discriminator(encoder);
     cifar.set_generator(decoder);
@@ -549,7 +553,7 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
         std::seed_seq ss{ uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32) };
         rng.seed(ss);
 
-        std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+        std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
         for (int i = 0; i < currentSize; i++)
         {
@@ -562,13 +566,21 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
 
     auto s1 = std::make_shared<std_stream>("disc_cats.b");
     auto s2 = std::make_shared<std_stream>("gen_cats.b");
+    auto s3 = std::make_shared<std_stream>("gen_cats.b");
 
     binary_serialization dis_ser(s1);
     binary_serialization gen_ser(s2);
+    //binary_serialization gen_ser3(s3);
+    //s3->read();
+    //auto m = gen_ser3.deserialize_model();
     s1->read();
     s2->read();
     dis_ser.deserialize_model(*encoder);
     gen_ser.deserialize_model(*decoder);
+    encoder->set_optimizer<momentum_optimizer>(0.1f);
+    decoder->set_optimizer<momentum_optimizer>(0.1f);
+    encoder->set_learning_rate(0.01f);
+    decoder->set_learning_rate(0.01f);
 
 
     // training loop
@@ -588,14 +600,11 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
             cifar.predict(batch_data, fake_data_batch);
             cifar.backprop();
 
-            //encoder->getInputLayer().set_input(batch_data);
-            //encoder->predict();
-            //encoder->loss_layer().setObservedValue(batch_data);
-            //encoder->backprop();
-            std::vector<float> image = (*decoder)[11]->get_native_output();
+
+            std::vector<float> image = (*decoder)[14]->get_native_output();
             image.resize(32 * 32 * 3);
             sh_plot->set_scale(4.0f);
-            sh_plot->draw_rgb_channels(std::move(image), 32, 32, 0.0f, 1.0f);
+            sh_plot->draw_rgb_channels(std::move(image), 32, 32, -1.0f, 1.0f);
             total_loss_disc += cifar.discriminator_loss() / batch_size;
             total_loss_generator += cifar.generator_loss() / batch_size;
             //tr.join();
@@ -609,6 +618,7 @@ void cat_gan(shape_plot* sh_plot, loss_plot* l_plot)
             s1->save();
             s2->save();
         }
+        decoder->pre_epoch(e);
         l_plot->add_point(total_loss_disc, "discrminator", "r");
         l_plot->add_point(total_loss_generator, "generator", "b");
     }
@@ -622,9 +632,10 @@ int main(int argc, char* argv[])
     view_manager.add_view(sh_plot);
     view_manager.add_view(l_plot);
     std::thread t([&]() {
-        //startTrain(sh_plot, l_plot);
+        startTrain(sh_plot, l_plot);
         //gan_test(sh_plot, l_plot);
-        cat_gan(sh_plot, l_plot);
+        //cifar(sh_plot, l_plot);
+        //cat_gan2(sh_plot, l_plot);
         });
     view_manager.loop();
 	return 0;

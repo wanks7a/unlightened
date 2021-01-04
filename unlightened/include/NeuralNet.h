@@ -3,11 +3,12 @@
 #include <vector>
 #include <memory>
 #include <optimizer.h>
+#include <loss_layer.h>
 
 class model
 {
     InputLayer input_layer;
-    OutputLayer output_layer;
+    loss_layer_cpu output_layer;
     std::vector<std::shared_ptr<Layer>> layers;
     std::vector<std::shared_ptr<optimizer>> optimizers;
 
@@ -34,7 +35,7 @@ public:
         return input_layer;
     }
 
-    OutputLayer& loss_layer() noexcept
+    loss_layer_cpu& loss_layer() noexcept
     {
         return output_layer;
     }
