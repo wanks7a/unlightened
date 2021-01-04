@@ -95,7 +95,7 @@ float loss_layer_cpu::get_mean_loss() const
     {
     case LOSS::MSE: result = get_mse_mean();
         break;
-    case LOSS::binary_cross_entropy: get_binary_cross_ent_mean_loss();
+    case LOSS::binary_cross_entropy: result = get_binary_cross_ent_mean_loss();
         break;
     }
     return result;
