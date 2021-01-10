@@ -1,7 +1,20 @@
 #include <optimizer_momentum.h>
+#include <cuda_vector_norm.h>
 
 void momentum_optimizer::update_weights(float* weights, const float* deriv, float learning_rate)
 {
+	device_vector<cuda_device, float> deriv_copy;
+	if (clip_grads_norm > 0.0f)
+	{
+		deriv_copy.memcpy(deriv, weights_desc.sh.size());
+		float norm = cuda_vector_norm(deriv_copy.data(), deriv_copy.size());
+		if (norm > clip_grads_norm)
+		{
+			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), 1.0f / norm);
+			deriv = deriv_copy.data();
+		}
+	}
+
 	float minus_beta = 1.0f - beta;
 	float zero = 0.0f;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
@@ -32,6 +45,18 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 
 void momentum_optimizer::update_bias(float* bias, const float* deriv, float learning_rate)
 {
+	device_vector<cuda_device, float> deriv_copy;
+	if (clip_grads_norm > 0.0f)
+	{
+		deriv_copy.memcpy(deriv, bias_desc.sh.size());
+		float norm = cuda_vector_norm(deriv_copy.data(), deriv_copy.size());
+		if (norm > clip_grads_norm)
+		{
+			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), 1.0f / norm);
+			deriv = deriv_copy.data();
+		}
+	}
+
 	float minus_beta = 1.0f - beta;
 	float zero = 0;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,

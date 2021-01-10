@@ -37,6 +37,7 @@ add_library(
     include/batch_norm.h
     include/batch_norm_cuda.h
     include/read_write_stream.h
+    include/cuda_vector_norm.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu
@@ -63,6 +64,7 @@ add_library(
     source/batch_norm.cpp
     source/batch_norm_cuda.cpp
     source/read_write_stream.cpp
+    source/cuda_vector_norm.cu
 )
 
 find_path(CUDNN_INCLUDE cudnn.h)

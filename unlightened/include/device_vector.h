@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 template <typename Device, typename DType>
 class device_vector
 {
@@ -62,6 +63,21 @@ public:
 		result.data_size = data_size;
 		Device::memcpy(result.mem, mem, data_size);
 		return result;
+	}
+
+	DType operator[](size_t index)
+	{
+		if (index >= data_size)
+			throw("device vector index out of range");
+		DType result;
+		Device::copy_to_host(&result, mem + index, 1);
+		return result;
+	}
+
+	void memcpy(const float* input, size_t size)
+	{
+		reserve(size);
+		Device::memcpy(mem, input, size);
 	}
 
 	DType* data()

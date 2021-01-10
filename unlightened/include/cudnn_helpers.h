@@ -2,6 +2,8 @@
 #include <cudnn.h>
 #include <iostream>
 #include <shape.h>
+#include <device_vector.h>
+#include <cuda_device.h>
 
 #define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort = true)
@@ -12,6 +14,34 @@ inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort
 		if (abort) exit(code);
 	}
 }
+
+struct cudnn_hanlde
+{
+	cudnnHandle_t handle;
+	cudnn_hanlde()
+	{
+		if (cudnnStatus_t::CUDNN_STATUS_SUCCESS != cudnnCreate(&handle))
+			handle = nullptr;
+	}
+
+	cudnn_hanlde(const cudnn_hanlde& d) = delete;
+
+	cudnn_hanlde(cudnn_hanlde&& d) noexcept
+	{
+		handle = d.handle;
+		d.handle = nullptr;
+	}
+
+	operator bool() const { return handle != nullptr; }
+
+	~cudnn_hanlde()
+	{
+		if (handle != nullptr)
+		{
+			cudnnDestroy(handle);
+		}
+	}
+};
 
 struct cudnn_descriptor4d
 {
@@ -47,6 +77,11 @@ struct cudnn_descriptor4d
 		CUDA_CHECK(status);
 
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
+	}
+
+	bool create(int size)
+	{
+		return create(size, 1, 1, 1);
 	}
 
 	~cudnn_descriptor4d()
@@ -155,16 +190,16 @@ private:
 			descriptor = nullptr;
 		}
 	}
-};	// create add op tensor 
+};
 
-
-struct cudnn_add_tensor
+template <unsigned int Type>
+struct cudnn_op_tensor
 {
 	cudnnOpTensorDescriptor_t descriptor = nullptr;
-	cudnn_add_tensor() : descriptor(nullptr) {}
-	cudnn_add_tensor(const cudnn_add_tensor& d) = delete;
+	cudnn_op_tensor() : descriptor(nullptr) {}
+	cudnn_op_tensor(const cudnn_op_tensor& d) = delete;
 
-	cudnn_add_tensor(cudnn_add_tensor&& d) noexcept
+	cudnn_op_tensor(cudnn_op_tensor&& d) noexcept
 	{
 		descriptor = d.descriptor;
 		d.descriptor = nullptr;
@@ -178,14 +213,34 @@ struct cudnn_add_tensor
 			return false;
 
 		status = cudnnSetOpTensorDescriptor(descriptor,
-			CUDNN_OP_TENSOR_ADD,
+			static_cast<cudnnOpTensorOp_t>(Type),
 			CUDNN_DATA_FLOAT,
 			CUDNN_PROPAGATE_NAN);
 		CUDA_CHECK(status);
 		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
 
-	~cudnn_add_tensor()
+	bool op(const float* A, size_t A_size, const float* B, size_t B_size, float* C, size_t C_size, float alpha1 = 1.0f, float alpha2 = 1.0f, float beta = 0.0f)
+	{
+		cudnn_hanlde handle;
+		cudnn_descriptor4d A_desc, B_desc, C_desc;
+		if (!A_desc.create(A_size) || !B_desc.create(B_size) || !C_desc.create(C_size))
+			return false;
+		CUDA_CHECK(cudnnOpTensor(handle.handle,
+			descriptor,
+			&alpha1,
+			A_desc.descriptor,
+			A,
+			&alpha2,
+			B_desc.descriptor,
+			B,
+			&beta,
+			C_desc.descriptor,
+			C));
+		return true;
+	}
+
+	~cudnn_op_tensor()
 	{
 		clear();
 	}
@@ -200,30 +255,98 @@ private:
 	}
 };
 
-struct cudnn_hanlde
+using cudnn_add_tensor = cudnn_op_tensor<CUDNN_OP_TENSOR_ADD>;
+using cudnn_mul_tensor = cudnn_op_tensor<CUDNN_OP_TENSOR_MUL>;
+
+template <unsigned int Type>
+struct cudnn_reduce_op_tensor
 {
-	cudnnHandle_t handle;
-	cudnn_hanlde()
+	cudnnReduceTensorDescriptor_t descriptor = nullptr;
+	cudnn_reduce_op_tensor() : descriptor(nullptr), workspaceBytes(0) {}
+	cudnn_reduce_op_tensor(const cudnn_reduce_op_tensor& d) = delete;
+
+	cudnn_reduce_op_tensor(cudnn_reduce_op_tensor&& d) noexcept
 	{
-		if (cudnnStatus_t::CUDNN_STATUS_SUCCESS != cudnnCreate(&handle))
-			handle = nullptr;
+		descriptor = d.descriptor;
+		workspaceBytes = d.workspaceBytes;
+		d.descriptor = nullptr;
+		d.indicesBytes = 0;
 	}
 
-	cudnn_hanlde(const cudnn_hanlde& d) = delete;
-
-	cudnn_hanlde(cudnn_hanlde&& d) noexcept
+	bool create(shape input, shape output)
 	{
-		handle = d.handle;
-		d.handle = nullptr;
+		clear();
+		cudnnStatus_t status = cudnnCreateReduceTensorDescriptor(&descriptor);
+		if (status != cudnnStatus_t::CUDNN_STATUS_SUCCESS)
+			return false;
+
+		status = cudnnSetReduceTensorDescriptor(descriptor,
+			static_cast<cudnnReduceTensorOp_t>(Type),
+			CUDNN_DATA_FLOAT,
+			CUDNN_PROPAGATE_NAN,
+			CUDNN_REDUCE_TENSOR_NO_INDICES,
+			CUDNN_32BIT_INDICES);
+
+		CUDA_CHECK(status);
+		cudnn_hanlde handle;
+		if (!input_desc.create(input.width, input.height, input.depth, input.batches))
+			return false;
+		if (!output_desc.create(output.width, output.height, output.depth, output.batches))
+			return false;
+		CUDA_CHECK(cudnnGetReductionWorkspaceSize(handle.handle,
+			descriptor,
+			input_desc.descriptor,
+			output_desc.descriptor,
+			&workspaceBytes));
+
+		return status == cudnnStatus_t::CUDNN_STATUS_SUCCESS;
 	}
 
-	operator bool() const { return handle != nullptr; }
-
-	~cudnn_hanlde()
+	bool create(int reduce_size)
 	{
-		if (handle != nullptr)
+		return create(shape(reduce_size), shape(1));
+	}
+
+	bool reduce(const float* input, float* output, float alpha = 1.0f, float beta = 0.0f)
+	{
+		if (input == nullptr || output == nullptr)
+			return false;
+		cudnn_hanlde handle;
+		device_vector<cuda_device, char> rBytes;
+		rBytes.reserve(workspaceBytes);
+		CUDA_CHECK(cudnnReduceTensor(handle.handle,
+			descriptor,
+			nullptr,
+			0,
+			rBytes.data(),
+			workspaceBytes,
+			&alpha,
+			input_desc.descriptor,
+			input,
+			&beta,
+			output_desc.descriptor,
+			output));
+		return true;
+	}
+
+	~cudnn_reduce_op_tensor()
+	{
+		clear();
+	}
+private:
+	void clear()
+	{
+		if (descriptor != nullptr)
 		{
-			cudnnDestroy(handle);
+			cudnnDestroyReduceTensorDescriptor(descriptor);
+			descriptor = nullptr;
 		}
 	}
+
+	cudnn_descriptor4d input_desc;
+	cudnn_descriptor4d output_desc;
+	size_t workspaceBytes;
 };
+
+using cudnn_reduce_add_tensor = cudnn_reduce_op_tensor<CUDNN_REDUCE_TENSOR_ADD>;
+using cudnn_reduce_mul_tensor = cudnn_reduce_op_tensor<CUDNN_REDUCE_TENSOR_MUL>;

@@ -8,6 +8,7 @@
 class momentum_optimizer : public optimizer_device<cuda_device, float>
 {
 	float beta;
+	float clip_grads_norm;
 	device_vector<cuda_device, float> momentum_derivatives;
 	device_vector<cuda_device, float> momentum_derivatives_bias;
 	cudnn_hanlde handle;
@@ -19,7 +20,7 @@ class momentum_optimizer : public optimizer_device<cuda_device, float>
 	shape sh;
 public:
 	using optimizer_device::update_weights;
-	momentum_optimizer(float beta = 0.9f) : beta(beta) {}
+	momentum_optimizer(float beta_param = 0.9f, float clip_grads_norm_param = 0.0f) : beta(beta_param), clip_grads_norm(clip_grads_norm_param) {}
 	void init(Layer* layer) override;
 	virtual ~momentum_optimizer() = default;
 };

@@ -75,7 +75,8 @@ std::shared_ptr<Layer> binary_serialization::deserialize_layer()
 	if (it != default_constructors.end())
 	{
 		std::shared_ptr<Layer> result((this->*it->second)());
-		result->deserialize(*this);
+		if (!result->deserialize(*this))
+			throw("Failed to deserialize layer");
 		return result;
 	}
 	else
