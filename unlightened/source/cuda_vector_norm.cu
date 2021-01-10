@@ -6,6 +6,11 @@ float cuda_vector_norm(float* input, size_t size)
 	cudnn_mul_tensor mul_tensor;
 	device_vector<cuda_device, float> input_copy;
 	input_copy.memcpy(input, size);
+	if (size == 1)
+	{
+		float res = input_copy[0];
+		return sqrt(res * res);
+	}
 	device_vector<cuda_device, float> vector_norm;
 	vector_norm.resize(1, 0.0f);
 	if (!mul_tensor.create())
