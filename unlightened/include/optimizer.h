@@ -16,6 +16,8 @@ protected:
 public:
 	virtual void init(Layer* layer) = 0;
 	virtual void update(Layer* layer) = 0;
+	virtual void pre_epoch(size_t e) = 0;
+	virtual void post_epoch(size_t e) = 0;
 	virtual ~optimizer() = default;
 };
 

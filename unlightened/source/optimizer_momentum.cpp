@@ -10,25 +10,24 @@ void momentum_optimizer::update_weights(float* weights, const float* deriv, floa
 		float norm = cuda_vector_norm(deriv_copy.data(), deriv_copy.size());
 		if (norm > clip_grads_norm)
 		{
-			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), 1.0f / norm);
+			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), clip_grads_norm / norm);
 			deriv = deriv_copy.data();
 		}
 	}
 
-	float minus_beta = 1.0f - beta;
+	float one = 1.0f;
 	float zero = 0.0f;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
-		&beta,
+		&gamma,
 		weights_desc.descriptor,
 		momentum_derivatives.data(),
-		&minus_beta,
+		&one,
 		weights_desc.descriptor,
 		deriv,
 		&zero,
 		weights_desc.descriptor,
 		momentum_derivatives.data()));
-	float one = 1.0f;
 	learning_rate = -(learning_rate / sh.batches);
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
@@ -52,25 +51,24 @@ void momentum_optimizer::update_bias(float* bias, const float* deriv, float lear
 		float norm = cuda_vector_norm(deriv_copy.data(), deriv_copy.size());
 		if (norm > clip_grads_norm)
 		{
-			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), 1.0f / norm);
+			cuda_scale_vector(deriv_copy.data(), deriv_copy.size(), clip_grads_norm / norm);
 			deriv = deriv_copy.data();
 		}
 	}
 
-	float minus_beta = 1.0f - beta;
+	float one = 1.0f;
 	float zero = 0;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
-		&beta,
+		&gamma,
 		bias_desc.descriptor,
 		momentum_derivatives_bias.data(),
-		&minus_beta,
+		&one,
 		bias_desc.descriptor,
 		deriv,
 		&zero,
 		bias_desc.descriptor,
 		momentum_derivatives_bias.data()));
-	float one = 1.0f;
 	learning_rate = -learning_rate / sh.batches;
 	CUDA_CHECK(cudnnOpTensor(handle.handle,
 		add_tensor.descriptor,
@@ -92,13 +90,26 @@ void momentum_optimizer::init(Layer* layer)
 	sh = layer->get_shape();
 	if (weight_props.size == 0)
 		return;
-	momentum_derivatives.reserve(weight_props.size);
+	momentum_derivatives.resize(weight_props.size, 0.0f);
 	if (!weights_desc.create(weight_props.size, 1, 1, 1))
 		std::exit(1);
 	add_tensor.create();
 	auto bias_props = layer->get_bias();
 	if (bias_props.size == 0)
 		return;
-	momentum_derivatives_bias.reserve(bias_props.size);
+	momentum_derivatives_bias.resize(bias_props.size, 0.0f);
 	bias_desc.create(bias_props.size, 1, 1, 1);
+}
+
+void momentum_optimizer::pre_epoch(size_t e)
+{
+	//if(momentum_derivatives.size() > 0)
+	//	cuda_scale_vector(momentum_derivatives.data(), momentum_derivatives.size(), 0.0f);
+	//if(momentum_derivatives_bias.size() > 0)
+	//	cuda_scale_vector(momentum_derivatives_bias.data(), momentum_derivatives_bias.size(), 0.0f);
+}
+
+void momentum_optimizer::post_epoch(size_t e)
+{
+
 }
