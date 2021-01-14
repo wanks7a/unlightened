@@ -69,17 +69,19 @@ public:
 
     void pre_epoch(size_t e)
     {
-        for (size_t i = 1; i < layers.size(); i++)
+        for (size_t i = 0; i < layers.size(); i++)
         {
             layers[i]->pre_epoch(e);
+            optimizers[i]->pre_epoch(e);
         }
     }
 
     void post_epoch(size_t e)
     {
-        for (size_t i = 1; i < layers.size(); i++)
+        for (size_t i = 0; i < layers.size(); i++)
         {
             layers[i]->post_epoch(e);
+            optimizers[i]->post_epoch(e);
         }
     }
 
