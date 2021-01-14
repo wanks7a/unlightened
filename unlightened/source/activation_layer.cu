@@ -58,22 +58,23 @@ struct relu
 
 struct leaky_relu
 {
+    const float alpha = 0.3f;
     __host__ __device__
-        inline float operator()(const float& input) const
+    inline float operator()(const float& input) const
     {
-        if (input > 0)
+        if (input >= 0)
             return  input;
         else
-            return input * 0.01f;
+            return input * alpha;
     }
 
     __host__ __device__
-        inline float operator()(const float& chain_rule_input, const float& activation_output) const
+    inline float operator()(const float& chain_rule_input, const float& activation_output) const
     {
         if (activation_output > 0)
             return chain_rule_input;
         else
-            return 0.01f * chain_rule_input;
+            return alpha * chain_rule_input;
     }
 };
 
