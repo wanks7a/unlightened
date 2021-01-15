@@ -84,6 +84,15 @@ struct cudnn_descriptor4d
 		return create(size, 1, 1, 1);
 	}
 
+	void scale(float* ptr, float scaleVal)
+	{
+		if (descriptor)
+		{
+			cudnn_hanlde handle;
+			CUDA_CHECK(cudnnScaleTensor(handle.handle, descriptor, ptr, &scaleVal));
+		}
+	}
+
 	~cudnn_descriptor4d()
 	{
 		clear();
@@ -257,6 +266,7 @@ private:
 
 using cudnn_add_tensor = cudnn_op_tensor<CUDNN_OP_TENSOR_ADD>;
 using cudnn_mul_tensor = cudnn_op_tensor<CUDNN_OP_TENSOR_MUL>;
+using cudnn_sqrt_tensor = cudnn_op_tensor<CUDNN_OP_TENSOR_SQRT>;
 
 template <unsigned int Type>
 struct cudnn_reduce_op_tensor
@@ -350,3 +360,5 @@ private:
 
 using cudnn_reduce_add_tensor = cudnn_reduce_op_tensor<CUDNN_REDUCE_TENSOR_ADD>;
 using cudnn_reduce_mul_tensor = cudnn_reduce_op_tensor<CUDNN_REDUCE_TENSOR_MUL>;
+
+bool cuda_scale_vector(float* ptr, size_t size, float scale);

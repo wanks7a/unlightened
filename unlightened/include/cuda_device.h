@@ -1,5 +1,6 @@
 #pragma once
 #include "cuda_runtime.h"
+#include <cudnn_helpers.h>
 
 struct cuda_device
 {

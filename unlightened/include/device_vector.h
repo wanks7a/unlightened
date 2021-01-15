@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
+#include <algorithm>
+
 template <typename Device, typename DType>
 class device_vector
 {
 	DType* mem;
 	size_t data_size;
-
 public:
 	device_vector() : mem(nullptr), data_size(0)
 	{
@@ -17,6 +18,16 @@ public:
 		data_size = v.data_size;
 		v.mem = nullptr;
 		v.data_size = 0;
+	}
+
+	device_vector& operator=(device_vector&& v) noexcept
+	{
+		if (this != &v)
+		{
+			std::swap(mem, v.mem);
+			std::swap(data_size, v.data_size);
+		}
+		return *this;
 	}
 
 	void reserve(size_t req_size)
@@ -74,7 +85,7 @@ public:
 		return result;
 	}
 
-	void memcpy(const float* input, size_t size)
+	void memcpy(const DType* input, size_t size)
 	{
 		reserve(size);
 		Device::memcpy(mem, input, size);

@@ -2,6 +2,9 @@
 #include <optimizer_momentum.h>
 #include <tests_objects.h>
 #include <cuda_vector_norm.h>
+#include <adam_optimizer.h>
+#include <cuda_vector.h>
+#include <generic_functions.h>
 
 TEST(momentum_cuda_tests, test1)
 {
@@ -81,4 +84,30 @@ TEST(momentum_cuda_tests, test2)
 	res = bias_props.to_vector();
 	expected = { 1 - expected_val, 1 - expected_val };
 	compare_vectors(res, expected);
+}
+
+TEST(adam_cuda_tests, test1)
+{
+	cuda_floats m, v, w, d;
+	std::vector<float> vals(4096 * 15, 0.0f);
+	m.set_data(vals);
+	v.set_data(vals);
+
+	for (size_t i = 0; i < 1; i++)
+	{
+		std::generate(vals.begin(), vals.end(), [] { return 1.0f / rand(); });
+		d.set_data(vals);
+		std::generate(vals.begin(), vals.end(), [] { return 1.0f / rand(); });
+		w.set_data(vals);
+		
+		auto m_temp = m.copy();
+		auto v_temp = v.copy();
+		auto w_temp = w.copy();
+
+		adam_kernel(m.data(), v.data(), w.data(), d.data(), d.size(), 0.9, 0.999, 1 - 0.9, 1 - 0.999, 0.01);
+		adam_kernel_vectorized(m_temp.data(), v_temp.data(), w_temp.data(), d.data(), d.size(), 0.9, 0.999, 1 - 0.9, 1 - 0.999, 0.01);
+		compare_vectors(m.to_vector(), m_temp.to_vector());
+		compare_vectors(v.to_vector(), v_temp.to_vector());
+		compare_vectors(w.to_vector(), w_temp.to_vector());
+	}
 }

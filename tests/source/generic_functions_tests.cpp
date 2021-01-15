@@ -116,3 +116,76 @@ TEST(generic_functions, softmax_v2)
 	result = a_layer.get_native_derivative();
 	EXPECT_EQ(result.size(), 6);
 }
+
+TEST(generic_functions, divide1)
+{
+	cuVector<float> input1;
+	EXPECT_TRUE(input1.resize(1 << 20, 1.0f));
+	cuVector<float> input2;
+	EXPECT_TRUE(input2.resize(1 << 20, 10.0f));
+	vector_divide(input1.get(), input2.get(), input1.size());
+	auto res = input1.to_vector();
+	EXPECT_EQ(input1.size(), res.size());
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		EXPECT_EQ(res[i], 1.0f / 10.f);
+	}
+}
+
+TEST(generic_functions, scale1)
+{
+	cuVector<float> input1;
+	EXPECT_TRUE(input1.resize(1 << 20, 1.0f));
+	vector_scale(input1.get(), input1.size(), 10.0f);
+	auto res = input1.to_vector();
+	EXPECT_EQ(input1.size(), res.size());
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		EXPECT_EQ(res[i],10.0f);
+	}
+}
+
+TEST(generic_functions, vec_mul1)
+{
+	cuVector<float> input1;
+	EXPECT_TRUE(input1.resize(1 << 20, 1.0f));
+	cuVector<float> input2;
+	EXPECT_TRUE(input2.resize(1 << 20, 10.0f));
+	vector_mul(input1.get(), input2.get(), input1.size());
+	auto res = input1.to_vector();
+	EXPECT_EQ(input1.size(), res.size());
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		EXPECT_EQ(res[i], 10.f);
+	}
+}
+
+TEST(generic_functions, vec_add1)
+{
+	cuVector<float> input1;
+	EXPECT_TRUE(input1.resize(1 << 20, 1.0f));
+	cuVector<float> input2;
+	EXPECT_TRUE(input2.resize(1 << 20, 10.0f));
+	vector_add(input1.get(), input2.get(), input1.size());
+	auto res = input1.to_vector();
+	EXPECT_EQ(input1.size(), res.size());
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		EXPECT_EQ(res[i], 11.f);
+	}
+}
+
+
+TEST(generic_functions, vec_sqrt)
+{
+	cuVector<float> input1;
+	EXPECT_TRUE(input1.resize(1 << 20, 1.0f));
+	vector_sqrt(input1.get(), input1.size());
+	auto res = input1.to_vector();
+	EXPECT_EQ(input1.size(), res.size());
+	float sqrt_val = sqrtf(1.0f);
+	for (size_t i = 0; i < res.size(); i++)
+	{
+		EXPECT_EQ(res[i], sqrt_val);
+	}
+}

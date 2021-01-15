@@ -61,6 +61,6 @@ void compare_vectors(const std::vector<T>& v1, const std::vector<T>& v2)
     EXPECT_EQ(v1.size(), v2.size());
     for (size_t i = 0; i < v1.size(); i++)
     {
-        EXPECT_EQ(v1[i], v2[i]);
+        EXPECT_FLOAT_EQ(v1[i], v2[i]);
     }
 }
