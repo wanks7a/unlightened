@@ -26,8 +26,18 @@ void loss_plot::add_points(const std::vector<float>& points, const std::string& 
 void loss_plot::draw()
 {
     if (!new_data)
+    {
+        if (last_texture)
+        {
+            SDL_RenderCopy(renderer, last_texture, nullptr, nullptr);
+            view::draw();
+        }
         return;
+    }
     new_data = false;
+    if(last_texture)
+        SDL_DestroyTexture(last_texture);
+
     mglGraph plot(0, options.w, options.h);
     plot.SetRanges(0.0, lines.begin()->second.points.size(), 0.0, max_val);
     bool will_draw = false;
@@ -50,10 +60,9 @@ void loss_plot::draw()
     plot.Box();
     SDL_Surface* surf = SDL_CreateRGBSurfaceFrom((void*)plot.GetRGBA(), options.w, options.h, 32, 4 * options.w,
         0x00ff0000, 0x0000ff00, 0x000000ff, 0);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surf);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    last_texture = SDL_CreateTextureFromSurface(renderer, surf);
+    SDL_RenderCopy(renderer, last_texture, nullptr, nullptr);
     view::draw();
-    SDL_DestroyTexture(texture);
     SDL_FreeSurface(surf);
 }
 

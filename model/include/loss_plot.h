@@ -3,6 +3,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <mgl2/mgl.h>
+#include <memory>
 
 class loss_plot : public view
 {
@@ -14,6 +15,7 @@ class loss_plot : public view
 	bool new_data = false;
 	std::mutex m;
 	float max_val = 0.0f;
+	SDL_Texture* last_texture = nullptr;
 	std::unordered_map<std::string, plot_values> lines;
 public:
 	loss_plot(int w, int h, std::string name);
