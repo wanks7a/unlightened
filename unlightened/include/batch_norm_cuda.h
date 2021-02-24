@@ -21,9 +21,15 @@ class batch_norm_cuda : public batch_norm<cuda_device>
     device_vector<cuda_device, float> input_derivative;
     device_vector<cuda_device, float> scale_data_derivative;
     device_vector<cuda_device, float> bias_data_derivative;
-    double bn_eps = 0.0000001;
+    double bn_eps;
     size_t factor = 0;
     double momentum = 0.0;
+protected:
+
+    std::vector<std::vector<float>> serialize_additional_members() const override;
+
+    bool deserialize_additional_members(const std::vector<std::vector<float>>& values) override;
+
 public:
     void device_forward() override;
     void device_backprop() override;
@@ -47,5 +53,5 @@ public:
     void post_epoch(size_t epoch) override;
 
 
-    batch_norm_cuda() {};
+    batch_norm_cuda(double epsilon = 0.0000001) : bn_eps(epsilon) {};
 };

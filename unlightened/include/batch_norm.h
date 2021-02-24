@@ -24,6 +24,10 @@ class batch_norm : public  device_layer<batch_norm<Device>, Device, float, true>
         Device::copy_to_device(p.ptr, data.data(), p.size);
         return true;
     }
+protected:
+
+    virtual std::vector<std::vector<float>> serialize_additional_members() const = 0;
+    virtual bool deserialize_additional_members(const std::vector<std::vector<float>>& values) = 0;
 
 public:
 
@@ -36,6 +40,8 @@ public:
     {
         serialize_weights_props(s, get_weights());
         serialize_weights_props(s, get_bias());
+        auto additional_members = serialize_additional_members();
+        s << additional_members;
     }
 
     template <typename Serializer>
@@ -44,6 +50,10 @@ public:
         init(input_shape);
         if (!deserialize_weights_props(s, get_weights()))
             return false;
-        return deserialize_weights_props(s, get_bias());
+        if (!deserialize_weights_props(s, get_bias()))
+            return false;
+        std::vector<std::vector<float>> additional_members;
+        s >> additional_members;
+        return deserialize_additional_members(additional_members);
     }
 };

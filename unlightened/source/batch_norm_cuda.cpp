@@ -111,3 +111,26 @@ void batch_norm_cuda::pre_epoch(size_t epoch)
 void batch_norm_cuda::post_epoch(size_t epoch)
 {
 }
+
+std::vector<std::vector<float>> batch_norm_cuda::serialize_additional_members() const
+{
+    std::vector<std::vector<float>> result;
+    result.emplace_back(running_mean_data.to_vector());
+    result.emplace_back(running_variance_data.to_vector());
+    return result;
+}
+
+bool batch_norm_cuda::deserialize_additional_members(const std::vector<std::vector<float>>& values)
+{
+    if (values.size() == 2)
+    {
+        if (values[0].size() != running_mean_data.size())
+            return false;
+        running_mean_data.set_data(values[0]);
+        if (values[1].size() != running_variance_data.size())
+            return false;
+        running_variance_data.set_data(values[1]);
+        return true;
+    }
+    return false;
+}
