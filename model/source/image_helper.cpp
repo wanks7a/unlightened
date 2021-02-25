@@ -1,24 +1,10 @@
 #include <image_helper.h>
-
-image_info load_image_normalized(const char* path)
-{
-    image_info result;
-    SDL_Surface* surf = IMG_Load(path);
-    size_t pixels = static_cast<size_t>(surf->w )* surf->h;
-    result.pixels.resize(pixels * 3);
-    for (size_t i = 0; i < pixels; i++)
-    {
-        Uint8 r, g, b;
-        SDL_GetRGB(static_cast<Uint32*>(surf->pixels)[i], surf->format, &r, &g, &b);
-        result.pixels[i] = r / 255.0f;
-        result.pixels[i + pixels] = g / 255.0f;
-        result.pixels[i + 2 * pixels] = b / 255.0f;
-    }
-    result.w = surf->w;
-    result.h = surf->h;
-    SDL_FreeSurface(surf);
-    return result;
-}
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_resize.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 image_info load_image_normalized(const char* path, size_t max_width, size_t max_height)
 {
@@ -90,5 +76,59 @@ image_info load_image_normalized(const char* path, size_t max_width, size_t max_
 
     SDL_FreeSurface(surf);
 
+    return result;
+}
+
+image_info resize_image(const image_info& img, int w, int h)
+{
+    image_info result;
+    result.w = w;
+    result.h = h;
+    result.pixels.resize(w * h * 3);
+    bool success = static_cast<bool>(stbir_resize_float(img.pixels.data(), img.w, img.h, 0, result.pixels.data(), w, h, 0, 3));
+    if (!success)
+    {
+        result.w = 0;
+        result.h = 0;
+        result.pixels.clear();
+    }
+    return result;
+}
+
+bool save_image(const char* p, const image_info& img, float pixel_scale)
+{
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < img.pixels.size(); i++)
+    {
+        data.emplace_back(static_cast<unsigned char>(img.pixels[i] * pixel_scale));
+    }
+    return stbi_write_png(p, img.w, img.h, 3, data.data(), img.w * 3 * sizeof(unsigned char));
+}
+
+image_info fit_image(const image_info& img, int w, int h)
+{
+    float scale = 1.0f;
+    if (img.w > w)
+    {
+        scale = w / img.w;
+    }
+    if (img.h > h)
+    {
+        if (scale > (h / img.h))
+            scale = h / static_cast<float>(img.h);
+    }
+    image_info result; 
+    result.w = w;
+    result.h = h;
+    result.pixels.resize(result.w * result.h * 3);
+    image_info resized_img = resize_image(img, img.w * scale, img.h * scale);
+    size_t x_offset, y_offset;
+    size_t stride = result.w * 3;
+    x_offset = (result.w - resized_img.w) / 2;
+    y_offset = (result.h - resized_img.h) / 2;
+    for (size_t i = 0; i < resized_img.h; i++)
+    {
+        memcpy(&result.pixels[stride * (y_offset + i) + x_offset * 3], &resized_img.pixels[resized_img.w * 3 * i], resized_img.w * 3 * sizeof(float));
+    }
     return result;
 }
