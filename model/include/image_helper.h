@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <SDL_image.h>
+#include <string>
 
 struct image_info
 {
@@ -22,11 +23,11 @@ struct shift_data
 };
 
 template <typename Func = shift_data>
-image_info load_image(const char* path, const Func& f = Func())
+image_info load_image(const std::string& path, const Func& f = Func())
 {
     image_info result;
     int w, h, n;
-    unsigned char* data = stbi_load(path, &w, &h, &n, STBI_rgb);
+    unsigned char* data = stbi_load(path.c_str(), &w, &h, &n, STBI_rgb);
     result.pixels.reserve(w * h * 3);
     for (int i = 0; i < w * h * 3; i++)
     {
@@ -37,7 +38,7 @@ image_info load_image(const char* path, const Func& f = Func())
     return result;
 }
 
-image_info load_image_normalized(const char* path, size_t max_width, size_t max_height);
+image_info load_image_normalized(const std::string& path, size_t max_width, size_t max_height);
 image_info resize_image(const image_info& img, int w, int h);
-bool save_image(const char* p, const image_info& img, float pixel_scale = 1.0f);
+bool save_image(const std::string& p, const image_info& img, float pixel_scale = 1.0f);
 image_info fit_image(const image_info& img, int w, int h);

@@ -5,11 +5,12 @@
 #include <stb_image_resize.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <string>
 
-image_info load_image_normalized(const char* path, size_t max_width, size_t max_height)
+image_info load_image_normalized(const std::string& path, size_t max_width, size_t max_height)
 {
     image_info result;
-    SDL_Surface* surf = IMG_Load(path);
+    SDL_Surface* surf = IMG_Load(path.c_str());
 
     int width = surf->w;
     int height = surf->h;
@@ -95,7 +96,7 @@ image_info resize_image(const image_info& img, int w, int h)
     return result;
 }
 
-bool save_image(const char* p, const image_info& img, float pixel_scale)
+bool save_image(const std::string& p, const image_info& img, float pixel_scale)
 {
     std::vector<unsigned char> data;
     for (size_t i = 0; i < img.pixels.size(); i++)
@@ -111,7 +112,11 @@ bool save_image(const char* p, const image_info& img, float pixel_scale)
         }
         data.emplace_back(static_cast<unsigned char>(pix));
     }
-    return stbi_write_png(p, img.w, img.h, 3, data.data(), img.w * 3 * sizeof(unsigned char));
+    if (p.rfind(".png") != std::string::npos)
+        return stbi_write_png(p.c_str(), img.w, img.h, 3, data.data(), img.w * 3 * sizeof(unsigned char));
+    else if (p.rfind(".jpg") != std::string::npos)
+        return stbi_write_jpg(p.c_str(), img.w, img.h, 3, data.data(), 100);
+    return false;
 }
 
 image_info fit_image(const image_info& img, int w, int h)
