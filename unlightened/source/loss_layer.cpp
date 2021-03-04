@@ -108,7 +108,7 @@ double loss_layer_cpu::get_binary_cross_ent_mean_loss() const
     {
         result += (observedValues[i] * log(predictedValue[i]) + (1 - observedValues[i]) * log(1 - predictedValue[i])) / output_shape.batches;
     }
-    return -result;
+    return -result / output_shape.batches;
 }
 
 void loss_layer_cpu::backprop_binary_cross_ent()
@@ -126,7 +126,7 @@ void loss_layer_cpu::print_predicted(size_t examples) const
         std::cout << "Actual " << " Predicted " << std::endl;
         for (size_t j = 0; j < output_shape.volume(); j++)
         {
-            std::cout << "   " <<observedValues[i * output_shape.volume() + j] << "      " << predictedValue[i * output_shape.volume() + j] << std::endl;
+            printf("   %.5f      %.5f\n", observedValues[i * output_shape.volume() + j], predictedValue[i * output_shape.volume() + j]);
         }
     }
 }

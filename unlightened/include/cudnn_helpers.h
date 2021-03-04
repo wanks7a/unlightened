@@ -2,8 +2,11 @@
 #include <cudnn.h>
 #include <iostream>
 #include <shape.h>
-#include <device_vector.h>
 #include <cuda_device.h>
+#include <device_vector.h>
+
+
+class cuda_device;
 
 #define CUDA_CHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudnnStatus_t code, const char* file, int line, bool abort = true)

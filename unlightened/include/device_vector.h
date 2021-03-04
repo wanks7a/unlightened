@@ -111,6 +111,7 @@ public:
 		if (mem != nullptr)
 		{
 			Device::free(mem);
+			mem = nullptr;
 			data_size = 0;
 		}
 	}
