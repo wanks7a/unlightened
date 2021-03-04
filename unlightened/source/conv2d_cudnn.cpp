@@ -42,79 +42,79 @@ void conv2d_cudnn::init(const shape& input)
 	init_cudnn();
 }
 
-void conv2d_cudnn::forward_pass(Layer* prevLayer)
-{
-	input_layer = prevLayer;
-
-	if (prevLayer->is_device_layer())
-		input = prevLayer->get_output();
-	else
-	{
-		prevLayer->get_device_output(layer_input);
-		input = layer_input.get();
-	}
-
-	const float alpha = 1.0f, alpha2 = 1.0f, beta = 0.0f;
-
-	// convolution 
-	checkCUDNN(cudnnConvolutionForward(cudnn_handle,
-		&alpha,
-		input_descriptor,
-		input,
-		filter_descriptor,
-		filters.get_weights().get(),
-		convolution_forwardpass_descriptor,
-		convolution_forwardpass_algorithm,
-		cudnn_memory_forward_pass.get(),
-		cudnn_memory_forward_pass.size() * sizeof(float),
-		&beta,
-		output_descriptor,
-		output.get()));
-
-	// add bias to the output from the convolution
-	checkCUDNN(cudnnOpTensor(cudnn_handle,
-		add_op_descriptor,
-		&alpha,
-		output_descriptor,
-		output.get(),
-		&alpha2,
-		bias_tensor_descriptor,
-		filters.get_bias().get(),
-		&beta,
-		output_descriptor,
-		output.get()));
-}
-
-void conv2d_cudnn::backprop(Layer* layer)
-{
-	cuVector<float> layer_input;
-	const float* derivative = nullptr;
-
-	if (layer->is_device_layer())
-		derivative = layer->derivative_wr_to_input();
-	else
-	{
-		layer_input = layer->get_device_derivative();
-		derivative = layer_input.get();
-	}
-
-	backprop_weights_cudnn(derivative);
-	// compute bias gradient
-	float alpha = 1.0f, beta = 0.0f;
-	checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
-		&alpha,
-		output_descriptor,
-		derivative,
-		&beta,
-		bias_tensor_descriptor,
-		filters.get_bias_derivative().get()
-	));
-
-	if (!is_first_layer)
-	{
-		backprop_cudnn(derivative);
-	}
-}
+//void conv2d_cudnn::forward_pass(Layer* prevLayer)
+//{
+//	input_layer = prevLayer;
+//
+//	if (prevLayer->is_device_layer())
+//		input = prevLayer->get_output();
+//	else
+//	{
+//		prevLayer->get_device_output(layer_input);
+//		input = layer_input.get();
+//	}
+//
+//	const float alpha = 1.0f, alpha2 = 1.0f, beta = 0.0f;
+//
+//	// convolution 
+//	checkCUDNN(cudnnConvolutionForward(cudnn_handle,
+//		&alpha,
+//		input_descriptor,
+//		input,
+//		filter_descriptor,
+//		filters.get_weights().get(),
+//		convolution_forwardpass_descriptor,
+//		convolution_forwardpass_algorithm,
+//		cudnn_memory_forward_pass.get(),
+//		cudnn_memory_forward_pass.size() * sizeof(float),
+//		&beta,
+//		output_descriptor,
+//		output.get()));
+//
+//	// add bias to the output from the convolution
+//	checkCUDNN(cudnnOpTensor(cudnn_handle,
+//		add_op_descriptor,
+//		&alpha,
+//		output_descriptor,
+//		output.get(),
+//		&alpha2,
+//		bias_tensor_descriptor,
+//		filters.get_bias().get(),
+//		&beta,
+//		output_descriptor,
+//		output.get()));
+//}
+//
+//void conv2d_cudnn::backprop(Layer* layer)
+//{
+//	cuVector<float> layer_input;
+//	const float* derivative = nullptr;
+//
+//	if (layer->is_device_layer())
+//		derivative = layer->derivative_wr_to_input();
+//	else
+//	{
+//		layer_input = layer->get_device_derivative();
+//		derivative = layer_input.get();
+//	}
+//
+//	backprop_weights_cudnn(derivative);
+//	// compute bias gradient
+//	float alpha = 1.0f, beta = 0.0f;
+//	checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
+//		&alpha,
+//		output_descriptor,
+//		derivative,
+//		&beta,
+//		bias_tensor_descriptor,
+//		filters.get_bias_derivative().get()
+//	));
+//
+//	if (!is_first_layer)
+//	{
+//		backprop_cudnn(derivative);
+//	}
+//}
 
 const float* conv2d_cudnn::get_output() const
 {
@@ -360,3 +360,56 @@ weights_properties conv2d_cudnn::get_bias_deriv() const
 	props.ptr = filters.get_bias_derivative().get();
 	return props;
 };
+
+bool conv2d_cudnn::forward(std::shared_ptr<cuda_device>& d, const blob_view<float>& input_data)
+{
+	const float alpha = 1.0f, alpha2 = 1.0f, beta = 0.0f;
+	input = input_data.data();
+	// convolution 
+	checkCUDNN(cudnnConvolutionForward(cudnn_handle,
+		&alpha,
+		input_descriptor,
+		input,
+		filter_descriptor,
+		filters.get_weights().get(),
+		convolution_forwardpass_descriptor,
+		convolution_forwardpass_algorithm,
+		cudnn_memory_forward_pass.get(),
+		cudnn_memory_forward_pass.size() * sizeof(float),
+		&beta,
+		output_descriptor,
+		output.get()));
+
+	// add bias to the output from the convolution
+	checkCUDNN(cudnnOpTensor(cudnn_handle,
+		add_op_descriptor,
+		&alpha,
+		output_descriptor,
+		output.get(),
+		&alpha2,
+		bias_tensor_descriptor,
+		filters.get_bias().get(),
+		&beta,
+		output_descriptor,
+		output.get()));
+	return true;
+}
+
+bool conv2d_cudnn::backward(std::shared_ptr<cuda_device>& d, const blob_view<float>& derivative_data)
+{
+	backprop_weights_cudnn(derivative_data.data());
+	// compute bias gradient
+	float alpha = 1.0f, beta = 0.0f;
+	checkCUDNN(cudnnConvolutionBackwardBias(cudnn_handle,
+		&alpha,
+		output_descriptor,
+		derivative_data.data(),
+		&beta,
+		bias_tensor_descriptor,
+		filters.get_bias_derivative().get()
+	));
+
+	backprop_cudnn(derivative_data.data());
+
+	return true;
+}

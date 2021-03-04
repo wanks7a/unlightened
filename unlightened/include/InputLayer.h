@@ -2,17 +2,22 @@
 #include <vector>
 #include <iostream>
 #include <serializable_interface.h>
+#include <device_vector.h>
+#include <cuda_device.h>
 
 class InputLayer : public serializable_layer<InputLayer>
 {
     std::vector<float> output;
+    device_vector<cuda_device, float> out_device;
 public:
-    InputLayer() = default;
+    InputLayer() { in_device_memory = true; };
     InputLayer(shape shape)
     {
+        in_device_memory = true;
         input_shape = shape;
         output_shape = shape;
         output.resize(output_shape.size());
+        out_device.reserve(output_shape.size());
     }
 
     void init(const shape& input) override
@@ -26,7 +31,9 @@ public:
             std::cout << "The data size is not the same as the input shape size." << std::endl;
             return false;
         }
-        memcpy(output.data(), data, size * sizeof(float));
+       // memcpy(output.data(), data, size * sizeof(float));
+        out_device.memcpy(data, size);
+        output = out_device.to_vector();
         return true;
     }
 
@@ -38,6 +45,7 @@ public:
             return false;
         }
         output = data;
+        out_device.set_data(output);
         return true;
     }
 
@@ -56,7 +64,7 @@ public:
 
     const float* get_output() const override
     {
-        return output.data();
+        return out_device.data();
     };
 
     template <typename Serializer>

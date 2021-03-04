@@ -1,5 +1,7 @@
 #pragma once
 #include <serializable_interface.h>
+#include <device_vector.h>
+#include <cuda_device.h>
 
 enum class LOSS
 {
@@ -13,11 +15,14 @@ class loss_layer_cpu : public serializable_layer<loss_layer_cpu>
     std::vector<float> predictedValue;
     std::vector<float> derivativeWRToInput;
     std::vector<float> observedValues;
+    mutable device_vector<cuda_device, float> derivative_device;
+    mutable device_vector<cuda_device, float> predicted_device;
     size_t size;
 public:
 
     loss_layer_cpu() : size(0), loss_type(LOSS::MSE)
     {
+        in_device_memory = true;
     }
 
     void init(const shape& input) override;
@@ -43,15 +48,9 @@ public:
         loss_type = loss;
     }
 
-    const float* get_output() const override
-    {
-        return predictedValue.data();
-    }
+    const float* get_output() const override;
 
-    const float* derivative_wr_to_input() const override
-    {
-        return derivativeWRToInput.data();
-    }
+    const float* derivative_wr_to_input() const override;
 
     void print_predicted(size_t examples) const;
 

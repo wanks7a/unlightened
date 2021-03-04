@@ -3,6 +3,7 @@
 #include <device_memory.h>
 #include <binary_serialization.h>
 #include <device_vector.h>
+#include <blob.h>
 
 struct weights_properties
 {
@@ -18,6 +19,8 @@ protected:
     shape input_shape;
     bool in_device_memory = false;
     bool update_on_backprop = true;
+    blob_view<float> forward_blob;
+    blob_view<float> backward_blob;
 public:
     void init_base(const shape& input)
     {
@@ -29,6 +32,16 @@ public:
     virtual void backprop(Layer* layer) = 0;
     virtual const float* get_output() const = 0;
     virtual const float* derivative_wr_to_input() const = 0;
+
+    const blob_view<float>& get_output_as_blob()
+    {
+        return forward_blob;
+    }
+
+    const blob_view<float>& derivative_as_blob()
+    {
+        return backward_blob;
+    }
 
     virtual weights_properties get_weights() const
     { 

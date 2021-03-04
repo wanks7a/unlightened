@@ -7,6 +7,7 @@ void loss_layer_cpu::init(const shape& input)
     size = input.size();
     derivativeWRToInput.resize(size);
     observedValues.resize(size);
+    predictedValue.resize(size);
 }
 
 void loss_layer_cpu::forward_pass(Layer* prevLayer)
@@ -129,4 +130,16 @@ void loss_layer_cpu::print_predicted(size_t examples) const
             printf("   %.5f      %.5f\n", observedValues[i * output_shape.volume() + j], predictedValue[i * output_shape.volume() + j]);
         }
     }
+}
+
+const float* loss_layer_cpu::get_output() const
+{
+    predicted_device.set_data(predictedValue);
+    return predicted_device.data();
+}
+
+const float* loss_layer_cpu::derivative_wr_to_input() const 
+{
+    derivative_device.set_data(derivativeWRToInput);
+    return derivative_device.data();
 }

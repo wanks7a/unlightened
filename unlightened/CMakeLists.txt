@@ -40,6 +40,7 @@ add_library(
     include/cuda_vector_norm.h
     include/adam_optimizer.h
     include/cuda_vector.h
+    include/blob.h
     # cpp files
     source/cnn_layer.cpp
     source/cnnLayer.cu

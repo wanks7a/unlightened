@@ -1,9 +1,10 @@
 #pragma once
 #include <conv_filter.h>
 #include <cudnn.h>
-#include <serializable_interface.h>
+#include <device_layer.h>
+#include <cuda_device.h>
 
-class conv2d_cudnn : public serializable_layer<conv2d_cudnn>
+class conv2d_cudnn : public device_layer_new<conv2d_cudnn, cuda_device>
 {
 protected:
     bool initialized = false;
@@ -35,8 +36,6 @@ public:
     conv2d_cudnn(size_t filter_dimension, size_t num_of_filters, bool first_layer = false);
     conv2d_cudnn(const filter_options& opt, bool first_layer = false);
     void init(const shape& input) override;
-    void forward_pass(Layer* prevLayer) override;
-    void backprop(Layer* layer) override;
     const float* get_output() const override;
     const float* derivative_wr_to_input() const override;
 
@@ -82,6 +81,9 @@ public:
     weights_properties get_bias() const override;
 
     weights_properties get_bias_deriv() const override;
+
+    bool forward(std::shared_ptr<cuda_device>& d, const blob_view<float>& input_data);
+    bool backward(std::shared_ptr<cuda_device>& d, const blob_view<float>& derivative_data);
 
     virtual ~conv2d_cudnn();
 

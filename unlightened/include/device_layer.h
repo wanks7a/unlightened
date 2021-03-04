@@ -76,3 +76,44 @@ public:
 
     friend TLayer;
 };
+
+template <typename TLayer, typename Device>
+class device_layer_new : public serializable_layer<TLayer>
+{
+    std::shared_ptr<Device> d;
+public:
+    void forward_pass(Layer* layer) override
+    {
+        const auto& b = layer->get_output_as_blob();
+        // TODO remove this if when every layer uses this interface
+        if (b.data() == nullptr)
+        {
+            blob_view<float> blob_v;
+            blob_v.set_size(layer->get_output(), input_shape.size());
+            TLayer& l = static_cast<TLayer&>(*this);
+            l.forward(d, blob_v);
+        }
+        if (b.size() == input_shape.size())
+        {
+            TLayer& l = static_cast<TLayer&>(*this);
+            l.forward(d, b);
+        }
+    }
+    
+    void backprop(Layer* layer) override
+    {
+        const auto& b = layer->derivative_as_blob();
+        if (b.data() == nullptr)
+        {
+            blob_view<float> blob_v;
+            blob_v.set_size(layer->derivative_wr_to_input(), output_shape.size());
+            TLayer& l = static_cast<TLayer&>(*this);
+            l.backward(d, blob_v);
+        }
+        if (b.size() == output_shape.size())
+        {
+            TLayer& l = static_cast<TLayer&>(*this);
+            l.backward(d, b);
+        }
+    }
+};
