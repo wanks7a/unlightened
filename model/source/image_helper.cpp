@@ -100,7 +100,16 @@ bool save_image(const char* p, const image_info& img, float pixel_scale)
     std::vector<unsigned char> data;
     for (size_t i = 0; i < img.pixels.size(); i++)
     {
-        data.emplace_back(static_cast<unsigned char>(img.pixels[i] * pixel_scale));
+        float pix = roundf(img.pixels[i] * pixel_scale);
+        if (pix > 255.0f)
+        {
+            pix = 255.0f;
+        }
+        if (pix < 0.0f)
+        {
+            pix = 0.0f;
+        }
+        data.emplace_back(static_cast<unsigned char>(pix));
     }
     return stbi_write_png(p, img.w, img.h, 3, data.data(), img.w * 3 * sizeof(unsigned char));
 }
@@ -110,7 +119,7 @@ image_info fit_image(const image_info& img, int w, int h)
     float scale = 1.0f;
     if (img.w > w)
     {
-        scale = w / img.w;
+        scale = w / static_cast<float>(img.w);
     }
     if (img.h > h)
     {
