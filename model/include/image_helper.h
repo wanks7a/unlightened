@@ -28,11 +28,14 @@ image_info load_image(const std::string& path, const Func& f = Func())
     image_info result;
     int w, h, n;
     unsigned char* data = stbi_load(path.c_str(), &w, &h, &n, STBI_rgb);
+    if (data == nullptr)
+        return result;
     result.pixels.reserve(w * h * 3);
     for (int i = 0; i < w * h * 3; i++)
     {
         result.pixels.emplace_back(f(data[i]));
     }
+    stbi_image_free(data);
     result.w = w;
     result.h = h;
     return result;
