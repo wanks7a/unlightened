@@ -33,7 +33,7 @@ void shape_plot::draw()
         latest_draw_call(*this);
 }
 
-shape_plot::shape_plot(int w, int h, std::string name) : view(w, h, name)
+shape_plot::shape_plot(int w, int h, std::string name) : view(w, h, name), draw_mode(RGB_MODE::PER_PIXEL)
 {
 }
 
@@ -65,19 +65,38 @@ void shape_plot::draw_rgb_channels_internal()
     Uint32 rmask = 0x000000ff;
     Uint32 gmask = 0x0000ff00;
     Uint32 bmask = 0x00ff0000;
-    Uint32 amask = 0;
+    Uint32 amask = 0xff000000;
     int startW = 0, startH = 0;
-
-    for (size_t j = 0; j < single_pic.size(); j++)
+    if (draw_mode == RGB_MODE::PER_AREA)
     {
-        single_pic[j] = 0;
-        float value = map_val(rgb_data.data[j], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
-        single_pic[j] |= static_cast<unsigned char>(value); // Red
-        value = map_val(rgb_data.data[j + rgb_data.width * rgb_data.height], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
-        single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 8; // Red
-        value = map_val(rgb_data.data[j + 2 * rgb_data.width * rgb_data.height], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
-        single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 16; // Red
+        for (size_t j = 0; j < single_pic.size(); j++)
+        {
+            single_pic[j] = 0;
+            float value = map_val(rgb_data.data[j], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<unsigned char>(value); // Red
+            value = map_val(rgb_data.data[j + rgb_data.width * rgb_data.height], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 8; // Red
+            value = map_val(rgb_data.data[j + 2 * rgb_data.width * rgb_data.height], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 16; // Red
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(0xFF)) << 24; // Red
+        }
     }
+    else
+    {
+        int idx = -1;
+        for (size_t j = 0; j < single_pic.size(); j++)
+        {
+            single_pic[j] = 0;
+            float value = map_val(rgb_data.data[++idx], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<unsigned char>(value); // Red
+            value = map_val(rgb_data.data[++idx], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 8; // Red
+            value = map_val(rgb_data.data[++idx], rgb_data.min_val, rgb_data.max_val, 0.0f, 255.0f);
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(value)) << 16; // Red
+            single_pic[j] |= static_cast<Uint32>(static_cast<unsigned char>(0xFF)) << 24; // Red
+        }
+    }
+
 
     SDL_Surface* surf = SDL_CreateRGBSurfaceFrom((void*)single_pic.data(), rgb_data.width, rgb_data.height, 32, 4 * rgb_data.width,
         rmask, gmask, bmask, amask);
@@ -160,4 +179,9 @@ void shape_plot::draw_grayscale_internal()
 void shape_plot::set_scale(float val)
 {
     scale = val;
+}
+
+void shape_plot::set_draw_mode(RGB_MODE mode)
+{
+    draw_mode = mode;
 }
