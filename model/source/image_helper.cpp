@@ -128,7 +128,7 @@ image_info fit_image(const image_info& img, int w, int h)
     }
     if (img.h > h)
     {
-        if (scale > (h / img.h))
+        if (scale > (h / static_cast<float>(img.h)))
             scale = h / static_cast<float>(img.h);
     }
     image_info result; 
