@@ -1,7 +1,6 @@
 add_library(
     unlightened STATIC
     include/AllLayers.h
-    include/cnn_layer.h
     include/conv_filter.h
     include/device_memory.h
     include/GpuUtils.h
@@ -42,8 +41,6 @@ add_library(
     include/cuda_vector.h
     include/blob.h
     # cpp files
-    source/cnn_layer.cpp
-    source/cnnLayer.cu
     source/GpuUtils.cpp
     source/LinearLayerGPU.cu
     source/SigmoidLayerGPU.cu

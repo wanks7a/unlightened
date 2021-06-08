@@ -30,6 +30,23 @@ public:
     virtual void init(const shape& input) = 0;
     virtual void forward_pass(Layer* prevLayer) = 0;
     virtual void backprop(Layer* layer) = 0;
+
+    // new interface
+    virtual bool compute(const blob_view<float>& weights, const blob_view<float>& input, blob_view<float>& output) 
+    {
+        return true;
+    }
+
+    virtual bool grad(const blob_view<float>& input, blob_view<float>& output)
+    {
+        return true;
+    }
+
+    virtual bool grad_weights(const blob_view<float>& input, blob_view<float>& output)
+    {
+        return true;
+    }
+
     virtual const float* get_output() const = 0;
     virtual const float* derivative_wr_to_input() const = 0;
 
