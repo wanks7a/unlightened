@@ -219,8 +219,15 @@ void softmax_derivative_calc(const float* input, shape* input_shape, const float
     {
         float current_exponent = exponents[batch_offset * i + tr_index];
         float current_exponnent_sum = exponents_sum[i];
-        current_exponent = (current_exponent * (current_exponnent_sum - current_exponent)) / (current_exponnent_sum * current_exponnent_sum);
-        output[batch_offset * i + tr_index] = input[batch_offset * i + tr_index] * current_exponent;
+        float result = 0.0f;
+        result = (current_exponent * (current_exponnent_sum - current_exponent)) / (current_exponnent_sum * current_exponnent_sum) * input[batch_offset * i + tr_index];
+        for (unsigned int j = 0; j < batch_offset; j++)
+        {
+            result += -(current_exponent / current_exponnent_sum) * (exponents[batch_offset * i + j] / current_exponnent_sum) * input[batch_offset * i + j];
+        }
+
+        result += (current_exponent / current_exponnent_sum) * (current_exponent / current_exponnent_sum) * input[batch_offset * i + tr_index];
+        output[batch_offset * i + tr_index] = result;
     }
 }
 
